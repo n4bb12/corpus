@@ -6,5 +6,8 @@
       "markitdown-ts",
       "semantic-chunker"
     ]
+  },
+  "aiFiles": {
+    "enabled": false
   }
 }
