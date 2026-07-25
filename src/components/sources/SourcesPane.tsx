@@ -12,7 +12,6 @@ import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { toast } from "sonner"
 import { AddSourceDialog } from "#/components/sources/AddSourceDialog"
 import { Button } from "#/components/ui/button"
 import { Checkbox } from "#/components/ui/checkbox"
@@ -74,6 +73,7 @@ export function SourcesPane({
 	const [renameId, setRenameId] = useState<Id<"sources"> | null>(null)
 	const [renameDraft, setRenameDraft] = useState("")
 	const [deleteId, setDeleteId] = useState<Id<"sources"> | null>(null)
+	const [uploadNotice, setUploadNotice] = useState<string | null>(null)
 	const listRef = useRef<HTMLDivElement>(null)
 	const scrollMemory = useRef(0)
 
@@ -178,9 +178,11 @@ export function SourcesPane({
 		}
 
 		if (rejected.length) {
-			toast.message("Some files were skipped", {
-				description: rejected.slice(0, 3).join(" "),
-			})
+			setUploadNotice(
+				`Some files were skipped: ${rejected.slice(0, 3).join(" ")}`,
+			)
+		} else {
+			setUploadNotice(null)
 		}
 	}
 
@@ -268,6 +270,12 @@ export function SourcesPane({
 					Add
 				</Button>
 			</div>
+
+			{uploadNotice ? (
+				<p className="px-4 pt-2 text-sm text-destructive" role="status">
+					{uploadNotice}
+				</p>
+			) : null}
 
 			<div className="relative px-4 pt-3">
 				<MagnifyingGlass

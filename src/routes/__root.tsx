@@ -7,7 +7,6 @@ import {
 	useRouteContext,
 } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
-import { Toaster } from "#/components/ui/sonner"
 import { TooltipProvider } from "#/components/ui/tooltip"
 import { AppConvexProvider } from "#/integrations/convex/provider"
 import { getToken } from "#/lib/auth-server"
@@ -59,7 +58,6 @@ function RootComponent() {
 		<AppConvexProvider initialToken={context.token}>
 			<TooltipProvider delayDuration={200}>
 				<Outlet />
-				<Toaster position="bottom-right" />
 			</TooltipProvider>
 		</AppConvexProvider>
 	)
