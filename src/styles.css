@@ -1,0 +1,186 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/figtree";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+	--background: #f1f3ee;
+	--foreground: #1e2823;
+	--card: #fafbf8;
+	--card-foreground: #1e2823;
+	--popover: #fafbf8;
+	--popover-foreground: #1e2823;
+	--primary: #245844;
+	--primary-foreground: #fafbf8;
+	--secondary: #e7ece6;
+	--secondary-foreground: #1e2823;
+	--muted: #e7ece6;
+	--muted-foreground: #68736c;
+	--accent: #e7ece6;
+	--accent-foreground: #1e2823;
+	--destructive: #b42318;
+	--border: #d8ded7;
+	--input: #d8ded7;
+	--ring: #245844;
+	--radius: 0.75rem;
+	--surface: #fafbf8;
+	--pine: #245844;
+	--pine-soft: rgb(36 88 68 / 12%);
+	--shadow-pine: 0 12px 32px rgb(36 88 68 / 10%);
+	--atmosphere: radial-gradient(
+		circle at 12% -10%,
+		rgb(36 88 68 / 14%),
+		transparent 32rem
+	);
+}
+
+.dark {
+	--background: #141a17;
+	--foreground: #e8eee9;
+	--card: #1b231f;
+	--card-foreground: #e8eee9;
+	--popover: #1b231f;
+	--popover-foreground: #e8eee9;
+	--primary: #79b999;
+	--primary-foreground: #141a17;
+	--secondary: #24302a;
+	--secondary-foreground: #e8eee9;
+	--muted: #24302a;
+	--muted-foreground: #9aa79f;
+	--accent: #24302a;
+	--accent-foreground: #e8eee9;
+	--destructive: #f97066;
+	--border: rgb(121 185 153 / 18%);
+	--input: rgb(121 185 153 / 18%);
+	--ring: #79b999;
+	--surface: #1b231f;
+	--pine: #79b999;
+	--pine-soft: rgb(121 185 153 / 14%);
+	--shadow-pine: 0 12px 32px rgb(0 0 0 / 28%);
+	--atmosphere: radial-gradient(
+		circle at 12% -10%,
+		rgb(121 185 153 / 12%),
+		transparent 32rem
+	);
+}
+
+@theme inline {
+  --font-sans: "Figtree Variable", "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: 0.625rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1rem;
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+
+	html {
+		@apply font-sans antialiased;
+	}
+
+	body {
+		@apply bg-background text-foreground;
+		font-feature-settings: "tnum" 1;
+	}
+
+	button,
+	[role="button"] {
+		cursor: pointer;
+	}
+}
+
+.atmosphere {
+	background: var(--atmosphere), var(--background);
+}
+
+.atmosphere-noise {
+	position: relative;
+}
+
+.atmosphere-noise::before {
+	content: "";
+	pointer-events: none;
+	position: fixed;
+	inset: 0;
+	z-index: 0;
+	opacity: 0.035;
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-transparency: reduce) {
+	.atmosphere-noise::before {
+		display: none;
+	}
+}
+
+.placeholder-shimmer {
+	color: transparent !important;
+	background: linear-gradient(
+		90deg,
+		rgb(36 88 68 / 8%) 0%,
+		rgb(36 88 68 / 16%) 50%,
+		rgb(36 88 68 / 8%) 100%
+	);
+	background-size: 200% 100%;
+	border-radius: 0.5rem;
+	animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.dark .placeholder-shimmer {
+	background: linear-gradient(
+		90deg,
+		rgb(121 185 153 / 8%) 0%,
+		rgb(121 185 153 / 16%) 50%,
+		rgb(121 185 153 / 8%) 100%
+	);
+	background-size: 200% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.placeholder-shimmer {
+		animation: none;
+	}
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+.citation-highlight {
+	background: rgb(36 88 68 / 10%);
+	box-shadow: inset 3px 0 0 var(--pine);
+	border-radius: 0.25rem;
+}
+
+.dark .citation-highlight {
+	background: rgb(121 185 153 / 12%);
+}

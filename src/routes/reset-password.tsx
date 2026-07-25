@@ -1,0 +1,91 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { useState } from "react"
+import { z } from "zod"
+import { AuthShell } from "#/components/auth/AuthShell"
+import { Button } from "#/components/ui/button"
+import { Input } from "#/components/ui/input"
+import { Label } from "#/components/ui/label"
+import { authClient } from "#/lib/auth-client"
+
+export const Route = createFileRoute("/reset-password")({
+	validateSearch: z.object({
+		token: z.string().optional(),
+	}),
+	component: ResetPasswordPage,
+})
+
+function ResetPasswordPage() {
+	const { token } = Route.useSearch()
+	const navigate = useNavigate()
+	const [password, setPassword] = useState("")
+	const [error, setError] = useState<string | null>(null)
+	const [pending, setPending] = useState(false)
+
+	async function onSubmit(event: React.FormEvent) {
+		event.preventDefault()
+
+		if (!token) {
+			setError("This reset link is missing a token.")
+			return
+		}
+
+		setPending(true)
+		setError(null)
+
+		const result = await authClient.resetPassword({
+			newPassword: password,
+			token,
+		})
+
+		setPending(false)
+
+		if (result.error) {
+			setError(result.error.message || "Could not reset password.")
+			return
+		}
+
+		await navigate({ to: "/sign-in" })
+	}
+
+	return (
+		<AuthShell>
+			<div className="space-y-6">
+				<div className="space-y-2">
+					<h1 className="text-2xl font-semibold tracking-tight">
+						Reset password
+					</h1>
+					<p className="text-sm text-muted-foreground">
+						Choose a new password for your Corpus account.
+					</p>
+				</div>
+				<form className="space-y-4" onSubmit={onSubmit}>
+					<div className="space-y-2">
+						<Label htmlFor="password">New password</Label>
+						<Input
+							id="password"
+							type="password"
+							value={password}
+							onChange={(event) => setPassword(event.target.value)}
+							className="rounded-xl"
+							minLength={8}
+							required
+						/>
+					</div>
+					{error ? <p className="text-sm text-destructive">{error}</p> : null}
+					<Button
+						type="submit"
+						className="h-11 w-full rounded-[10px]"
+						disabled={pending}
+					>
+						{pending ? "Saving…" : "Save password"}
+					</Button>
+				</form>
+				<p className="text-sm text-muted-foreground">
+					<Link to="/sign-in" className="text-primary hover:underline">
+						Back to sign in
+					</Link>
+				</p>
+			</div>
+		</AuthShell>
+	)
+}
