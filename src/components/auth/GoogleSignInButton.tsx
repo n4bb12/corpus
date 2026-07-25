@@ -3,6 +3,7 @@ import { cn } from "#/lib/utils"
 
 export type GoogleSignInButtonProps = {
 	className?: string
+	highlighted?: boolean
 	onClick: () => void
 }
 
@@ -36,20 +37,30 @@ function GoogleMark() {
 
 export function GoogleSignInButton({
 	className,
+	highlighted = false,
 	onClick,
 }: GoogleSignInButtonProps) {
 	return (
-		<Button
-			type="button"
-			variant="outline"
-			className={cn(
-				"h-11 w-full gap-3 rounded-md border-[#dadce0] bg-white text-[#3c4043] shadow-sm hover:bg-[#f8f9fa] hover:text-[#3c4043] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]",
-				className,
-			)}
-			onClick={onClick}
-		>
-			<GoogleMark />
-			Continue with Google
-		</Button>
+		<div className="relative">
+			{highlighted ? (
+				<span className="absolute -top-2 right-3 z-10 rounded-md bg-primary px-2 py-0.5 text-xs font-medium tracking-wide text-primary-foreground uppercase">
+					Last used
+				</span>
+			) : null}
+			<Button
+				type="button"
+				variant="outline"
+				className={cn(
+					"h-11 w-full gap-3 rounded-md border-[#dadce0] bg-white text-[#3c4043] shadow-sm hover:bg-[#f8f9fa] hover:text-[#3c4043] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]",
+					highlighted &&
+						"ring-2 ring-primary ring-offset-2 ring-offset-background",
+					className,
+				)}
+				onClick={onClick}
+			>
+				<GoogleMark />
+				Continue with Google
+			</Button>
+		</div>
 	)
 }

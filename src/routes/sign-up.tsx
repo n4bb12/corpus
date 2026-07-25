@@ -14,6 +14,7 @@ import { Label } from "#/components/ui/label"
 import { Separator } from "#/components/ui/separator"
 import { authClient } from "#/lib/auth-client"
 import { getToken } from "#/lib/auth-server"
+import { setLastSignInMethod } from "#/lib/last-sign-in-method"
 
 const getAuth = createServerFn({ method: "GET" }).handler(async () =>
 	getToken(),
@@ -56,6 +57,7 @@ function SignUpPage() {
 			return
 		}
 
+		setLastSignInMethod("email")
 		await navigate({
 			to: "/verify-email",
 			search: { email },
@@ -75,12 +77,13 @@ function SignUpPage() {
 				</div>
 
 				<GoogleSignInButton
-					onClick={() =>
+					onClick={() => {
+						setLastSignInMethod("google")
 						authClient.signIn.social({
 							provider: "google",
 							callbackURL: "/",
 						})
-					}
+					}}
 				/>
 
 				<div className="flex items-center gap-3">

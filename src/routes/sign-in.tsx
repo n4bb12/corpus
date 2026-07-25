@@ -14,6 +14,11 @@ import { Label } from "#/components/ui/label"
 import { Separator } from "#/components/ui/separator"
 import { authClient } from "#/lib/auth-client"
 import { getToken } from "#/lib/auth-server"
+import {
+	setLastSignInMethod,
+	useLastSignInMethod,
+} from "#/lib/last-sign-in-method"
+import { cn } from "#/lib/utils"
 
 const getAuth = createServerFn({ method: "GET" }).handler(async () =>
 	getToken(),
@@ -32,6 +37,7 @@ export const Route = createFileRoute("/sign-in")({
 
 function SignInPage() {
 	const navigate = useNavigate()
+	const lastMethod = useLastSignInMethod()
 	const [email, setEmail] = useState("")
 	const [password, setPassword] = useState("")
 	const [error, setError] = useState<string | null>(null)
@@ -54,6 +60,7 @@ function SignInPage() {
 			return
 		}
 
+		setLastSignInMethod("email")
 		await navigate({ to: "/" })
 	}
 
@@ -68,12 +75,14 @@ function SignInPage() {
 				</div>
 
 				<GoogleSignInButton
-					onClick={() =>
+					highlighted={lastMethod === "google"}
+					onClick={() => {
+						setLastSignInMethod("google")
 						authClient.signIn.social({
 							provider: "google",
 							callbackURL: "/",
 						})
-					}
+					}}
 				/>
 
 				<div className="flex items-center gap-3">
@@ -84,7 +93,19 @@ function SignInPage() {
 					<Separator className="flex-1" />
 				</div>
 
-				<form className="space-y-4" onSubmit={onSubmit}>
+				<form
+					className={cn(
+						"relative space-y-4 rounded-md p-1",
+						lastMethod === "email" &&
+							"ring-2 ring-primary ring-offset-2 ring-offset-background",
+					)}
+					onSubmit={onSubmit}
+				>
+					{lastMethod === "email" ? (
+						<span className="absolute -top-2 right-3 z-10 rounded-md bg-primary px-2 py-0.5 text-xs font-medium tracking-wide text-primary-foreground uppercase">
+							Last used
+						</span>
+					) : null}
 					<div className="space-y-2">
 						<Label htmlFor="email">Email</Label>
 						<Input
