@@ -104,7 +104,7 @@ export function AddSourceDialog({
 								/>
 								<Button
 									type="submit"
-									className="rounded-[10px]"
+									className="rounded-sm"
 									disabled={pending}
 								>
 									Add
@@ -155,7 +155,7 @@ export function AddSourceDialog({
 							<Button
 								type="button"
 								variant="ghost"
-								className="w-full rounded-[10px]"
+								className="w-full rounded-sm"
 								onClick={() => setMode("text")}
 							>
 								Add pasted text
@@ -194,13 +194,13 @@ export function AddSourceDialog({
 							<div className="flex justify-between gap-2">
 								<Button
 									variant="outline"
-									className="rounded-[10px]"
+									className="rounded-sm"
 									onClick={() => setMode("main")}
 								>
 									Back
 								</Button>
 								<Button
-									className="rounded-[10px]"
+									className="rounded-sm"
 									disabled={pending}
 									onClick={async () => {
 										setPending(true)

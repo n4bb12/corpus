@@ -57,7 +57,7 @@ function VerifyEmailPage() {
 				{message ? <p className="text-sm text-primary">{message}</p> : null}
 				{error ? <p className="text-sm text-destructive">{error}</p> : null}
 				<Button
-					className="h-11 w-full rounded-[10px]"
+					className="h-11 w-full rounded-sm"
 					onClick={resend}
 					disabled={pending}
 				>

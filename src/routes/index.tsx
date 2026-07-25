@@ -104,7 +104,7 @@ function LibraryPage() {
 						<h1 className="text-2xl font-semibold tracking-tight">
 							Your notebooks
 						</h1>
-						<Button className="rounded-[10px]" onClick={onCreate}>
+						<Button className="rounded-sm" onClick={onCreate}>
 							<Plus size={16} className="mr-1.5" />
 							New notebook
 						</Button>
@@ -125,7 +125,7 @@ function LibraryPage() {
 					</div>
 
 					{isEmpty ? (
-						<div className="flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-pine)]">
+						<div className="flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-8 shadow-(--shadow-pine)">
 							<span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
 								<Books size={28} />
 							</span>
@@ -138,7 +138,7 @@ function LibraryPage() {
 									to every answer.
 								</p>
 							</div>
-							<Button className="rounded-[10px]" onClick={onCreate}>
+							<Button className="rounded-sm" onClick={onCreate}>
 								<Plus size={16} className="mr-1.5" />
 								New notebook
 							</Button>
@@ -152,7 +152,7 @@ function LibraryPage() {
 							</p>
 							<Button
 								variant="outline"
-								className="rounded-[10px]"
+								className="rounded-sm"
 								onClick={() => {
 									setDraft("")
 									void navigate({ to: "/", search: {} })
@@ -209,7 +209,7 @@ function LibraryPage() {
 							<div className="mt-8 flex items-center justify-between gap-3">
 								<Button
 									variant="outline"
-									className="rounded-[10px]"
+									className="rounded-sm"
 									disabled={!search.cursor}
 									onClick={() =>
 										void navigate({
@@ -225,7 +225,7 @@ function LibraryPage() {
 								</Button>
 								<Button
 									variant="outline"
-									className="rounded-[10px]"
+									className="rounded-sm"
 									disabled={isLoading || result?.isDone}
 									onClick={() =>
 										void navigate({

@@ -51,7 +51,7 @@ export function NotebookCard({
 				transition={layoutTransition}
 				whileHover={loading ? undefined : { y: -2 }}
 				className={cn(
-					"group relative rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-pine)] transition-shadow duration-120",
+					"group relative rounded-2xl border border-border bg-card p-4 shadow-(--shadow-pine) transition-shadow duration-120",
 					"max-sm:flex max-sm:items-center max-sm:gap-3",
 					loading && "pointer-events-none",
 				)}
@@ -66,7 +66,7 @@ export function NotebookCard({
 				/>
 				<div
 					className={cn(
-						"relative z-10 flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-primary/10 text-primary",
+						"relative z-10 flex size-11 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary",
 						loading && "placeholder-shimmer",
 					)}
 					aria-hidden={loading}
@@ -108,7 +108,7 @@ export function NotebookCard({
 							<Button
 								variant="ghost"
 								size="icon"
-								className="rounded-[10px] opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+								className="rounded-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
 								aria-label={`Notebook menu for ${title}`}
 								disabled={loading}
 							>
@@ -157,13 +157,13 @@ export function NotebookCard({
 					<DialogFooter>
 						<Button
 							variant="outline"
-							className="rounded-[10px]"
+							className="rounded-sm"
 							onClick={() => setRenameOpen(false)}
 						>
 							Cancel
 						</Button>
 						<Button
-							className="rounded-[10px]"
+							className="rounded-sm"
 							onClick={async () => {
 								await onRename(draft)
 								setRenameOpen(false)
@@ -187,14 +187,14 @@ export function NotebookCard({
 					<DialogFooter>
 						<Button
 							variant="outline"
-							className="rounded-[10px]"
+							className="rounded-sm"
 							onClick={() => setDeleteOpen(false)}
 						>
 							Cancel
 						</Button>
 						<Button
 							variant="destructive"
-							className="rounded-[10px]"
+							className="rounded-sm"
 							onClick={async () => {
 								await onDelete()
 								setDeleteOpen(false)

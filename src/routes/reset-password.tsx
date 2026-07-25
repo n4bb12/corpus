@@ -74,7 +74,7 @@ function ResetPasswordPage() {
 					{error ? <p className="text-sm text-destructive">{error}</p> : null}
 					<Button
 						type="submit"
-						className="h-11 w-full rounded-[10px]"
+						className="h-11 w-full rounded-sm"
 						disabled={pending}
 					>
 						{pending ? "Saving…" : "Save password"}

@@ -95,14 +95,14 @@ function SignInPage() {
 
 				<form
 					className={cn(
-						"relative space-y-4 rounded-md p-1",
+						"relative space-y-4 rounded-sm p-1",
 						lastMethod === "email" &&
 							"ring-2 ring-primary ring-offset-2 ring-offset-background",
 					)}
 					onSubmit={onSubmit}
 				>
 					{lastMethod === "email" ? (
-						<span className="absolute -top-2 right-3 z-10 rounded-md bg-primary px-2 py-0.5 text-xs font-medium tracking-wide text-primary-foreground uppercase">
+						<span className="absolute -top-2 right-3 z-10 rounded-sm bg-primary px-2 py-0.5 text-xs font-medium tracking-wide text-primary-foreground uppercase">
 							Last used
 						</span>
 					) : null}
@@ -141,7 +141,7 @@ function SignInPage() {
 					{error ? <p className="text-sm text-destructive">{error}</p> : null}
 					<Button
 						type="submit"
-						className="h-11 w-full rounded-[10px]"
+						className="h-11 w-full rounded-sm"
 						disabled={pending}
 					>
 						{pending ? "Signing in…" : "Sign in"}

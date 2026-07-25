@@ -47,7 +47,7 @@ export function ThemeMenu() {
 					variant="ghost"
 					size="icon"
 					aria-label="Theme"
-					className="rounded-[10px]"
+					className="rounded-sm"
 				>
 					<Icon size={18} />
 				</Button>

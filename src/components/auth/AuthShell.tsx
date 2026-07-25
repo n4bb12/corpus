@@ -18,7 +18,7 @@ export function AuthShell({ children, className }: AuthShellProps) {
 				<main className="flex flex-1 items-start justify-center px-4 pb-16 pt-8">
 					<div
 						className={cn(
-							"w-full max-w-[28rem] rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-pine)]",
+							"w-full max-w-[28rem] rounded-2xl border border-border bg-card p-6 shadow-(--shadow-pine)",
 							className,
 						)}
 					>

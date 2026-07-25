@@ -63,7 +63,7 @@ export function InlineNotebookTitle({
 			maxLength={100}
 			aria-label="Notebook title"
 			className={cn(
-				"h-9 w-full min-w-0 truncate rounded-[10px] border border-transparent bg-transparent px-2 text-lg font-semibold tracking-tight outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30",
+				"h-9 w-full min-w-0 truncate rounded-sm border border-transparent bg-transparent px-2 text-lg font-semibold tracking-tight outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30",
 				className,
 			)}
 		/>

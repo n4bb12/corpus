@@ -193,7 +193,7 @@ export function SourcesPane({
 					<Button
 						variant="ghost"
 						size="sm"
-						className="rounded-[10px]"
+						className="rounded-sm"
 						onClick={() => {
 							onPreviewSource(null)
 							requestAnimationFrame(() => {
@@ -263,7 +263,7 @@ export function SourcesPane({
 				</h2>
 				<Button
 					size="sm"
-					className="rounded-[10px]"
+					className="rounded-sm"
 					onClick={() => setAddOpen(true)}
 				>
 					<Plus size={14} className="mr-1" />
@@ -360,7 +360,7 @@ export function SourcesPane({
 											<Button
 												variant="ghost"
 												size="icon-xs"
-												className="rounded-[10px] opacity-100 touch-manipulation md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+												className="rounded-sm opacity-100 touch-manipulation md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
 												aria-label={`Source menu for ${source.title}`}
 											>
 												<DotsThree size={16} weight="bold" />
@@ -438,7 +438,7 @@ export function SourcesPane({
 					/>
 					<DialogFooter>
 						<Button
-							className="rounded-[10px]"
+							className="rounded-sm"
 							onClick={async () => {
 								if (!renameId) {
 									return
@@ -470,14 +470,14 @@ export function SourcesPane({
 					<DialogFooter>
 						<Button
 							variant="outline"
-							className="rounded-[10px]"
+							className="rounded-sm"
 							onClick={() => setDeleteId(null)}
 						>
 							Cancel
 						</Button>
 						<Button
 							variant="destructive"
-							className="rounded-[10px]"
+							className="rounded-sm"
 							onClick={async () => {
 								if (!deleteId) {
 									return

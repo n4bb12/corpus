@@ -141,7 +141,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 				<Button
 					variant="ghost"
 					size="sm"
-					className="rounded-[10px]"
+					className="rounded-sm"
 					onClick={() => setClearOpen(true)}
 				>
 					Clear chat
@@ -193,7 +193,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 								Chat needs at least one ready, selected source before it can
 								answer.
 							</p>
-							<Button className="rounded-[10px]" onClick={onOpenSources}>
+							<Button className="rounded-sm" onClick={onOpenSources}>
 								Go to Sources
 							</Button>
 						</div>
@@ -220,7 +220,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 						if (entry.role === "user") {
 							return (
 								<div key={entry._id} className="flex justify-end">
-									<div className="max-w-[85%] rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-pine)]">
+									<div className="max-w-[85%] rounded-2xl bg-card px-4 py-3 shadow-(--shadow-pine)">
 										<p className="whitespace-pre-wrap text-sm">
 											{entry.content}
 										</p>
@@ -273,7 +273,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 									<Button
 										size="sm"
 										variant="outline"
-										className="rounded-[10px]"
+										className="rounded-sm"
 										onClick={() => {
 											const user = entries?.find(
 												(item) =>
@@ -296,7 +296,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 			<div className="border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
 				<div className="mx-auto w-full max-w-[50rem] space-y-2">
 					{error ? <p className="text-sm text-destructive">{error}</p> : null}
-					<div className="rounded-2xl border border-border bg-card p-3 shadow-[var(--shadow-pine)]">
+					<div className="rounded-2xl border border-border bg-card p-3 shadow-(--shadow-pine)">
 						<Textarea
 							value={prompt}
 							onChange={(event) =>
@@ -337,7 +337,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 								{streaming || sending ? (
 									<Button
 										type="button"
-										className="min-w-20 rounded-[10px]"
+										className="min-w-20 rounded-sm"
 										onClick={() => void stop()}
 									>
 										<Stop size={14} className="mr-1" weight="fill" />
@@ -346,7 +346,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 								) : (
 									<Button
 										type="button"
-										className="min-w-20 rounded-[10px]"
+										className="min-w-20 rounded-sm"
 										disabled={!readySelected.length || !prompt.trim()}
 										onClick={() => void send()}
 									>
@@ -371,14 +371,14 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 					<DialogFooter>
 						<Button
 							variant="outline"
-							className="rounded-[10px]"
+							className="rounded-sm"
 							onClick={() => setClearOpen(false)}
 						>
 							Cancel
 						</Button>
 						<Button
 							variant="destructive"
-							className="rounded-[10px]"
+							className="rounded-sm"
 							onClick={async () => {
 								await clearChat({ notebookId })
 								setClearOpen(false)

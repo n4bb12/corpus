@@ -23,7 +23,7 @@ export function AccountMenu({ email, name }: AccountMenuProps) {
 					variant="ghost"
 					size="icon"
 					aria-label="Account"
-					className="rounded-[10px]"
+					className="rounded-sm"
 				>
 					<User size={18} />
 				</Button>
