@@ -1,4 +1,10 @@
 {
   "$schema": "./node_modules/convex/schemas/convex.schema.json",
-  "functions": "src/convex/"
+  "functions": "src/convex/",
+  "node": {
+    "externalPackages": [
+      "markitdown-ts",
+      "semantic-chunker"
+    ]
+  }
 }
