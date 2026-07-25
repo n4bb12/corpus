@@ -95,12 +95,10 @@ Better Auth trusts both hosts via `trustedOrigins` / `baseURL.allowedHosts`, so 
 ### 6. Run
 
 ```bash
-# terminal 1
-bunx convex dev
-
-# terminal 2
 bun run dev
 ```
+
+That runs Vite and Convex together via `concurrently`. For one side only: `bun run dev:vite` or `bun run dev:convex`.
 
 App: [http://localhost:3000](http://localhost:3000)
 
