@@ -12,9 +12,9 @@ import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { AddSourceDialog } from "#/components/sources/AddSourceDialog"
-import { Button } from "#/components/ui/button"
-import { Checkbox } from "#/components/ui/checkbox"
+import { AddSourceDialog } from "src/components/sources/AddSourceDialog"
+import { Button } from "src/components/ui/button"
+import { Checkbox } from "src/components/ui/checkbox"
 import {
 	Dialog,
 	DialogContent,
@@ -22,17 +22,17 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "#/components/ui/dialog"
+} from "src/components/ui/dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
-import { Input } from "#/components/ui/input"
-import { layoutTransition } from "#/lib/motion"
-import { cn } from "#/lib/utils"
-import { describeRejectedFile, isAcceptedUpload } from "#/utils/file-types"
+} from "src/components/ui/dropdown-menu"
+import { Input } from "src/components/ui/input"
+import { layoutTransition } from "src/lib/motion"
+import { cn } from "src/lib/utils"
+import { describeRejectedFile, isAcceptedUpload } from "src/utils/file-types"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
 

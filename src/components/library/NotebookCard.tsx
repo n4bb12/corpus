@@ -1,7 +1,7 @@
 import { DotsThree, Notebook } from "@phosphor-icons/react"
 import { motion } from "motion/react"
 import { useState } from "react"
-import { Button } from "#/components/ui/button"
+import { Button } from "src/components/ui/button"
 import {
 	Dialog,
 	DialogContent,
@@ -9,16 +9,16 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "#/components/ui/dialog"
+} from "src/components/ui/dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
-import { Input } from "#/components/ui/input"
-import { layoutTransition } from "#/lib/motion"
-import { cn } from "#/lib/utils"
+} from "src/components/ui/dropdown-menu"
+import { Input } from "src/components/ui/input"
+import { layoutTransition } from "src/lib/motion"
+import { cn } from "src/lib/utils"
 
 export type NotebookCardProps = {
 	notebookId: string

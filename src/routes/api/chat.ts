@@ -1,9 +1,9 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { createFileRoute } from "@tanstack/react-router"
 import { generateText, streamText } from "ai"
-import { fetchAuthAction, fetchAuthMutation, getToken } from "#/lib/auth-server"
-import { MODELS } from "#/lib/limits"
-import { parseCitationMarkers, validateCitations } from "#/utils/citations"
+import { fetchAuthAction, fetchAuthMutation, getToken } from "src/lib/auth-server"
+import { MODELS } from "src/lib/limits"
+import { parseCitationMarkers, validateCitations } from "src/utils/citations"
 import { api } from "../../../convex/_generated/api"
 
 export const Route = createFileRoute("/api/chat")({

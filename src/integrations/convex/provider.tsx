@@ -4,7 +4,7 @@ import {
 } from "@convex-dev/better-auth/react"
 import { ConvexReactClient } from "convex/react"
 import { ConvexQueryCacheProvider } from "convex-helpers/react/cache"
-import { authClient } from "#/lib/auth-client"
+import { authClient } from "src/lib/auth-client"
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL
 

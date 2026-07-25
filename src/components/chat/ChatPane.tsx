@@ -3,7 +3,7 @@ import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { marked } from "marked"
 import { useEffect, useRef, useState } from "react"
-import { Button } from "#/components/ui/button"
+import { Button } from "src/components/ui/button"
 import {
 	Dialog,
 	DialogContent,
@@ -11,15 +11,15 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "#/components/ui/dialog"
+} from "src/components/ui/dialog"
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
-} from "#/components/ui/popover"
-import { Textarea } from "#/components/ui/textarea"
-import { LIMITS } from "#/lib/limits"
-import { canRetryLatestAssistant } from "#/utils/chat-history"
+} from "src/components/ui/popover"
+import { Textarea } from "src/components/ui/textarea"
+import { LIMITS } from "src/lib/limits"
+import { canRetryLatestAssistant } from "src/utils/chat-history"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
 

@@ -1,6 +1,6 @@
-import { BrandLockup } from "#/components/layout/BrandLockup"
-import { ThemeMenu } from "#/components/layout/ThemeMenu"
-import { cn } from "#/lib/utils"
+import { BrandLockup } from "src/components/layout/BrandLockup"
+import { ThemeMenu } from "src/components/layout/ThemeMenu"
+import { cn } from "src/lib/utils"
 
 export type AuthShellProps = {
 	children: React.ReactNode

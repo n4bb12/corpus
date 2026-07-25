@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
-import { UNTITLED_NOTEBOOK } from "#/lib/limits"
-import { cn } from "#/lib/utils"
+import { UNTITLED_NOTEBOOK } from "src/lib/limits"
+import { cn } from "src/lib/utils"
 
 export type InlineNotebookTitleProps = {
 	title: string

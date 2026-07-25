@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import { z } from "zod"
-import { AuthShell } from "#/components/auth/AuthShell"
-import { Button } from "#/components/ui/button"
-import { Input } from "#/components/ui/input"
-import { Label } from "#/components/ui/label"
-import { authClient } from "#/lib/auth-client"
+import { AuthShell } from "src/components/auth/AuthShell"
+import { Button } from "src/components/ui/button"
+import { Input } from "src/components/ui/input"
+import { Label } from "src/components/ui/label"
+import { authClient } from "src/lib/auth-client"
 
 export const Route = createFileRoute("/reset-password")({
 	validateSearch: z.object({

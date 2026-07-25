@@ -2,16 +2,16 @@ import { UploadSimple } from "@phosphor-icons/react"
 import { useMutation } from "convex/react"
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useRef, useState } from "react"
-import { Button } from "#/components/ui/button"
+import { Button } from "src/components/ui/button"
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-} from "#/components/ui/dialog"
-import { Input } from "#/components/ui/input"
-import { Textarea } from "#/components/ui/textarea"
-import { layoutTransition } from "#/lib/motion"
+} from "src/components/ui/dialog"
+import { Input } from "src/components/ui/input"
+import { Textarea } from "src/components/ui/textarea"
+import { layoutTransition } from "src/lib/motion"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
 

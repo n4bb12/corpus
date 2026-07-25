@@ -7,10 +7,10 @@ import {
 	useRouteContext,
 } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
-import { TooltipProvider } from "#/components/ui/tooltip"
-import { AppConvexProvider } from "#/integrations/convex/provider"
-import { getToken } from "#/lib/auth-server"
-import appCss from "#/styles.css?url"
+import { TooltipProvider } from "src/components/ui/tooltip"
+import { AppConvexProvider } from "src/integrations/convex/provider"
+import { getToken } from "src/lib/auth-server"
+import appCss from "src/styles.css?url"
 
 const getAuth = createServerFn({ method: "GET" }).handler(async () => {
 	return await getToken()

@@ -1,6 +1,6 @@
 import { Books } from "@phosphor-icons/react"
 import { Link } from "@tanstack/react-router"
-import { cn } from "#/lib/utils"
+import { cn } from "src/lib/utils"
 
 export type BrandLockupProps = {
 	className?: string

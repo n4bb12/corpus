@@ -1,5 +1,5 @@
 import { SignOut, User } from "@phosphor-icons/react"
-import { Button } from "#/components/ui/button"
+import { Button } from "src/components/ui/button"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -7,8 +7,8 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
-import { authClient } from "#/lib/auth-client"
+} from "src/components/ui/dropdown-menu"
+import { authClient } from "src/lib/auth-client"
 
 export type AccountMenuProps = {
 	email?: string | null
