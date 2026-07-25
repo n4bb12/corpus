@@ -1,4 +1,4 @@
-import { useNavigate, getRouteApi } from "@tanstack/react-router"
+import { getRouteApi, useNavigate } from "@tanstack/react-router"
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { AnimatePresence, motion } from "motion/react"
@@ -8,11 +8,11 @@ import { AppHeader } from "src/components/layout/AppHeader"
 import { InlineNotebookTitle } from "src/components/notebook/InlineNotebookTitle"
 import { SourcesPane } from "src/components/sources/SourcesPane"
 import { Popover, PopoverContent } from "src/components/ui/popover"
+import { api } from "src/convex/_generated/api"
+import type { Id } from "src/convex/_generated/dataModel"
 import { authClient } from "src/lib/auth-client"
 import { layoutTransition } from "src/lib/motion"
 import { cn } from "src/lib/utils"
-import { api } from "src/convex/_generated/api"
-import type { Id } from "src/convex/_generated/dataModel"
 
 const routeApi = getRouteApi("/notebooks/$notebookId")
 

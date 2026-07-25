@@ -4,9 +4,7 @@ import type { ComponentProps } from "react"
 import { Button } from "src/components/ui/button.tsx"
 import { cn } from "src/lib/utils.ts"
 
-function Dialog({
-	...props
-}: ComponentProps<typeof DialogPrimitive.Root>) {
+function Dialog({ ...props }: ComponentProps<typeof DialogPrimitive.Root>) {
 	return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 

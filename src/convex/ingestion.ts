@@ -1,10 +1,10 @@
 "use node"
 
+import dns from "node:dns/promises"
 import { voyage } from "@ai-sdk/voyage"
+import { MDocument } from "@mastra/rag"
 import { embedMany } from "ai"
 import { v } from "convex/values"
-import { MDocument } from "@mastra/rag"
-import dns from "node:dns/promises"
 import { MarkItDown } from "markitdown-ts"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"

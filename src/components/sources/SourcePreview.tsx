@@ -20,7 +20,12 @@ export function SourcePreview({
 	return (
 		<div className="flex h-full flex-col">
 			<div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
-				<Button variant="ghost" size="sm" className="rounded-sm" onClick={onBack}>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="rounded-sm"
+					onClick={onBack}
+				>
 					<ArrowLeft size={16} className="mr-1" />
 					Back
 				</Button>

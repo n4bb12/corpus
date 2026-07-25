@@ -1,5 +1,5 @@
-import { BookOpen } from "lucide-react"
 import { Link } from "@tanstack/react-router"
+import { BookOpen } from "lucide-react"
 import { cn } from "src/lib/utils"
 
 export type BrandLockupProps = {

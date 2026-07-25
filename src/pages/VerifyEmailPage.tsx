@@ -1,4 +1,4 @@
-import { Link, getRouteApi } from "@tanstack/react-router"
+import { getRouteApi, Link } from "@tanstack/react-router"
 import { useState } from "react"
 import { AuthShell } from "src/components/auth/AuthShell"
 import { Button } from "src/components/ui/button"

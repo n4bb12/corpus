@@ -3,14 +3,14 @@ import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useRef, useState } from "react"
 import { ChatComposer } from "src/components/chat/ChatComposer"
 import {
-	ChatMessageList,
 	type ChatCiteArgs,
+	ChatMessageList,
 } from "src/components/chat/ChatMessageList"
 import { ClearChatDialog } from "src/components/chat/ClearChatDialog"
 import { Button } from "src/components/ui/button"
-import { canRetryLatestAssistant } from "src/convex/lib/chat-history"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
+import { canRetryLatestAssistant } from "src/convex/lib/chat-history"
 
 export type ChatPaneProps = {
 	notebookId: Id<"notebooks">

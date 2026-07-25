@@ -1,6 +1,6 @@
-import { Plus, Search } from "lucide-react"
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
+import { Plus, Search } from "lucide-react"
 import { AnimatePresence } from "motion/react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { AddSourceDialog } from "src/components/sources/AddSourceDialog"
@@ -11,9 +11,12 @@ import { SourceRenameDialog } from "src/components/sources/SourceRenameDialog"
 import { Button } from "src/components/ui/button"
 import { Checkbox } from "src/components/ui/checkbox"
 import { Input } from "src/components/ui/input"
-import { describeRejectedFile, isAcceptedUpload } from "src/convex/lib/file-types"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
+import {
+	describeRejectedFile,
+	isAcceptedUpload,
+} from "src/convex/lib/file-types"
 
 export type SourcesPaneProps = {
 	notebookId: Id<"notebooks">
@@ -66,7 +69,9 @@ export function SourcesPane({
 		selectable.length > 0 && selectedCount === selectable.length
 	const someSelected = selectedCount > 0 && !allSelected
 
-	const previewSource = sources?.find((source) => source._id === previewSourceId)
+	const previewSource = sources?.find(
+		(source) => source._id === previewSourceId,
+	)
 	const previewUrl = useQuery(
 		api.sources.getNormalizedContent,
 		previewSourceId ? { sourceId: previewSourceId as Id<"sources"> } : "skip",

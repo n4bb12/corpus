@@ -1,8 +1,8 @@
-import { marked } from "marked"
 import type { FunctionReturnType } from "convex/server"
+import { marked } from "marked"
 import { CitationPill } from "src/components/chat/CitationPill"
 import { Button } from "src/components/ui/button"
-import { api } from "src/convex/_generated/api"
+import type { api } from "src/convex/_generated/api"
 
 export type ChatCiteArgs = {
 	sourceId?: string
@@ -115,8 +115,7 @@ export function ChatMessageList({
 					async: false,
 				}) as string
 				const latestFailed =
-					canRetry &&
-					(entry.status === "failed" || entry.status === "canceled")
+					canRetry && (entry.status === "failed" || entry.status === "canceled")
 
 				return (
 					<div key={entry._id} className="space-y-3">

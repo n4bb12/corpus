@@ -1,4 +1,4 @@
-import { Link, useNavigate, getRouteApi } from "@tanstack/react-router"
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router"
 import type { SubmitEvent } from "react"
 import { useState } from "react"
 import { AuthShell } from "src/components/auth/AuthShell"

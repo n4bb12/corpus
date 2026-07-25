@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { z } from "zod"
 import { ResetPasswordPage } from "src/pages/ResetPasswordPage"
+import { z } from "zod"
 
 export const Route = createFileRoute("/reset-password")({
 	validateSearch: z.object({

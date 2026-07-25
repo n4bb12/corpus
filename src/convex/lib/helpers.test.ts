@@ -18,10 +18,7 @@ import {
 	titleFromPastedText,
 	titleFromUrl,
 } from "./source-title"
-import {
-	isBlockedResolvedAddress,
-	validatePublicHttpUrl,
-} from "./url-safety"
+import { isBlockedResolvedAddress, validatePublicHttpUrl } from "./url-safety"
 
 describe("source titles", () => {
 	test("normalizes and truncates", () => {

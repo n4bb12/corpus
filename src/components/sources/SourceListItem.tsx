@@ -67,7 +67,9 @@ export function SourceListItem({
 					)}
 				</span>
 				<span className="min-w-0">
-					<span className="line-clamp-2 text-sm font-medium">{source.title}</span>
+					<span className="line-clamp-2 text-sm font-medium">
+						{source.title}
+					</span>
 					<span className="mt-0.5 block text-xs text-muted-foreground">
 						{source.processingState === "failed"
 							? source.errorCode || "Failed"

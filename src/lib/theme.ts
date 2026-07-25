@@ -1,6 +1,6 @@
 import { useStore } from "zustand"
+import { type PersistStorage, persist } from "zustand/middleware"
 import { createStore } from "zustand/vanilla"
-import { persist, type PersistStorage } from "zustand/middleware"
 
 export type ThemePreference = "light" | "dark" | "system"
 

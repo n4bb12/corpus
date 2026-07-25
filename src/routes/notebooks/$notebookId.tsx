@@ -1,8 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { getToken } from "src/lib/auth-server"
-import { z } from "zod"
 import { NotebookPage } from "src/pages/notebooks/NotebookPage"
+import { z } from "zod"
 
 const getAuth = createServerFn({ method: "GET" }).handler(async () =>
 	getToken(),
