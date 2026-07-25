@@ -1,4 +1,4 @@
-import { Books, MagnifyingGlass, Plus } from "@phosphor-icons/react"
+import { BookOpen, Plus, Search } from "lucide-react"
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { useMutation } from "convex/react"
@@ -111,7 +111,7 @@ function LibraryPage() {
 					</div>
 
 					<div className="relative mb-8 w-full md:w-80">
-						<MagnifyingGlass
+						<Search
 							size={16}
 							className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
 						/>
@@ -127,7 +127,7 @@ function LibraryPage() {
 					{isEmpty ? (
 						<div className="flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-8 shadow-(--shadow-pine)">
 							<span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-								<Books size={28} />
+								<BookOpen size={28} />
 							</span>
 							<div className="space-y-2">
 								<h2 className="text-xl font-semibold">

@@ -1,13 +1,13 @@
 import {
 	ArrowLeft,
-	CircleNotch,
-	DotsThree,
 	FileText,
 	Link as LinkIcon,
-	MagnifyingGlass,
+	LoaderCircle,
+	MoreHorizontal,
 	Plus,
-	TextT,
-} from "@phosphor-icons/react"
+	Search,
+	Type,
+} from "lucide-react"
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { AnimatePresence, motion } from "motion/react"
@@ -278,7 +278,7 @@ export function SourcesPane({
 			) : null}
 
 			<div className="relative px-4 pt-3">
-				<MagnifyingGlass
+				<Search
 					size={14}
 					className="pointer-events-none absolute top-1/2 left-7 -translate-y-1/2 text-muted-foreground"
 				/>
@@ -316,7 +316,7 @@ export function SourcesPane({
 								? LinkIcon
 								: source.kind === "file"
 									? FileText
-									: TextT
+									: Type
 						const busy =
 							source.processingState !== "ready" &&
 							source.processingState !== "failed"
@@ -338,7 +338,7 @@ export function SourcesPane({
 								>
 									<span className="mt-0.5 text-primary">
 										{busy ? (
-											<CircleNotch size={18} className="animate-spin" />
+											<LoaderCircle size={18} className="animate-spin" />
 										) : (
 											<Icon size={18} />
 										)}
@@ -363,7 +363,7 @@ export function SourcesPane({
 												className="rounded-sm opacity-100 touch-manipulation md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
 												aria-label={`Source menu for ${source.title}`}
 											>
-												<DotsThree size={16} weight="bold" />
+												<MoreHorizontal size={16} />
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end" className="rounded-xl">

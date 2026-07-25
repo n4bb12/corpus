@@ -1,4 +1,4 @@
-import { UploadSimple } from "@phosphor-icons/react"
+import { Upload } from "lucide-react"
 import { useMutation } from "convex/react"
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useRef, useState } from "react"
@@ -133,7 +133,7 @@ export function AddSourceDialog({
 									onOpenChange(false)
 								}}
 							>
-								<UploadSimple size={22} />
+								<Upload size={22} />
 								Drop files here or browse
 							</button>
 							<input

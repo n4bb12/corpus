@@ -1,4 +1,4 @@
-import { Books } from "@phosphor-icons/react"
+import { BookOpen } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 import { cn } from "src/lib/utils"
 
@@ -17,7 +17,7 @@ export function BrandLockup({ className, to = "/" }: BrandLockupProps) {
 			)}
 		>
 			<span className="flex size-10 items-center justify-center rounded-sm bg-primary/10 text-primary shadow-(--shadow-pine)">
-				<Books size={22} weight="regular" aria-hidden />
+				<BookOpen size={22} aria-hidden />
 			</span>
 			<span className="text-lg font-bold tracking-tight text-foreground">
 				Corpus

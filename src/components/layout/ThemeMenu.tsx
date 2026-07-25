@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from "@phosphor-icons/react"
+import { Monitor, Moon, Sun } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Button } from "src/components/ui/button"
 import {

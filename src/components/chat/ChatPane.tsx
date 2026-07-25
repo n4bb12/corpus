@@ -1,4 +1,4 @@
-import { Stack, Stop } from "@phosphor-icons/react"
+import { Layers, Square } from "lucide-react"
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { marked } from "marked"
@@ -331,7 +331,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 									aria-label={`${readySelected.length} active sources`}
 									onClick={onOpenSources}
 								>
-									<Stack size={16} className="mr-1" />
+									<Layers size={16} className="mr-1" />
 									{readySelected.length} sources
 								</Button>
 								{streaming || sending ? (
@@ -340,7 +340,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 										className="min-w-20 rounded-sm"
 										onClick={() => void stop()}
 									>
-										<Stop size={14} className="mr-1" weight="fill" />
+										<Square size={14} className="mr-1" />
 										Stop
 									</Button>
 								) : (

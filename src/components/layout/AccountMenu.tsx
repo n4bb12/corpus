@@ -1,4 +1,4 @@
-import { SignOut, User } from "@phosphor-icons/react"
+import { LogOut, User } from "lucide-react"
 import { Button } from "src/components/ui/button"
 import {
 	DropdownMenu,
@@ -51,7 +51,7 @@ export function AccountMenu({ email, name }: AccountMenuProps) {
 						})
 					}
 				>
-					<SignOut size={16} className="mr-2" />
+					<LogOut size={16} className="mr-2" />
 					Sign out
 				</DropdownMenuItem>
 			</DropdownMenuContent>

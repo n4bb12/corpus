@@ -1,4 +1,4 @@
-import { DotsThree, Notebook } from "@phosphor-icons/react"
+import { MoreHorizontal, Notebook } from "lucide-react"
 import { motion } from "motion/react"
 import { useState } from "react"
 import { Button } from "src/components/ui/button"
@@ -112,7 +112,7 @@ export function NotebookCard({
 								aria-label={`Notebook menu for ${title}`}
 								disabled={loading}
 							>
-								<DotsThree size={18} weight="bold" />
+								<MoreHorizontal size={18} />
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="rounded-xl">

@@ -29,7 +29,6 @@
     "@fontsource-variable/outfit": "^5.3.0",
     "@mastra/core": "^1.52.1",
     "@mastra/rag": "^2.4.2",
-    "@phosphor-icons/react": "^2.1.10",
     "@react-email/components": "^1.0.12",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-devtools": "latest",
