@@ -14,7 +14,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu"
-import type { Doc, Id } from "src/convex/_generated/dataModel"
+import type { Doc } from "src/convex/_generated/dataModel"
 import { layoutTransition } from "src/lib/motion"
 
 const STATUS_LABEL: Record<string, string> = {
@@ -107,5 +107,3 @@ export function SourceListItem({
 		</motion.div>
 	)
 }
-
-export type SourceId = Id<"sources">
