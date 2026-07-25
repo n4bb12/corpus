@@ -1,4 +1,4 @@
-import { useStore } from "zustand"
+import { useState } from "react"
 import { persist } from "zustand/middleware"
 import { createStore } from "zustand/vanilla"
 
@@ -27,6 +27,9 @@ export function setLastSignInMethod(method: SignInMethod) {
 	store.setState({ method })
 }
 
+/** Snapshot of the last method from storage at mount time (survives click updates until reload). */
 export function useLastSignInMethod() {
-	return useStore(store, (state) => state.method)
+	const [method] = useState(() => getLastSignInMethod())
+
+	return method
 }
