@@ -12,8 +12,8 @@ import {
 import { Input } from "src/components/ui/input"
 import { Textarea } from "src/components/ui/textarea"
 import { layoutTransition } from "src/lib/motion"
-import { api } from "../../../convex/_generated/api"
-import type { Id } from "../../../convex/_generated/dataModel"
+import { api } from "src/convex/_generated/api"
+import type { Id } from "src/convex/_generated/dataModel"
 
 export type AddSourceDialogProps = {
 	open: boolean

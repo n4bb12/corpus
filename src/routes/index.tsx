@@ -13,7 +13,7 @@ import { Input } from "src/components/ui/input"
 import { authClient } from "src/lib/auth-client"
 import { getToken } from "src/lib/auth-server"
 import { LIMITS } from "src/lib/limits"
-import { api } from "../../convex/_generated/api"
+import { api } from "src/convex/_generated/api"
 
 const getAuth = createServerFn({ method: "GET" }).handler(async () =>
 	getToken(),

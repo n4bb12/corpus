@@ -3,8 +3,8 @@ import { createFileRoute } from "@tanstack/react-router"
 import { generateText, streamText } from "ai"
 import { fetchAuthAction, fetchAuthMutation, getToken } from "src/lib/auth-server"
 import { MODELS } from "src/lib/limits"
-import { parseCitationMarkers, validateCitations } from "src/utils/citations"
-import { api } from "../../../convex/_generated/api"
+import { parseCitationMarkers, validateCitations } from "src/convex/lib/citations"
+import { api } from "src/convex/_generated/api"
 
 export const Route = createFileRoute("/api/chat")({
 	server: {

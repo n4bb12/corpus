@@ -9,11 +9,10 @@
 		"ignoreUnknown": true,
 		"includes": [
 			"**/src/**/*",
-			"**/convex/**/*",
 			"**/vite.config.ts",
 			"!**/src/routeTree.gen.ts",
 			"!**/src/styles.css",
-			"!**/convex/_generated/**/*"
+			"!**/src/convex/_generated/**/*"
 		]
 	},
 	"formatter": {

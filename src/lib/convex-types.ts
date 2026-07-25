@@ -1,4 +1,4 @@
-import type { Doc, Id } from "../../convex/_generated/dataModel"
+import type { Doc, Id } from "src/convex/_generated/dataModel"
 
 export type NotebookListItem = Doc<"notebooks"> & {
 	sourceCount: number

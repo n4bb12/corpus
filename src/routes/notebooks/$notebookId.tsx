@@ -14,8 +14,8 @@ import { authClient } from "src/lib/auth-client"
 import { getToken } from "src/lib/auth-server"
 import { layoutTransition } from "src/lib/motion"
 import { cn } from "src/lib/utils"
-import { api } from "../../../convex/_generated/api"
-import type { Id } from "../../../convex/_generated/dataModel"
+import { api } from "src/convex/_generated/api"
+import type { Id } from "src/convex/_generated/dataModel"
 
 const getAuth = createServerFn({ method: "GET" }).handler(async () =>
 	getToken(),

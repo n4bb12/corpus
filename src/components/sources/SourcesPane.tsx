@@ -32,9 +32,9 @@ import {
 import { Input } from "src/components/ui/input"
 import { layoutTransition } from "src/lib/motion"
 import { cn } from "src/lib/utils"
-import { describeRejectedFile, isAcceptedUpload } from "src/utils/file-types"
-import { api } from "../../../convex/_generated/api"
-import type { Id } from "../../../convex/_generated/dataModel"
+import { describeRejectedFile, isAcceptedUpload } from "src/convex/lib/file-types"
+import { api } from "src/convex/_generated/api"
+import type { Id } from "src/convex/_generated/dataModel"
 
 export type SourcesPaneProps = {
 	notebookId: Id<"notebooks">

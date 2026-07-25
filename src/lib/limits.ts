@@ -1,1 +1,1 @@
-export { LIMITS, MODELS, UNTITLED_NOTEBOOK } from "../../convex/lib/limits"
+export { LIMITS, MODELS, UNTITLED_NOTEBOOK } from "src/convex/lib/limits"

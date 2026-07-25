@@ -19,9 +19,9 @@ import {
 } from "src/components/ui/popover"
 import { Textarea } from "src/components/ui/textarea"
 import { LIMITS } from "src/lib/limits"
-import { canRetryLatestAssistant } from "src/utils/chat-history"
-import { api } from "../../../convex/_generated/api"
-import type { Id } from "../../../convex/_generated/dataModel"
+import { canRetryLatestAssistant } from "src/convex/lib/chat-history"
+import { api } from "src/convex/_generated/api"
+import type { Id } from "src/convex/_generated/dataModel"
 
 export type ChatPaneProps = {
 	notebookId: Id<"notebooks">
