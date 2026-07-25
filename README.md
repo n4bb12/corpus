@@ -37,7 +37,7 @@ Copy the printed `VITE_CONVEX_URL` values into `.env.local`. Also set:
 
 ```bash
 bunx convex env set SITE_URL http://localhost:3000
-bunx convex env set BETTER_AUTH_SECRET "$(openssl rand -base64 32)"
+bunx convex env set BETTER_AUTH_SECRET "$(openssl rand -hex 32)"
 ```
 
 ### 3. Environment files
@@ -131,7 +131,7 @@ Set the same Convex env vars for production, with `SITE_URL` equal to your Verce
 ### Vercel
 
 1. Import the GitHub repo.
-2. Framework preset: other / Vite. Build command `bun run build`, output via Nitro.
+2. Framework preset: **TanStack Start** (`vercel.json` sets this). Nitro builds with `preset: "vercel"` into `.vercel/output`.
 3. Set:
 
 | Name | Value |

@@ -12,7 +12,7 @@ const config = defineConfig({
 	},
 	plugins: [
 		devtools(),
-		nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+		nitro({ preset: "vercel" }),
 		tailwindcss(),
 		tanstackStart(),
 		viteReact(),
