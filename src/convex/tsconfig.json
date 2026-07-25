@@ -21,9 +21,8 @@
 		"noEmit": true,
 
 		/* Custom options */
-		"paths": {
-			"src/*": ["../*"]
-		}
+		"paths": { "src/*": ["../*"] },
+    "types": ["bun"]
 	},
 	"include": ["./**/*"],
 	"exclude": ["./_generated"]
