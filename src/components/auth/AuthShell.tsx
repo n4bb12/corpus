@@ -12,11 +12,15 @@ export function AuthShell({ children, className }: AuthShellProps) {
 	return (
 		<div className="atmosphere atmosphere-noise relative min-h-dvh">
 			<div className="relative z-10 flex min-h-dvh flex-col">
-				<header className="flex h-16 items-center justify-between px-4 md:px-6">
-					<BrandLockup />
-					<ThemeMenu />
+				<header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between p-6 md:p-8 lg:p-10">
+					<div className="pointer-events-auto">
+						<BrandLockup />
+					</div>
+					<div className="pointer-events-auto">
+						<ThemeMenu />
+					</div>
 				</header>
-				<main className="flex flex-1 items-start justify-center px-4 pb-16 pt-8">
+				<main className="flex flex-1 items-center justify-center px-4 py-24 md:px-8 md:py-28">
 					<div
 						className={cn(
 							"w-full max-w-[28rem] rounded-2xl border border-border bg-card p-6 shadow-(--shadow-pine)",
