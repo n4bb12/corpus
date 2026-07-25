@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { persist } from "zustand/middleware"
 import { createStore } from "zustand/vanilla"
 
@@ -27,9 +27,22 @@ export function setLastSignInMethod(method: SignInMethod) {
 	store.setState({ method })
 }
 
-/** Snapshot of the last method from storage at mount time (survives click updates until reload). */
+/** Last method from storage after hydration; ignores later clicks until reload. */
 export function useLastSignInMethod() {
-	const [method] = useState(() => getLastSignInMethod())
+	const [method, setMethod] = useState<SignInMethod | null>(() =>
+		store.persist.hasHydrated() ? store.getState().method : null,
+	)
+
+	useEffect(() => {
+		if (store.persist.hasHydrated()) {
+			setMethod(store.getState().method)
+			return
+		}
+
+		return store.persist.onFinishHydration(() => {
+			setMethod(store.getState().method)
+		})
+	}, [])
 
 	return method
 }
