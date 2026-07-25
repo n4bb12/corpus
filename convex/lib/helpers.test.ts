@@ -1,33 +1,27 @@
-import { describe, expect, test } from "vitest"
+import { describe, expect, test } from "bun:test"
 import {
 	canRetryLatestAssistant,
 	shouldCreateSourceRevision,
 	successfulPairsAfterBoundary,
-} from "../../convex/lib/chat-history"
-import { deriveChunkLocators } from "../../convex/lib/chunk-locators"
-import {
-	parseCitationMarkers,
-	validateCitations,
-} from "../../convex/lib/citations"
-import {
-	describeRejectedFile,
-	isAcceptedUpload,
-} from "../../convex/lib/file-types"
-import { remainingQuota, utcDateKey } from "../../convex/lib/quotas"
+} from "./chat-history"
+import { deriveChunkLocators } from "./chunk-locators"
+import { parseCitationMarkers, validateCitations } from "./citations"
+import { describeRejectedFile, isAcceptedUpload } from "./file-types"
+import { remainingQuota, utcDateKey } from "./quotas"
 import {
 	mergeRetrievalCandidates,
 	selectEvidenceWithinBudget,
-} from "../../convex/lib/retrieval"
+} from "./retrieval"
 import {
 	normalizeTitle,
 	titleFromFilename,
 	titleFromPastedText,
 	titleFromUrl,
-} from "../../convex/lib/source-title"
+} from "./source-title"
 import {
 	isBlockedResolvedAddress,
 	validatePublicHttpUrl,
-} from "../../convex/lib/url-safety"
+} from "./url-safety"
 
 describe("source titles", () => {
 	test("normalizes and truncates", () => {

@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest"
-import schema from "../../convex/schema"
+import { describe, expect, test } from "bun:test"
+import schema from "./schema"
 
 describe("schema smoke", () => {
 	test("defines core tables", () => {
