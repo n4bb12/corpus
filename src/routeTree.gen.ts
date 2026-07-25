@@ -10,11 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignInRouteImport } from './routes/sign-in'
-import { Route as SignUpRouteImport } from './routes/sign-up'
-import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as NotebooksNotebookIdRouteImport } from './routes/notebooks/$notebookId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -24,29 +20,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VerifyEmailRoute = VerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -67,22 +43,14 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/forgot-password': typeof ForgotPasswordRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
-  '/verify-email': typeof VerifyEmailRoute
   '/api/chat': typeof ApiChatRoute
   '/notebooks/$notebookId': typeof NotebooksNotebookIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/forgot-password': typeof ForgotPasswordRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
-  '/verify-email': typeof VerifyEmailRoute
   '/api/chat': typeof ApiChatRoute
   '/notebooks/$notebookId': typeof NotebooksNotebookIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -90,11 +58,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/forgot-password': typeof ForgotPasswordRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
-  '/verify-email': typeof VerifyEmailRoute
   '/api/chat': typeof ApiChatRoute
   '/notebooks/$notebookId': typeof NotebooksNotebookIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -102,34 +66,13 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/forgot-password'
-    | '/reset-password'
-    | '/sign-in'
-    | '/sign-up'
-    | '/verify-email'
-    | '/api/chat'
-    | '/notebooks/$notebookId'
-    | '/api/auth/$'
+    '/' | '/sign-in' | '/api/chat' | '/notebooks/$notebookId' | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/forgot-password'
-    | '/reset-password'
-    | '/sign-in'
-    | '/sign-up'
-    | '/verify-email'
-    | '/api/chat'
-    | '/notebooks/$notebookId'
-    | '/api/auth/$'
+  to: '/' | '/sign-in' | '/api/chat' | '/notebooks/$notebookId' | '/api/auth/$'
   id:
     | '__root__'
     | '/'
-    | '/forgot-password'
-    | '/reset-password'
     | '/sign-in'
-    | '/sign-up'
-    | '/verify-email'
     | '/api/chat'
     | '/notebooks/$notebookId'
     | '/api/auth/$'
@@ -137,11 +80,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ForgotPasswordRoute: typeof ForgotPasswordRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
   SignInRoute: typeof SignInRoute
-  SignUpRoute: typeof SignUpRoute
-  VerifyEmailRoute: typeof VerifyEmailRoute
   ApiChatRoute: typeof ApiChatRoute
   NotebooksNotebookIdRoute: typeof NotebooksNotebookIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -156,39 +95,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sign-in': {
       id: '/sign-in'
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/verify-email': {
-      id: '/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -217,11 +128,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ForgotPasswordRoute: ForgotPasswordRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
   SignInRoute: SignInRoute,
-  SignUpRoute: SignUpRoute,
-  VerifyEmailRoute: VerifyEmailRoute,
   ApiChatRoute: ApiChatRoute,
   NotebooksNotebookIdRoute: NotebooksNotebookIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

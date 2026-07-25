@@ -38,14 +38,10 @@ function emailShell(title: string, body: string, href: string, cta: string) {
 </html>`
 }
 
-async function sendEmail(args: {
-	to: string
-	subject: string
-	title: string
-	body: string
-	href: string
-	cta: string
-}) {
+export async function sendMagicLinkEmail(
+	_ctx: GenericCtx<DataModel>,
+	args: { to: string; url: string },
+) {
 	const plunk = getPlunkClient()
 	const from = getFromAddress()
 
@@ -53,50 +49,13 @@ async function sendEmail(args: {
 		to: args.to,
 		from: from.from,
 		name: from.name,
-		subject: args.subject,
-		body: emailShell(args.title, args.body, args.href, args.cta),
-		type: "html",
-	})
-}
-
-export async function sendVerificationEmail(
-	_ctx: GenericCtx<DataModel>,
-	args: { to: string; url: string },
-) {
-	await sendEmail({
-		to: args.to,
-		subject: "Verify your Corpus email",
-		title: "Verify your email",
-		body: "Confirm your address to finish creating your Corpus account.",
-		href: args.url,
-		cta: "Verify email",
-	})
-}
-
-export async function sendPasswordResetEmail(
-	_ctx: GenericCtx<DataModel>,
-	args: { to: string; url: string },
-) {
-	await sendEmail({
-		to: args.to,
-		subject: "Reset your Corpus password",
-		title: "Reset your password",
-		body: "Use the button below to choose a new password. If you did not ask for this, you can ignore the message.",
-		href: args.url,
-		cta: "Reset password",
-	})
-}
-
-export async function sendMagicLinkEmail(
-	_ctx: GenericCtx<DataModel>,
-	args: { to: string; url: string },
-) {
-	await sendEmail({
-		to: args.to,
 		subject: "Sign in to Corpus",
-		title: "Your sign-in link",
-		body: "Use the button below to sign in to Corpus. If you did not ask for this, you can ignore the message.",
-		href: args.url,
-		cta: "Sign in",
+		body: emailShell(
+			"Your sign-in link",
+			"Use the button below to sign in to Corpus. If you did not ask for this, you can ignore the message.",
+			args.url,
+			"Sign in",
+		),
+		type: "html",
 	})
 }

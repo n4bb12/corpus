@@ -1,4 +1,3 @@
-import { Link, useNavigate } from "@tanstack/react-router"
 import type { SubmitEvent } from "react"
 import { useState } from "react"
 import { AuthShell } from "src/components/auth/AuthShell"
@@ -15,32 +14,32 @@ import {
 import { cn } from "src/lib/utils"
 
 export function SignInPage() {
-	const navigate = useNavigate()
 	const lastMethod = useLastSignInMethod()
 	const [email, setEmail] = useState("")
-	const [password, setPassword] = useState("")
 	const [error, setError] = useState<string | null>(null)
+	const [sent, setSent] = useState(false)
 	const [pending, setPending] = useState(false)
 
 	async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault()
 		setPending(true)
 		setError(null)
+		setSent(false)
 
-		const result = await authClient.signIn.email({
+		const result = await authClient.signIn.magicLink({
 			email,
-			password,
+			callbackURL: "/",
 		})
 
 		setPending(false)
 
 		if (result.error) {
-			setError(result.error.message || "Could not sign in.")
+			setError(result.error.message || "Could not send magic link.")
 			return
 		}
 
 		setLastSignInMethod("email")
-		await navigate({ to: "/" })
+		setSent(true)
 	}
 
 	return (
@@ -49,7 +48,7 @@ export function SignInPage() {
 				<div className="space-y-2">
 					<h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
 					<p className="text-sm text-muted-foreground">
-						Continue with Google or your verified email.
+						Continue with Google or a magic link to your email.
 					</p>
 				</div>
 
@@ -97,42 +96,20 @@ export function SignInPage() {
 							required
 						/>
 					</div>
-					<div className="space-y-2">
-						<div className="flex items-center justify-between gap-3">
-							<Label htmlFor="password">Password</Label>
-							<Link
-								to="/forgot-password"
-								className="text-xs text-primary hover:underline"
-							>
-								Forgot password?
-							</Link>
-						</div>
-						<Input
-							id="password"
-							type="password"
-							autoComplete="current-password"
-							value={password}
-							onChange={(event) => setPassword(event.target.value)}
-							className="rounded-xl"
-							required
-						/>
-					</div>
 					{error ? <p className="text-sm text-destructive">{error}</p> : null}
+					{sent ? (
+						<p className="text-sm text-muted-foreground">
+							Check your inbox for a sign-in link. It expires in a few minutes.
+						</p>
+					) : null}
 					<Button
 						type="submit"
 						className="h-11 w-full rounded-sm"
 						disabled={pending}
 					>
-						{pending ? "Signing in…" : "Sign in"}
+						{pending ? "Sending…" : "Email me a magic link"}
 					</Button>
 				</form>
-
-				<p className="text-sm text-muted-foreground">
-					Need an account?{" "}
-					<Link to="/sign-up" className="text-primary hover:underline">
-						Sign up
-					</Link>
-				</p>
 			</div>
 		</AuthShell>
 	)

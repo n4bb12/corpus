@@ -2,11 +2,12 @@ import type { GenericCtx } from "@convex-dev/better-auth"
 import { createClient } from "@convex-dev/better-auth"
 import { convex } from "@convex-dev/better-auth/plugins"
 import { betterAuth } from "better-auth/minimal"
+import { magicLink } from "better-auth/plugins"
 import { components } from "./_generated/api"
 import type { DataModel } from "./_generated/dataModel"
 import { query } from "./_generated/server"
 import authConfig from "./auth.config"
-import { sendPasswordResetEmail, sendVerificationEmail } from "./emails/send"
+import { sendMagicLinkEmail } from "./emails/send"
 
 const siteUrl = process.env.SITE_URL!
 
@@ -24,26 +25,6 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 				clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
 			},
 		},
-		emailAndPassword: {
-			enabled: true,
-			requireEmailVerification: true,
-			sendResetPassword: async ({ user, url }) => {
-				await sendPasswordResetEmail(ctx, {
-					to: user.email,
-					url,
-				})
-			},
-		},
-		emailVerification: {
-			sendOnSignUp: true,
-			autoSignInAfterVerification: true,
-			sendVerificationEmail: async ({ user, url }) => {
-				await sendVerificationEmail(ctx, {
-					to: user.email,
-					url,
-				})
-			},
-		},
 		account: {
 			accountLinking: {
 				enabled: true,
@@ -54,7 +35,17 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 			expiresIn: 60 * 60 * 24 * 30,
 			updateAge: 60 * 60 * 24,
 		},
-		plugins: [convex({ authConfig })],
+		plugins: [
+			magicLink({
+				sendMagicLink: async ({ email, url }) => {
+					await sendMagicLinkEmail(ctx, {
+						to: email,
+						url,
+					})
+				},
+			}),
+			convex({ authConfig }),
+		],
 	})
 }
 

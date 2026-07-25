@@ -153,7 +153,7 @@ bun run fix
 bun run build
 ```
 
-Before calling the deployment done, manually verify Google sign-in, email verification, one URL/file/text ingestion, grounded chat, citations, and light/dark layouts.
+Before calling the deployment done, manually verify Google sign-in, magic-link sign-in, one URL/file/text ingestion, grounded chat, citations, and light/dark layouts.
 
 ## Product docs
 

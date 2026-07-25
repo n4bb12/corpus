@@ -4,7 +4,7 @@ Corpus is a NotebookLM-style MVP for grounded research over personal sources.
 
 ## In scope (v1)
 
-- Google OAuth and verified email/password authentication
+- Google OAuth and magic-link email authentication
 - Notebook library with search, cursor pagination, create, rename, and permanent delete
 - URL, file, and pasted-text sources with realtime processing states
 - One strictly source-grounded chat thread per notebook
