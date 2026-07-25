@@ -11,12 +11,22 @@ import { sendMagicLinkEmail } from "./emails/send"
 
 const siteUrl = process.env.SITE_URL!
 
+const trustedOrigins = [
+	"http://localhost:3000",
+	"https://corpus-n4bb12.vercel.app",
+] as const
+
 export const authComponent = createClient<DataModel>(components.betterAuth)
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
 	return betterAuth({
 		appName: "Corpus",
-		baseURL: siteUrl,
+		baseURL: {
+			allowedHosts: ["localhost:3000", "corpus-n4bb12.vercel.app"],
+			fallback: siteUrl,
+			protocol: "auto",
+		},
+		trustedOrigins: [...trustedOrigins],
 		secret: process.env.BETTER_AUTH_SECRET,
 		database: authComponent.adapter(ctx),
 		socialProviders: {

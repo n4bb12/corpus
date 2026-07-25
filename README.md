@@ -75,12 +75,16 @@ Do not commit secret values.
 
 ### 4. Google OAuth
 
-In Google Cloud Console create an OAuth client and add:
+In Google Cloud Console create an OAuth client and add both local and production origins:
 
-- Authorized JavaScript origin: `http://localhost:3000`
-- Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+- Authorized JavaScript origins:
+  - `http://localhost:3000`
+  - `https://corpus-n4bb12.vercel.app`
+- Authorized redirect URIs:
+  - `http://localhost:3000/api/auth/callback/google`
+  - `https://corpus-n4bb12.vercel.app/api/auth/callback/google`
 
-For production, repeat with your Vercel URL.
+Better Auth trusts both hosts via `trustedOrigins` / `baseURL.allowedHosts`, so magic links and OAuth work from either origin.
 
 ### 5. Plunk
 
@@ -139,7 +143,7 @@ Set the same Convex env vars for production, with `SITE_URL` equal to your Verce
 | `VITE_SITE_URL` | `https://your-app.vercel.app` |
 | `OPENAI_API_KEY` | Same as Convex if the SSE route reads it locally |
 
-4. Update Google OAuth redirect URIs and Convex `SITE_URL` to the production origin.
+4. Keep Google OAuth redirect URIs for both `http://localhost:3000` and `https://corpus-n4bb12.vercel.app`. Set Convex `SITE_URL` to the production origin as the fallback.
 5. Deploy.
 
 Chat streaming runs from the TanStack Start `/api/chat` route on Vercel and persists through authenticated Convex mutations/actions.
