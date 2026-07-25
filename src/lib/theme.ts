@@ -1,47 +1,78 @@
+import { useStore } from "zustand"
 import { createStore } from "zustand/vanilla"
+import { persist, type PersistStorage } from "zustand/middleware"
 
 export type ThemePreference = "light" | "dark" | "system"
+
+export const THEME_STORAGE_KEY = "corpus-theme"
 
 type ThemeState = {
 	preference: ThemePreference
 }
 
-const STORAGE_KEY = "corpus-theme"
-
-function readStoredPreference(): ThemePreference {
-	if (typeof window === "undefined") {
-		return "system"
-	}
-
-	const value = window.localStorage.getItem(STORAGE_KEY)
-
-	if (value === "light" || value === "dark" || value === "system") {
-		return value
-	}
-
-	return "system"
+function isThemePreference(value: string): value is ThemePreference {
+	return value === "light" || value === "dark" || value === "system"
 }
 
-const store = createStore<ThemeState>(() => ({
-	preference: "system",
-}))
+const themeStorage: PersistStorage<ThemeState> = {
+	getItem: (name) => {
+		if (typeof window === "undefined") {
+			return null
+		}
+
+		const raw = window.localStorage.getItem(name)
+
+		if (!raw) {
+			return null
+		}
+
+		if (isThemePreference(raw)) {
+			return {
+				state: {
+					preference: raw,
+				},
+			}
+		}
+
+		try {
+			return JSON.parse(raw) as { state: ThemeState }
+		} catch {
+			return null
+		}
+	},
+	setItem: (name, value) => {
+		if (typeof window === "undefined") {
+			return
+		}
+
+		window.localStorage.setItem(name, value.state.preference)
+	},
+	removeItem: (name) => {
+		if (typeof window === "undefined") {
+			return
+		}
+
+		window.localStorage.removeItem(name)
+	},
+}
+
+const store = createStore(
+	persist<ThemeState>(
+		() => ({
+			preference: "system",
+		}),
+		{
+			name: THEME_STORAGE_KEY,
+			storage: themeStorage,
+		},
+	),
+)
 
 export function getThemePreference() {
 	return store.getState().preference
 }
 
 export function setThemePreference(preference: ThemePreference) {
-	store.setState({ preference })
-
-	if (typeof window !== "undefined") {
-		window.localStorage.setItem(STORAGE_KEY, preference)
-	}
-
-	applyTheme(preference)
-}
-
-export function hydrateThemePreference() {
-	const preference = readStoredPreference()
 	store.setState({ preference })
 	applyTheme(preference)
 }
@@ -77,5 +108,5 @@ export function subscribeTheme(
 }
 
 export function useThemePreference() {
-	return store.getState().preference
+	return useStore(store, (state) => state.preference)
 }

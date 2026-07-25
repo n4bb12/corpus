@@ -9,34 +9,34 @@ import {
 } from "src/components/ui/dropdown-menu"
 import {
 	applyTheme,
-	hydrateThemePreference,
 	resolveTheme,
 	setThemePreference,
 	subscribeTheme,
-	type ThemePreference,
+	useThemePreference,
 } from "src/lib/theme"
 
 export function ThemeMenu() {
-	const [preference, setPreference] = useState<ThemePreference>("system")
+	const preference = useThemePreference()
+	const [resolved, setResolved] = useState(() => resolveTheme(preference))
 
 	useEffect(() => {
-		hydrateThemePreference()
-		setPreference(
-			(window.localStorage.getItem("corpus-theme") as ThemePreference) ||
-				"system",
-		)
+		applyTheme(preference)
+		setResolved(resolveTheme(preference))
 
 		const media = window.matchMedia("(prefers-color-scheme: dark)")
-		const onChange = () => applyTheme()
+		const onChange = () => {
+			applyTheme()
+			setResolved(resolveTheme(preference))
+		}
+
 		media.addEventListener("change", onChange)
 
 		return subscribeTheme((value) => {
-			setPreference(value)
 			applyTheme(value)
+			setResolved(resolveTheme(value))
 		})
-	}, [])
+	}, [preference])
 
-	const resolved = resolveTheme(preference)
 	const Icon =
 		resolved === "dark" ? Moon : preference === "system" ? Monitor : Sun
 
