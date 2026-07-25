@@ -6,19 +6,19 @@
     "src/*": "./src/*"
   },
   "scripts": {
+    "build": "bun --bun vite build",
+    "check": "biome check",
     "dev": "bun --bun vite dev --port 3000",
     "dev:convex": "bunx convex dev",
+    "fix": "bun format && bun types",
+    "format": "biome check --write --unsafe",
     "generate-routes": "tsr generate",
-    "build": "bun --bun vite build",
+    "lint": "biome lint",
     "preview": "bun --bun vite preview",
     "start": "bun run .output/server/index.mjs",
-    "format": "biome format --write",
-    "lint": "biome lint",
-    "check": "biome check",
-    "fix": "biome check --write",
-    "types": "tsc --noEmit",
     "test": "bun test",
-    "test:watch": "bun test --watch"
+    "test:watch": "bun test --watch",
+    "types": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.20",
