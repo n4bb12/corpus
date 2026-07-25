@@ -14,7 +14,7 @@ Convex
   ├── Better Auth component
   ├── Resend component + webhook
   ├── Notebooks / sources / chunks / chat / citations
-  ├── Ingestion actions (MarkItDown → Mastra chunks → Voyage embeddings)
+  ├── Ingestion actions (MarkItDown → semantic-chunker → Voyage embeddings)
   └── Hybrid retrieval (vector + text → Voyage rerank)
 ```
 

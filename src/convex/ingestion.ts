@@ -2,10 +2,10 @@
 
 import dns from "node:dns/promises"
 import { voyage } from "@ai-sdk/voyage"
-import { MDocument } from "@mastra/rag"
-import { embedMany } from "ai"
+import { embed, embedMany } from "ai"
 import { v } from "convex/values"
 import { MarkItDown } from "markitdown-ts"
+import semantic from "semantic-chunker"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
 import { deriveChunkLocators } from "./lib/chunk-locators"
@@ -217,12 +217,40 @@ export const processSource = internalAction({
 				processingState: "chunking",
 			})
 
-			const document = MDocument.fromMarkdown(markdown)
-			const chunks = await document.chunk({
-				strategy: "semantic-markdown",
-				maxSize: 1200,
+			const embeddingModel = voyage.textEmbedding(MODELS.embed)
+			const chunker = semantic({
+				embed: async (text) => {
+					const { embedding } = await embed({
+						model: embeddingModel,
+						value: text,
+						providerOptions: {
+							voyage: {
+								inputType: "document",
+							},
+						},
+					})
+
+					return embedding
+				},
+				splitMode: "markdown",
+				maxChunkSize: 1200,
+				minChunkSize: 200,
+				zScoreThreshold: 1,
 			})
-			const texts = chunks.map((chunk) => chunk.text).filter(Boolean)
+			const texts: string[] = []
+
+			for await (const [text] of chunker(markdown)) {
+				const trimmed = text.trim()
+
+				if (trimmed) {
+					texts.push(trimmed)
+				}
+			}
+
+			if (!texts.length) {
+				throw new Error("No useful chunks could be created.")
+			}
+
 			const locators = deriveChunkLocators(texts, markdown)
 
 			await ctx.runMutation(internal.ingestionHelpers.setProcessingState, {
@@ -231,7 +259,7 @@ export const processSource = internalAction({
 			})
 
 			const { embeddings: vectors } = await embedMany({
-				model: voyage.textEmbedding(MODELS.embed),
+				model: embeddingModel,
 				values: texts,
 				providerOptions: {
 					voyage: {
