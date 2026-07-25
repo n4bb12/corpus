@@ -69,7 +69,7 @@ async function fetchPublicHtml(url: URL) {
 			break
 		}
 
-		if (!response || !response.ok) {
+		if (!response?.ok) {
 			throw new Error("The URL could not be fetched.")
 		}
 

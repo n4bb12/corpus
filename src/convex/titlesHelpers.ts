@@ -42,7 +42,7 @@ export const applyGeneratedTitle = internalMutation({
 	handler: async (ctx, args) => {
 		const notebook = await ctx.db.get(args.notebookId)
 
-		if (!notebook || notebook.titleOrigin !== "placeholder") {
+		if (notebook?.titleOrigin !== "placeholder") {
 			return
 		}
 

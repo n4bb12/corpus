@@ -19,8 +19,7 @@ export const maybeGenerateNotebookTitle = internalAction({
 		})
 
 		if (
-			!notebook ||
-			notebook.titleOrigin !== "placeholder" ||
+			notebook?.titleOrigin !== "placeholder" ||
 			notebook.titleGenerationState === "pending" ||
 			notebook.titleGenerationState === "complete"
 		) {

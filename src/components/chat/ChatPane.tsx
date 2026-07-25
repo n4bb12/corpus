@@ -51,7 +51,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 		}
 
 		scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight
-	}, [entries])
+	}, [])
 
 	async function send(nextPrompt = prompt, retryAssistantId?: string) {
 		if (!nextPrompt.trim() || !readySelected.length) {

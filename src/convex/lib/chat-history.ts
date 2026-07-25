@@ -76,7 +76,7 @@ export function canRetryLatestAssistant(entries: ChatEntryLike[]) {
 	const messages = entries.filter((entry) => entry.kind === "message")
 	const latest = messages.at(-1)
 
-	if (!latest || latest.role !== "assistant") {
+	if (latest?.role !== "assistant") {
 		return false
 	}
 
