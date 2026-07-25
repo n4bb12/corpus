@@ -29,9 +29,7 @@ export function setLastSignInMethod(method: SignInMethod) {
 
 /** Last method from storage after hydration; ignores later clicks until reload. */
 export function useLastSignInMethod() {
-	const [method, setMethod] = useState<SignInMethod | null>(() =>
-		store.persist.hasHydrated() ? store.getState().method : null,
-	)
+	const [method, setMethod] = useState<SignInMethod | null>()
 
 	useEffect(() => {
 		if (store.persist.hasHydrated()) {
