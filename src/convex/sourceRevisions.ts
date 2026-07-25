@@ -1,6 +1,6 @@
 import { v } from "convex/values"
+import { shouldCreateSourceRevision } from "src/lib/chat_history"
 import { internalMutation } from "./_generated/server"
-import { shouldCreateSourceRevision } from "./lib/chat-history"
 
 async function getReadySelectedIds(ctx: { db: any }, notebookId: string) {
 	const sources = await ctx.db

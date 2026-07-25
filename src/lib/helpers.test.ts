@@ -3,10 +3,10 @@ import {
 	canRetryLatestAssistant,
 	shouldCreateSourceRevision,
 	successfulPairsAfterBoundary,
-} from "./chat-history"
-import { deriveChunkLocators } from "./chunk-locators"
+} from "./chat_history"
+import { deriveChunkLocators } from "./chunk_locators"
 import { parseCitationMarkers, validateCitations } from "./citations"
-import { describeRejectedFile, isAcceptedUpload } from "./file-types"
+import { describeRejectedFile, isAcceptedUpload } from "./file_types"
 import { remainingQuota, utcDateKey } from "./quotas"
 import {
 	mergeRetrievalCandidates,
@@ -17,8 +17,8 @@ import {
 	titleFromFilename,
 	titleFromPastedText,
 	titleFromUrl,
-} from "./source-title"
-import { isBlockedResolvedAddress, validatePublicHttpUrl } from "./url-safety"
+} from "./source_title"
+import { isBlockedResolvedAddress, validatePublicHttpUrl } from "./url_safety"
 
 describe("source titles", () => {
 	test("normalizes and truncates", () => {

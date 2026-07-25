@@ -3,14 +3,11 @@ import { createFileRoute } from "@tanstack/react-router"
 import { generateText, streamText } from "ai"
 import { api } from "src/convex/_generated/api"
 import {
-	parseCitationMarkers,
-	validateCitations,
-} from "src/convex/lib/citations"
-import {
 	fetchAuthAction,
 	fetchAuthMutation,
 	getToken,
 } from "src/lib/auth-server"
+import { parseCitationMarkers, validateCitations } from "src/lib/citations"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
 

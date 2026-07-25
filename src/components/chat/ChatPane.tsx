@@ -10,7 +10,7 @@ import { ClearChatDialog } from "src/components/chat/ClearChatDialog"
 import { Button } from "src/components/ui/button"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
-import { canRetryLatestAssistant } from "src/convex/lib/chat-history"
+import { canRetryLatestAssistant } from "src/lib/chat_history"
 
 export type ChatPaneProps = {
 	notebookId: Id<"notebooks">

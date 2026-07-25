@@ -1,20 +1,20 @@
 import { v } from "convex/values"
-import { internal } from "./_generated/api"
-import { mutation, query } from "./_generated/server"
-import { shouldCreateSourceRevision } from "./lib/chat-history"
-import { LIMITS } from "./lib/limits"
-import {
-	requireNotebookOwner,
-	requireSourceOwner,
-	requireUser,
-} from "./lib/ownership"
-import { quotaResetMessage, utcDateKey } from "./lib/quotas"
+import { shouldCreateSourceRevision } from "src/lib/chat_history"
+import { LIMITS } from "src/lib/limits"
+import { quotaResetMessage, utcDateKey } from "src/lib/quotas"
 import {
 	normalizeTitle,
 	titleFromFilename,
 	titleFromPastedText,
 	titleFromUrl,
-} from "./lib/source-title"
+} from "src/lib/source_title"
+import { internal } from "./_generated/api"
+import { mutation, query } from "./_generated/server"
+import {
+	requireNotebookOwner,
+	requireSourceOwner,
+	requireUser,
+} from "./lib/ownership"
 
 async function bumpUsage(
 	ctx: { db: any },

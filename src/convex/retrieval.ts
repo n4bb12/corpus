@@ -3,14 +3,14 @@
 import { voyage } from "@ai-sdk/voyage"
 import { embed, rerank } from "ai"
 import { v } from "convex/values"
-import { api, internal } from "./_generated/api"
-import { action } from "./_generated/server"
-import { authComponent } from "./auth"
-import { MODELS } from "./lib/limits"
+import { MODELS } from "src/lib/limits"
 import {
 	mergeRetrievalCandidates,
 	selectEvidenceWithinBudget,
-} from "./lib/retrieval"
+} from "src/lib/retrieval"
+import { api, internal } from "./_generated/api"
+import { action } from "./_generated/server"
+import { authComponent } from "./auth"
 
 export const prepareEvidence = action({
 	args: {

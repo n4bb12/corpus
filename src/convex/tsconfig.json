@@ -20,10 +20,10 @@
 		"isolatedModules": true,
 		"noEmit": true,
 
-    /* Custom options */
-    "paths": {
-      "src/*": ["../*"]
-    }
+		/* Custom options */
+		"paths": {
+			"src/*": ["../*"]
+		}
 	},
 	"include": ["./**/*"],
 	"exclude": ["./_generated"]

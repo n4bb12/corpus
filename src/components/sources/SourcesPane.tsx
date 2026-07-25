@@ -13,10 +13,7 @@ import { Checkbox } from "src/components/ui/checkbox"
 import { Input } from "src/components/ui/input"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
-import {
-	describeRejectedFile,
-	isAcceptedUpload,
-} from "src/convex/lib/file-types"
+import { describeRejectedFile, isAcceptedUpload } from "src/lib/file_types"
 
 export type SourcesPaneProps = {
 	notebookId: Id<"notebooks">

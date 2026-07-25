@@ -6,15 +6,15 @@ import { embed, embedMany } from "ai"
 import { v } from "convex/values"
 import { MarkItDown } from "markitdown-ts"
 import semantic from "semantic-chunker"
-import { internal } from "./_generated/api"
-import { internalAction } from "./_generated/server"
-import { deriveChunkLocators } from "./lib/chunk-locators"
-import { LIMITS, MODELS } from "./lib/limits"
-import { titleFromUrl } from "./lib/source-title"
+import { deriveChunkLocators } from "src/lib/chunk_locators"
+import { LIMITS, MODELS } from "src/lib/limits"
+import { titleFromUrl } from "src/lib/source_title"
 import {
 	isBlockedResolvedAddress,
 	validatePublicHttpUrl,
-} from "./lib/url-safety"
+} from "src/lib/url_safety"
+import { internal } from "./_generated/api"
+import { internalAction } from "./_generated/server"
 
 const markitdown = new MarkItDown()
 

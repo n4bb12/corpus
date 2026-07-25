@@ -1,9 +1,9 @@
 import { v } from "convex/values"
+import { LIMITS, UNTITLED_NOTEBOOK } from "src/lib/limits"
+import { normalizeTitle } from "src/lib/source_title"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
-import { LIMITS, UNTITLED_NOTEBOOK } from "./lib/limits"
 import { requireNotebookOwner, requireUser } from "./lib/ownership"
-import { normalizeTitle } from "./lib/source-title"
 
 export const list = query({
 	args: {

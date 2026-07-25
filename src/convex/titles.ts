@@ -4,10 +4,10 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { generateText } from "ai"
 import { v } from "convex/values"
 import { requireEnv } from "src/lib/env"
+import { MODELS, UNTITLED_NOTEBOOK } from "src/lib/limits"
+import { normalizeTitle } from "src/lib/source_title"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
-import { MODELS, UNTITLED_NOTEBOOK } from "./lib/limits"
-import { normalizeTitle } from "./lib/source-title"
 
 export const maybeGenerateNotebookTitle = internalAction({
 	args: {

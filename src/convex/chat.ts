@@ -1,12 +1,12 @@
 import { v } from "convex/values"
-import { mutation, query } from "./_generated/server"
 import {
 	canRetryLatestAssistant,
 	successfulPairsAfterBoundary,
-} from "./lib/chat-history"
-import { LIMITS } from "./lib/limits"
+} from "src/lib/chat_history"
+import { LIMITS } from "src/lib/limits"
+import { quotaResetMessage, utcDateKey } from "src/lib/quotas"
+import { mutation, query } from "./_generated/server"
 import { requireNotebookOwner } from "./lib/ownership"
-import { quotaResetMessage, utcDateKey } from "./lib/quotas"
 
 function createId() {
 	return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
