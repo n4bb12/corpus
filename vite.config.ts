@@ -8,7 +8,7 @@ import { defineConfig } from "vite"
 const config = defineConfig({
 	resolve: { tsconfigPaths: true },
 	ssr: {
-		noExternal: ["@convex-dev/better-auth", "@convex-dev/resend"],
+		noExternal: ["@convex-dev/better-auth"],
 	},
 	plugins: [
 		devtools(),

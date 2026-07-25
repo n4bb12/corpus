@@ -153,11 +153,4 @@ export default defineSchema({
 		ingestions: v.number(),
 		generations: v.number(),
 	}).index("by_user_date", ["userId", "dateKey"]),
-
-	emailEvents: defineTable({
-		emailId: v.string(),
-		eventType: v.string(),
-		createdAt: v.number(),
-		payload: v.optional(v.string()),
-	}).index("by_emailId", ["emailId"]),
 })

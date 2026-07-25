@@ -12,7 +12,7 @@ TanStack Start (Vercel)
 
 Convex
   ├── Better Auth component
-  ├── Resend component + webhook
+  ├── Plunk transactional email
   ├── Notebooks / sources / chunks / chat / citations
   ├── Ingestion actions (MarkItDown → semantic-chunker → Voyage embeddings)
   └── Hybrid retrieval (vector + text → Voyage rerank)
@@ -67,10 +67,9 @@ Set these on the Convex deployment (Dashboard or `bunx convex env set`):
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `OPENAI_API_KEY` | Chat + title models |
 | `VOYAGE_API_KEY` | Embeddings + rerank |
-| `RESEND_API_KEY` | Transactional email |
-| `RESEND_FROM_EMAIL` | Verified sender, e.g. `Corpus <noreply@yourdomain.com>` |
-| `RESEND_WEBHOOK_SECRET` | Resend webhook signing secret |
-| `RESEND_TEST_MODE` | `false` for real delivery |
+| `PLUNK_API_KEY` | Plunk secret API key |
+| `PLUNK_FROM_EMAIL` | Verified sender address |
+| `PLUNK_FROM_NAME` | Optional display name (defaults to `Corpus`) |
 
 Do not commit secret values.
 
@@ -83,16 +82,11 @@ In Google Cloud Console create an OAuth client and add:
 
 For production, repeat with your Vercel URL.
 
-### 5. Resend
+### 5. Plunk
 
-1. Verify your sending domain in Resend.
-2. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` on Convex.
-3. Create a webhook pointing to:
-
-   `https://<your-deployment>.convex.site/resend-webhook`
-
-4. Subscribe to delivery events and set `RESEND_WEBHOOK_SECRET`.
-5. Set `RESEND_TEST_MODE=false` when ready for real addresses.
+1. Verify your sending domain in Plunk.
+2. Set `PLUNK_API_KEY` and `PLUNK_FROM_EMAIL` on Convex.
+3. Optionally set `PLUNK_FROM_NAME` (defaults to `Corpus`).
 
 ### 6. Run
 

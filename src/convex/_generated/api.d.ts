@@ -61,7 +61,4 @@ export declare const components: {
     adapterTest: any
     auth: any
   }
-  resend: {
-    lib: any
-  }
 }

@@ -9,7 +9,6 @@ describe("schema smoke", () => {
         "chunks",
         "citations",
         "dailyUsage",
-        "emailEvents",
         "notebooks",
         "sources",
       ]
