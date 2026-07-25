@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Corpus typography and icon studies</title>
+    <script
+      src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"
+      defer
+    ></script>
+    <style>
+      @font-face {
+        font-family: "Figtree Variable";
+        font-style: normal;
+        font-display: swap;
+        font-weight: 300 900;
+        src: url("https://cdn.jsdelivr.net/fontsource/fonts/figtree:vf@latest/latin-wght-normal.woff2")
+          format("woff2-variations");
+      }
+
+      @font-face {
+        font-family: "Geist Variable";
+        font-style: normal;
+        font-display: swap;
+        font-weight: 100 900;
+        src: url("https://cdn.jsdelivr.net/fontsource/fonts/geist:vf@latest/latin-wght-normal.woff2")
+          format("woff2-variations");
+      }
+
+      @font-face {
+        font-family: "Manrope Variable";
+        font-style: normal;
+        font-display: swap;
+        font-weight: 200 800;
+        src: url("https://cdn.jsdelivr.net/fontsource/fonts/manrope:vf@latest/latin-wght-normal.woff2")
+          format("woff2-variations");
+      }
+
+      :root {
+        color-scheme: light;
+        --page: #e9ece7;
+        --background: #f1f3ee;
+        --surface: #fafbf8;
+        --surface-strong: #ffffff;
+        --primary: #245844;
+        --primary-hover: #1b4636;
+        --primary-soft: #dce9e0;
+        --text: #1e2823;
+        --muted: #68736c;
+        --border: #d8ded7;
+        --shadow: rgb(36 73 57 / 12%);
+        font-family: "Figtree Variable", "Segoe UI", sans-serif;
+        background: var(--page);
+        color: var(--text);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        background:
+          radial-gradient(circle at 8% 0%, rgb(255 255 255 / 70%), transparent 30rem),
+          var(--page);
+      }
+
+      body[data-theme="dark"] {
+        color-scheme: dark;
+        --page: #101512;
+        --background: #141a17;
+        --surface: #1b231f;
+        --surface-strong: #222c27;
+        --primary: #79b999;
+        --primary-hover: #91c9aa;
+        --primary-soft: #293c32;
+        --text: #e8ece8;
+        --muted: #a4aea8;
+        --border: #354139;
+        --shadow: rgb(0 0 0 / 30%);
+        background:
+          radial-gradient(circle at 8% 0%, rgb(121 185 153 / 8%), transparent 30rem),
+          var(--page);
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      iconify-icon {
+        display: inline-block;
+        flex: 0 0 auto;
+      }
+
+      .page {
+        width: min(100% - 2rem, 88rem);
+        margin-inline: auto;
+        padding-block: 3rem 5rem;
+      }
+
+      .page-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.7fr);
+        gap: 3rem;
+        align-items: end;
+        margin-bottom: 2rem;
+      }
+
+      .page-header h1 {
+        max-width: 14ch;
+        margin: 0;
+        font-size: clamp(2.5rem, 6vw, 5rem);
+        font-weight: 650;
+        letter-spacing: -0.058em;
+        line-height: 0.94;
+      }
+
+      .page-header p {
+        max-width: 36rem;
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 1rem;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+        padding: 0.625rem;
+        border: 1px solid var(--border);
+        border-radius: 0.875rem;
+        background: color-mix(in srgb, var(--surface) 86%, transparent);
+        box-shadow: 0 0.75rem 2.5rem var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .toolbar-label {
+        padding-inline: 0.5rem;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+
+      .theme-switch {
+        display: flex;
+        gap: 0.25rem;
+      }
+
+      .theme-switch button {
+        min-height: 2.25rem;
+        padding-inline: 0.875rem;
+        border: 0;
+        border-radius: 0.625rem;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 650;
+      }
+
+      .theme-switch button[aria-pressed="true"] {
+        background: var(--primary);
+        color: var(--surface);
+        box-shadow: 0 0.25rem 0.75rem var(--shadow);
+      }
+
+      .section {
+        margin-top: 4.5rem;
+      }
+
+      .section:first-of-type {
+        margin-top: 0;
+      }
+
+      .section-heading {
+        max-width: 46rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .section-heading h2 {
+        margin: 0;
+        font-size: clamp(1.8rem, 3vw, 2.6rem);
+        font-weight: 650;
+        letter-spacing: -0.045em;
+      }
+
+      .section-heading p {
+        margin: 0.65rem 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .type-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .type-study,
+      .icon-study {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        background: var(--surface);
+        box-shadow: 0 1rem 2.5rem var(--shadow);
+      }
+
+      .type-study[data-font="figtree"] {
+        font-family: "Figtree Variable", sans-serif;
+      }
+
+      .type-study[data-font="geist"] {
+        font-family: "Geist Variable", sans-serif;
+      }
+
+      .type-study[data-font="manrope"] {
+        font-family: "Manrope Variable", sans-serif;
+      }
+
+      .study-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.15rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .study-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      .study-header span {
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .study-header .recommended {
+        padding: 0.3rem 0.55rem;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 700;
+      }
+
+      .type-content {
+        padding: 1.4rem 1.25rem 1.25rem;
+      }
+
+      .brand-sample {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 2rem;
+        font-size: 1.05rem;
+        font-weight: 750;
+        letter-spacing: -0.025em;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 2rem;
+        height: 2rem;
+        place-items: center;
+        border-radius: 0.6rem;
+        background: var(--primary);
+        color: var(--surface);
+      }
+
+      .notebook-title {
+        margin: 0;
+        font-size: 1.65rem;
+        font-weight: 650;
+        letter-spacing: -0.042em;
+        line-height: 1.05;
+      }
+
+      .metadata {
+        margin: 0.6rem 0 1.5rem;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .question {
+        width: fit-content;
+        max-width: 88%;
+        margin: 0 0 1.25rem auto;
+        padding: 0.7rem 0.85rem;
+        border: 1px solid var(--border);
+        border-radius: 0.8rem 0.8rem 0.3rem 0.8rem;
+        background: var(--surface-strong);
+        font-size: 0.86rem;
+        line-height: 1.45;
+      }
+
+      .answer {
+        margin: 0;
+        font-size: 0.9rem;
+        line-height: 1.68;
+      }
+
+      .citation {
+        display: inline-flex;
+        min-width: 1.35rem;
+        height: 1.35rem;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.2rem;
+        border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 0.68rem;
+        font-weight: 750;
+        vertical-align: 0.08em;
+      }
+
+      .composer {
+        margin-top: 1.5rem;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.9rem;
+        background: var(--surface-strong);
+        box-shadow: 0 0.75rem 1.75rem var(--shadow);
+      }
+
+      .composer textarea {
+        width: 100%;
+        min-height: 3.2rem;
+        resize: none;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        outline: none;
+        line-height: 1.5;
+      }
+
+      .composer textarea::placeholder {
+        color: var(--muted);
+      }
+
+      .composer-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.55rem;
+        margin-top: 0.4rem;
+      }
+
+      .source-count {
+        display: inline-flex;
+        min-height: 2.2rem;
+        align-items: center;
+        gap: 0.35rem;
+        padding-inline: 0.65rem;
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-variant-numeric: tabular-nums;
+        font-weight: 650;
+      }
+
+      .send {
+        display: inline-flex;
+        min-height: 2.2rem;
+        align-items: center;
+        gap: 0.4rem;
+        padding-inline: 0.8rem;
+        border: 0;
+        border-radius: 0.62rem;
+        background: var(--primary);
+        color: var(--surface);
+        font-weight: 700;
+        transition:
+          transform 120ms ease,
+          background-color 120ms ease;
+      }
+
+      .send:hover {
+        background: var(--primary-hover);
+      }
+
+      .send:active {
+        transform: translateY(1px) scale(0.985);
+      }
+
+      .character-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+      }
+
+      .alphabet {
+        color: var(--muted);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+      }
+
+      .numbers {
+        font-size: 0.86rem;
+        font-variant-numeric: tabular-nums;
+        font-weight: 650;
+      }
+
+      .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .icon-content {
+        padding: 1.25rem;
+      }
+
+      .icon-set {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.65rem;
+      }
+
+      .icon-cell {
+        display: grid;
+        min-height: 4.4rem;
+        place-items: center;
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        background: var(--background);
+        color: var(--text);
+        transition:
+          transform 120ms ease,
+          border-color 120ms ease,
+          background-color 120ms ease;
+      }
+
+      .icon-cell:hover {
+        transform: translateY(-2px);
+        border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+
+      .icon-cell iconify-icon {
+        font-size: 1.45rem;
+      }
+
+      .icon-cell span {
+        display: none;
+      }
+
+      .icon-context {
+        display: grid;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      .context-row {
+        display: flex;
+        min-height: 3rem;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.6rem 0.7rem;
+        border-radius: 0.72rem;
+        color: var(--text);
+      }
+
+      .context-row:hover {
+        background: var(--background);
+      }
+
+      .context-row iconify-icon {
+        color: var(--primary);
+        font-size: 1.25rem;
+      }
+
+      .context-copy {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .context-copy strong,
+      .context-copy small {
+        display: block;
+      }
+
+      .context-copy strong {
+        overflow: hidden;
+        font-size: 0.84rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .context-copy small {
+        margin-top: 0.15rem;
+        color: var(--muted);
+        font-size: 0.72rem;
+      }
+
+      .icon-button {
+        display: grid;
+        width: 2.25rem;
+        height: 2.25rem;
+        place-items: center;
+        border: 1px solid var(--border);
+        border-radius: 0.65rem;
+        background: var(--surface-strong);
+        color: var(--text);
+      }
+
+      .icon-button:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .selection-note {
+        margin-top: 1.5rem;
+        padding: 1rem 1.1rem;
+        border: 1px solid var(--border);
+        border-radius: 0.85rem;
+        background: var(--primary-soft);
+        color: var(--text);
+        line-height: 1.55;
+      }
+
+      .selection-note strong {
+        color: var(--primary);
+      }
+
+      @media (max-width: 1080px) {
+        .type-grid,
+        .icon-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .type-content {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+
+        .character-row {
+          grid-column: 1 / -1;
+          margin-top: 0;
+        }
+      }
+
+      @media (max-width: 700px) {
+        .page {
+          width: min(100% - 1rem, 88rem);
+          padding-top: 1.5rem;
+        }
+
+        .page-header,
+        .type-content {
+          grid-template-columns: 1fr;
+        }
+
+        .page-header {
+          gap: 1.5rem;
+        }
+
+        .character-row {
+          grid-column: auto;
+        }
+
+        .icon-set {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .toolbar-label {
+          display: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms;
+          animation-duration: 0.01ms;
+          animation-iteration-count: 1;
+        }
+      }
+    </style>
+  </head>
+  <body data-theme="light">
+    <main class="page">
+      <header class="page-header">
+        <h1>Type and icon studies</h1>
+        <p>
+          Three font voices and three icon families shown against the selected Green
+          mineral palette. The final app will self-host one font and use one icon family.
+        </p>
+      </header>
+
+      <div class="toolbar">
+        <span class="toolbar-label">Green mineral preview</span>
+        <div class="theme-switch" role="group" aria-label="Preview theme">
+          <button type="button" data-theme-choice="light" aria-pressed="true">Light</button>
+          <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+
+      <section class="section" aria-labelledby="type-heading">
+        <header class="section-heading">
+          <h2 id="type-heading">Typography</h2>
+          <p>
+            Each sample uses the same hierarchy, answer copy, metadata, and composer.
+            Compare warmth, scanability, and how the source count sits beside Send.
+          </p>
+        </header>
+
+        <div class="type-grid">
+          <article class="type-study" data-font="figtree">
+            <header class="study-header">
+              <h3>Figtree</h3>
+              <span class="recommended">Recommended</span>
+            </header>
+            <div class="type-content">
+              <div>
+                <div class="brand-sample">
+                  <span class="brand-mark">C</span>
+                  <span>Corpus</span>
+                </div>
+                <h4 class="notebook-title">Transformer research</h4>
+                <p class="metadata">Used 18 minutes ago · 8 sources</p>
+                <div class="question">What is the central architectural idea?</div>
+                <p class="answer">
+                  The architecture replaces recurrence with attention, allowing every
+                  token to connect directly to the rest of the sequence.
+                  <span class="citation">1</span>
+                </p>
+              </div>
+              <div>
+                <div class="composer">
+                  <textarea placeholder="Ask about your sources" aria-label="Figtree composer"></textarea>
+                  <div class="composer-footer">
+                    <span class="source-count">
+                      <iconify-icon icon="ph:stack"></iconify-icon>
+                      3 sources
+                    </span>
+                    <button class="send" type="button">
+                      Send
+                      <iconify-icon icon="ph:arrow-up"></iconify-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="character-row">
+                <span class="alphabet">Aa Bb Cc Dd Ee Rr Ss</span>
+                <span class="numbers">0123456789</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="type-study" data-font="geist">
+            <header class="study-header">
+              <h3>Geist</h3>
+              <span>Crisp and technical</span>
+            </header>
+            <div class="type-content">
+              <div>
+                <div class="brand-sample">
+                  <span class="brand-mark">C</span>
+                  <span>Corpus</span>
+                </div>
+                <h4 class="notebook-title">Transformer research</h4>
+                <p class="metadata">Used 18 minutes ago · 8 sources</p>
+                <div class="question">What is the central architectural idea?</div>
+                <p class="answer">
+                  The architecture replaces recurrence with attention, allowing every
+                  token to connect directly to the rest of the sequence.
+                  <span class="citation">1</span>
+                </p>
+              </div>
+              <div>
+                <div class="composer">
+                  <textarea placeholder="Ask about your sources" aria-label="Geist composer"></textarea>
+                  <div class="composer-footer">
+                    <span class="source-count">
+                      <iconify-icon icon="ph:stack"></iconify-icon>
+                      3 sources
+                    </span>
+                    <button class="send" type="button">
+                      Send
+                      <iconify-icon icon="ph:arrow-up"></iconify-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="character-row">
+                <span class="alphabet">Aa Bb Cc Dd Ee Rr Ss</span>
+                <span class="numbers">0123456789</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="type-study" data-font="manrope">
+            <header class="study-header">
+              <h3>Manrope</h3>
+              <span>Rounded and geometric</span>
+            </header>
+            <div class="type-content">
+              <div>
+                <div class="brand-sample">
+                  <span class="brand-mark">C</span>
+                  <span>Corpus</span>
+                </div>
+                <h4 class="notebook-title">Transformer research</h4>
+                <p class="metadata">Used 18 minutes ago · 8 sources</p>
+                <div class="question">What is the central architectural idea?</div>
+                <p class="answer">
+                  The architecture replaces recurrence with attention, allowing every
+                  token to connect directly to the rest of the sequence.
+                  <span class="citation">1</span>
+                </p>
+              </div>
+              <div>
+                <div class="composer">
+                  <textarea placeholder="Ask about your sources" aria-label="Manrope composer"></textarea>
+                  <div class="composer-footer">
+                    <span class="source-count">
+                      <iconify-icon icon="ph:stack"></iconify-icon>
+                      3 sources
+                    </span>
+                    <button class="send" type="button">
+                      Send
+                      <iconify-icon icon="ph:arrow-up"></iconify-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="character-row">
+                <span class="alphabet">Aa Bb Cc Dd Ee Rr Ss</span>
+                <span class="numbers">0123456789</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="icons-heading">
+        <header class="section-heading">
+          <h2 id="icons-heading">Icons</h2>
+          <p>
+            The same practical actions rendered in three coherent line-icon families.
+            The final system will use regular weight throughout and filled icons only for
+            selected states.
+          </p>
+        </header>
+
+        <div class="icon-grid">
+          <article class="icon-study">
+            <header class="study-header">
+              <h3>Phosphor</h3>
+              <span class="recommended">Recommended</span>
+            </header>
+            <div class="icon-content">
+              <div class="icon-set" aria-label="Phosphor icon samples">
+                <div class="icon-cell"><iconify-icon icon="ph:books"></iconify-icon><span>Books</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:file-text"></iconify-icon><span>File</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:globe"></iconify-icon><span>Web</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:text-t"></iconify-icon><span>Text</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:magnifying-glass"></iconify-icon><span>Search</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:sun"></iconify-icon><span>Theme</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:user-circle"></iconify-icon><span>Account</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:dots-three"></iconify-icon><span>Menu</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:arrow-up"></iconify-icon><span>Send</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:stop-circle"></iconify-icon><span>Stop</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:pencil-simple"></iconify-icon><span>Rename</span></div>
+                <div class="icon-cell"><iconify-icon icon="ph:trash"></iconify-icon><span>Delete</span></div>
+              </div>
+              <div class="icon-context">
+                <div class="context-row">
+                  <iconify-icon icon="ph:file-pdf"></iconify-icon>
+                  <div class="context-copy">
+                    <strong>Attention Is All You Need</strong>
+                    <small>PDF · Ready</small>
+                  </div>
+                  <button class="icon-button" type="button" aria-label="Source menu">
+                    <iconify-icon icon="ph:dots-three"></iconify-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="icon-study">
+            <header class="study-header">
+              <h3>Tabler</h3>
+              <span>Precise and utilitarian</span>
+            </header>
+            <div class="icon-content">
+              <div class="icon-set" aria-label="Tabler icon samples">
+                <div class="icon-cell"><iconify-icon icon="tabler:books"></iconify-icon><span>Books</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:file-text"></iconify-icon><span>File</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:world"></iconify-icon><span>Web</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:letter-t"></iconify-icon><span>Text</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:search"></iconify-icon><span>Search</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:sun"></iconify-icon><span>Theme</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:user-circle"></iconify-icon><span>Account</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:dots"></iconify-icon><span>Menu</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:arrow-up"></iconify-icon><span>Send</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:circle-square"></iconify-icon><span>Stop</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:pencil"></iconify-icon><span>Rename</span></div>
+                <div class="icon-cell"><iconify-icon icon="tabler:trash"></iconify-icon><span>Delete</span></div>
+              </div>
+              <div class="icon-context">
+                <div class="context-row">
+                  <iconify-icon icon="tabler:file-type-pdf"></iconify-icon>
+                  <div class="context-copy">
+                    <strong>Attention Is All You Need</strong>
+                    <small>PDF · Ready</small>
+                  </div>
+                  <button class="icon-button" type="button" aria-label="Source menu">
+                    <iconify-icon icon="tabler:dots"></iconify-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="icon-study">
+            <header class="study-header">
+              <h3>Radix</h3>
+              <span>Compact and understated</span>
+            </header>
+            <div class="icon-content">
+              <div class="icon-set" aria-label="Radix icon samples">
+                <div class="icon-cell"><iconify-icon icon="radix-icons:archive"></iconify-icon><span>Library</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:file-text"></iconify-icon><span>File</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:globe"></iconify-icon><span>Web</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:text"></iconify-icon><span>Text</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:magnifying-glass"></iconify-icon><span>Search</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:sun"></iconify-icon><span>Theme</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:person"></iconify-icon><span>Account</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:dots-horizontal"></iconify-icon><span>Menu</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:arrow-up"></iconify-icon><span>Send</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:stop"></iconify-icon><span>Stop</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:pencil-1"></iconify-icon><span>Rename</span></div>
+                <div class="icon-cell"><iconify-icon icon="radix-icons:trash"></iconify-icon><span>Delete</span></div>
+              </div>
+              <div class="icon-context">
+                <div class="context-row">
+                  <iconify-icon icon="radix-icons:file-text"></iconify-icon>
+                  <div class="context-copy">
+                    <strong>Attention Is All You Need</strong>
+                    <small>PDF · Ready</small>
+                  </div>
+                  <button class="icon-button" type="button" aria-label="Source menu">
+                    <iconify-icon icon="radix-icons:dots-horizontal"></iconify-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <p class="selection-note">
+          <strong>Current recommendation:</strong> Figtree with Phosphor regular icons.
+          Both soften the precise workspace without making it feel decorative or playful.
+        </p>
+      </section>
+    </main>
+
+    <script>
+      const body = document.body
+      const themeButtons = document.querySelectorAll("[data-theme-choice]")
+
+      for (const button of themeButtons) {
+        button.addEventListener("click", () => {
+          body.dataset.theme = button.dataset.themeChoice
+
+          for (const candidate of themeButtons) {
+            candidate.setAttribute("aria-pressed", String(candidate === button))
+          }
+        })
+      }
+    </script>
+  </body>
+</html>
