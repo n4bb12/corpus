@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Corpus color studies</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Geist, "Avenir Next", Avenir, "Segoe UI", sans-serif;
+        background: #e9ece7;
+        color: #18211d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        background:
+          radial-gradient(circle at 8% 0%, rgb(255 255 255 / 68%), transparent 28rem),
+          #e9ece7;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .page {
+        width: min(100% - 2rem, 92rem);
+        margin-inline: auto;
+        padding-block: 3rem 5rem;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .page-header h1 {
+        max-width: 12ch;
+        margin: 0;
+        font-size: clamp(2.25rem, 5vw, 4.75rem);
+        font-weight: 620;
+        letter-spacing: -0.055em;
+        line-height: 0.94;
+      }
+
+      .page-header p {
+        max-width: 34rem;
+        margin: 0;
+        color: #59645e;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 1rem;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 0.625rem;
+        border: 1px solid rgb(64 78 70 / 14%);
+        border-radius: 0.875rem;
+        background: rgb(250 251 248 / 82%);
+        box-shadow: 0 0.75rem 2.5rem rgb(36 54 45 / 8%);
+        backdrop-filter: blur(18px);
+      }
+
+      .toolbar-label {
+        padding-inline: 0.5rem;
+        color: #59645e;
+        font-size: 0.875rem;
+      }
+
+      .theme-switch {
+        display: flex;
+        gap: 0.25rem;
+      }
+
+      .theme-switch button {
+        min-height: 2.25rem;
+        padding-inline: 0.875rem;
+        border: 0;
+        border-radius: 0.625rem;
+        background: transparent;
+        color: #536059;
+        font-weight: 600;
+      }
+
+      .theme-switch button[aria-pressed="true"] {
+        background: #245844;
+        color: #f8fbf8;
+        box-shadow: 0 0.25rem 0.75rem rgb(36 88 68 / 20%);
+      }
+
+      .studies {
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      .study {
+        --background: #f1f3ee;
+        --surface: #fafbf8;
+        --surface-strong: #ffffff;
+        --primary: #245844;
+        --primary-hover: #1b4636;
+        --primary-soft: #dce9e0;
+        --text: #1e2823;
+        --muted: #68736c;
+        --border: #d8ded7;
+        --shadow: rgb(36 73 57 / 12%);
+        overflow: hidden;
+        border: 1px solid rgb(64 78 70 / 12%);
+        border-radius: 1.125rem;
+        background: var(--surface);
+        box-shadow: 0 1.25rem 3.75rem rgb(38 52 44 / 8%);
+      }
+
+      .study[data-palette="paper"] {
+        --background: #f3efe5;
+        --surface: #fffcf4;
+        --surface-strong: #ffffff;
+        --primary: #2d5a45;
+        --primary-hover: #234936;
+        --primary-soft: #dfe8da;
+        --text: #29271f;
+        --muted: #706d62;
+        --border: #ddd6c8;
+        --shadow: rgb(71 61 43 / 13%);
+      }
+
+      .study[data-palette="neutral"] {
+        --background: #f5f6f3;
+        --surface: #ffffff;
+        --surface-strong: #ffffff;
+        --primary: #1f5a43;
+        --primary-hover: #174734;
+        --primary-soft: #dcece3;
+        --text: #18211d;
+        --muted: #65706a;
+        --border: #dce2dd;
+        --shadow: rgb(33 57 46 / 10%);
+      }
+
+      .study[data-palette="earth"] {
+        --background: #ebe3d7;
+        --surface: #f7f0e5;
+        --surface-strong: #fdf9f1;
+        --primary: #365943;
+        --primary-hover: #294936;
+        --primary-soft: #d9dfcf;
+        --text: #302c25;
+        --muted: #746d61;
+        --border: #d5c9ba;
+        --shadow: rgb(76 62 43 / 14%);
+      }
+
+      .study[data-palette="moss"] {
+        --background: #e8e7d9;
+        --surface: #f5f3e7;
+        --surface-strong: #fcfaf1;
+        --primary: #405b37;
+        --primary-hover: #31482a;
+        --primary-soft: #dce2ce;
+        --text: #292c24;
+        --muted: #6d7062;
+        --border: #ced0bd;
+        --shadow: rgb(59 67 45 / 14%);
+      }
+
+      .study[data-palette="walnut"] {
+        --background: #e5ddd2;
+        --surface: #f2eae0;
+        --surface-strong: #faf5ee;
+        --primary: #315440;
+        --primary-hover: #254332;
+        --primary-soft: #d3dbce;
+        --text: #302923;
+        --muted: #71685f;
+        --border: #cec1b4;
+        --shadow: rgb(70 52 41 / 16%);
+      }
+
+      .studies[data-preview-theme="dark"] .study {
+        --background: #141a17;
+        --surface: #1b231f;
+        --surface-strong: #222c27;
+        --primary: #79b999;
+        --primary-hover: #91c9aa;
+        --primary-soft: #293c32;
+        --text: #e8ece8;
+        --muted: #a4aea8;
+        --border: #354139;
+        --shadow: rgb(0 0 0 / 28%);
+      }
+
+      .studies[data-preview-theme="dark"] .study[data-palette="paper"] {
+        --background: #191a16;
+        --surface: #22241e;
+        --surface-strong: #2a2d25;
+        --primary: #84b89a;
+        --primary-hover: #9ac9ad;
+        --primary-soft: #344238;
+        --text: #ecece5;
+        --muted: #acaea3;
+        --border: #41443a;
+        --shadow: rgb(0 0 0 / 30%);
+      }
+
+      .studies[data-preview-theme="dark"] .study[data-palette="neutral"] {
+        --background: #111714;
+        --surface: #18201c;
+        --surface-strong: #202a25;
+        --primary: #75c49a;
+        --primary-hover: #8bd5ae;
+        --primary-soft: #253b30;
+        --text: #edf2ee;
+        --muted: #9eaaa3;
+        --border: #303d36;
+        --shadow: rgb(0 0 0 / 30%);
+      }
+
+      .studies[data-preview-theme="dark"] .study[data-palette="earth"] {
+        --background: #1b1915;
+        --surface: #25221c;
+        --surface-strong: #2d2922;
+        --primary: #8eb592;
+        --primary-hover: #a4c6a7;
+        --primary-soft: #384136;
+        --text: #eee9de;
+        --muted: #b1aa9e;
+        --border: #474239;
+        --shadow: rgb(0 0 0 / 32%);
+      }
+
+      .studies[data-preview-theme="dark"] .study[data-palette="moss"] {
+        --background: #171a13;
+        --surface: #20251a;
+        --surface-strong: #292f22;
+        --primary: #9ab783;
+        --primary-hover: #aec899;
+        --primary-soft: #394331;
+        --text: #eceee4;
+        --muted: #aaad9f;
+        --border: #42483a;
+        --shadow: rgb(0 0 0 / 32%);
+      }
+
+      .studies[data-preview-theme="dark"] .study[data-palette="walnut"] {
+        --background: #1a1614;
+        --surface: #241f1c;
+        --surface-strong: #2d2723;
+        --primary: #8cb69a;
+        --primary-hover: #a3c8ad;
+        --primary-soft: #364039;
+        --text: #eee8e3;
+        --muted: #aea49d;
+        --border: #463d38;
+        --shadow: rgb(0 0 0 / 34%);
+      }
+
+      .study-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 2rem;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        transition:
+          background-color 160ms ease,
+          color 160ms ease,
+          border-color 160ms ease;
+      }
+
+      .study-number {
+        margin: 0 0 0.35rem;
+        color: var(--primary);
+        font-size: 0.75rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .study-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.025em;
+      }
+
+      .study-header p {
+        max-width: 42rem;
+        margin: 0.45rem 0 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .swatches {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .swatch {
+        width: 2.35rem;
+        height: 2.35rem;
+        border: 1px solid var(--border);
+        border-radius: 0.7rem;
+        background: var(--swatch);
+        box-shadow: inset 0 1px rgb(255 255 255 / 25%);
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(16rem, 25rem) minmax(0, 1fr);
+        min-height: 35rem;
+        background: var(--background);
+        color: var(--text);
+        transition:
+          background-color 160ms ease,
+          color 160ms ease;
+      }
+
+      .sources {
+        padding: 1.25rem;
+        border-right: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      .brand-row,
+      .sources-heading,
+      .source,
+      .chat-header,
+      .composer-actions {
+        display: flex;
+        align-items: center;
+      }
+
+      .brand-row {
+        gap: 0.65rem;
+        margin-bottom: 2rem;
+        font-weight: 720;
+        letter-spacing: -0.02em;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 2rem;
+        height: 2rem;
+        place-items: center;
+        border-radius: 0.6rem;
+        background: var(--primary);
+        color: var(--surface);
+        font-size: 0.875rem;
+        box-shadow: 0 0.35rem 1rem var(--shadow);
+      }
+
+      .sources-heading {
+        justify-content: space-between;
+        margin-bottom: 0.875rem;
+      }
+
+      .sources-heading h3 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .add-button,
+      .send-button {
+        border: 0;
+        border-radius: 0.65rem;
+        background: var(--primary);
+        color: var(--surface);
+        font-weight: 700;
+        transition:
+          transform 120ms ease,
+          background-color 120ms ease,
+          box-shadow 120ms ease;
+      }
+
+      .add-button {
+        min-height: 2.1rem;
+        padding-inline: 0.75rem;
+        font-size: 0.82rem;
+      }
+
+      .add-button:hover,
+      .send-button:hover {
+        background: var(--primary-hover);
+        box-shadow: 0 0.45rem 1.1rem var(--shadow);
+      }
+
+      .add-button:active,
+      .send-button:active {
+        transform: translateY(1px) scale(0.985);
+      }
+
+      .search,
+      .composer {
+        width: 100%;
+        border: 1px solid var(--border);
+        background: var(--surface-strong);
+        color: var(--text);
+        outline: none;
+        transition:
+          border-color 120ms ease,
+          box-shadow 120ms ease;
+      }
+
+      .search {
+        min-height: 2.65rem;
+        margin-bottom: 0.8rem;
+        padding-inline: 0.8rem;
+        border-radius: 0.7rem;
+      }
+
+      .search:focus,
+      .composer:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+      }
+
+      .search::placeholder,
+      textarea::placeholder {
+        color: var(--muted);
+      }
+
+      .source-list {
+        display: grid;
+        gap: 0.45rem;
+      }
+
+      .source {
+        justify-content: space-between;
+        gap: 0.75rem;
+        min-height: 3.15rem;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid transparent;
+        border-radius: 0.75rem;
+        color: var(--text);
+        transition:
+          background-color 120ms ease,
+          border-color 120ms ease,
+          transform 120ms ease;
+      }
+
+      .source:hover {
+        border-color: var(--border);
+        background: var(--background);
+        transform: translateY(-1px);
+      }
+
+      .source-title {
+        min-width: 0;
+      }
+
+      .source-title strong,
+      .source-title span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .source-title strong {
+        font-size: 0.86rem;
+      }
+
+      .source-title span {
+        margin-top: 0.18rem;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .check {
+        display: grid;
+        flex: 0 0 auto;
+        width: 1.15rem;
+        height: 1.15rem;
+        place-items: center;
+        border-radius: 0.35rem;
+        background: var(--primary);
+        color: var(--surface);
+        font-size: 0.72rem;
+        font-weight: 800;
+      }
+
+      .chat {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+      }
+
+      .chat-header {
+        min-height: 4.5rem;
+        padding-inline: 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: color-mix(in srgb, var(--surface) 88%, transparent);
+      }
+
+      .chat-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: -0.015em;
+      }
+
+      .messages {
+        display: flex;
+        width: min(100%, 50rem);
+        margin-inline: auto;
+        padding: 3.5rem 1.5rem 2rem;
+        flex: 1;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .user-message {
+        max-width: 76%;
+        align-self: end;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 0.9rem 0.9rem 0.3rem 0.9rem;
+        background: var(--surface-strong);
+        box-shadow: 0 0.6rem 1.5rem var(--shadow);
+        font-size: 0.9rem;
+        line-height: 1.55;
+      }
+
+      .assistant-message {
+        max-width: 42rem;
+        font-size: 0.94rem;
+        line-height: 1.7;
+      }
+
+      .assistant-message p {
+        margin: 0 0 0.9rem;
+      }
+
+      .citation {
+        display: inline-flex;
+        min-width: 1.45rem;
+        height: 1.45rem;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.25rem;
+        border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 0.72rem;
+        font-weight: 750;
+        vertical-align: 0.1em;
+      }
+
+      .composer-wrap {
+        width: min(100%, 50rem);
+        margin-inline: auto;
+        padding: 0 1.5rem 1.5rem;
+      }
+
+      .composer {
+        padding: 0.9rem;
+        border-radius: 1rem;
+        box-shadow: 0 1rem 2.5rem var(--shadow);
+      }
+
+      .composer textarea {
+        display: block;
+        width: 100%;
+        min-height: 5rem;
+        resize: none;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        outline: 0;
+        line-height: 1.5;
+      }
+
+      .composer-actions {
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 0.6rem;
+      }
+
+      .composer-hint {
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .send-button {
+        min-height: 2.4rem;
+        padding-inline: 1rem;
+      }
+
+      @media (max-width: 800px) {
+        .page {
+          width: min(100% - 1rem, 92rem);
+          padding-top: 1.5rem;
+        }
+
+        .page-header {
+          display: grid;
+        }
+
+        .study-header {
+          grid-template-columns: 1fr;
+        }
+
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .sources {
+          display: none;
+        }
+
+        .messages {
+          padding-top: 2rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <h1>Corpus color studies</h1>
+        <p>
+          Six warm pine directions shown in the same practical notebook workspace.
+          Compare their surfaces, hierarchy, contrast, and dark-mode character.
+        </p>
+      </header>
+
+      <div class="toolbar">
+        <span class="toolbar-label">Preview theme</span>
+        <div class="theme-switch" role="group" aria-label="Preview theme">
+          <button type="button" data-theme="light" aria-pressed="true">Light</button>
+          <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+
+      <section class="studies" data-preview-theme="light">
+        <article class="study" data-palette="mineral">
+          <header class="study-header">
+            <div>
+              <p class="study-number">Palette 1</p>
+              <h2>Green mineral</h2>
+              <p>
+                The most balanced direction. Warmth comes from green-gray neutrals,
+                while pine stays clear and functional.
+              </p>
+            </div>
+            <div class="swatches" aria-label="Green mineral color swatches">
+              <span class="swatch" style="--swatch: var(--background)" title="Background"></span>
+              <span class="swatch" style="--swatch: var(--surface)" title="Surface"></span>
+              <span class="swatch" style="--swatch: var(--primary)" title="Pine"></span>
+              <span class="swatch" style="--swatch: var(--text)" title="Text"></span>
+            </div>
+          </header>
+          <div class="workspace">
+            <aside class="sources">
+              <div class="brand-row">
+                <span class="brand-mark">C</span>
+                <span>Corpus</span>
+              </div>
+              <div class="sources-heading">
+                <h3>Sources</h3>
+                <button class="add-button" type="button">Add source</button>
+              </div>
+              <input class="search" type="search" placeholder="Search sources" aria-label="Search sources" />
+              <div class="source-list">
+                <div class="source">
+                  <div class="source-title">
+                    <strong>Attention Is All You Need</strong>
+                    <span>PDF · Ready</span>
+                  </div>
+                  <span class="check">✓</span>
+                </div>
+                <div class="source">
+                  <div class="source-title">
+                    <strong>Transformer architecture notes</strong>
+                    <span>Pasted text · Ready</span>
+                  </div>
+                  <span class="check">✓</span>
+                </div>
+                <div class="source">
+                  <div class="source-title">
+                    <strong>Research overview</strong>
+                    <span>Web page · Processing</span>
+                  </div>
+                  <span class="check">✓</span>
+                </div>
+              </div>
+            </aside>
+            <section class="chat">
+              <header class="chat-header"><h3>Transformer research</h3></header>
+              <div class="messages">
+                <div class="user-message">What is the central architectural idea?</div>
+                <div class="assistant-message">
+                  <p>
+                    The architecture replaces recurrence with attention, allowing the
+                    model to connect every token directly to the rest of the sequence.
+                    <span class="citation">1</span>
+                  </p>
+                  <p>
+                    This makes training more parallel while preserving the ability to
+                    model long-range relationships through multi-head attention.
+                    <span class="citation">1</span><span class="citation">2</span>
+                  </p>
+                </div>
+              </div>
+              <div class="composer-wrap">
+                <div class="composer">
+                  <textarea placeholder="Ask about your sources" aria-label="Chat message"></textarea>
+                  <div class="composer-actions">
+                    <span class="composer-hint">Enter to send · Shift + Enter for a new line</span>
+                    <button class="send-button" type="button">Send</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="study" data-palette="paper">
+          <header class="study-header">
+            <div>
+              <p class="study-number">Palette 2</p>
+              <h2>Warm paper</h2>
+              <p>
+                The softest and most tactile option. Creamy surfaces make the workspace
+                feel calm, familiar, and distinctly bookish.
+              </p>
+            </div>
+            <div class="swatches" aria-label="Warm paper color swatches">
+              <span class="swatch" style="--swatch: var(--background)" title="Background"></span>
+              <span class="swatch" style="--swatch: var(--surface)" title="Surface"></span>
+              <span class="swatch" style="--swatch: var(--primary)" title="Pine"></span>
+              <span class="swatch" style="--swatch: var(--text)" title="Text"></span>
+            </div>
+          </header>
+          <div class="workspace">
+            <aside class="sources">
+              <div class="brand-row">
+                <span class="brand-mark">C</span>
+                <span>Corpus</span>
+              </div>
+              <div class="sources-heading">
+                <h3>Sources</h3>
+                <button class="add-button" type="button">Add source</button>
+              </div>
+              <input class="search" type="search" placeholder="Search sources" aria-label="Search sources" />
+              <div class="source-list">
+                <div class="source">
+                  <div class="source-title">
+                    <strong>Attention Is All You Need</strong>
+                    <span>PDF · Ready</span>
+                  </div>
+                  <span class="check">✓</span>
+                </div>
+                <div class="source">
+                  <div class="source-title">
+                    <strong>Transformer architecture notes</strong>
+                    <span>Pasted text · Ready</span>
+                  </div>
+                  <span class="check">✓</span>
+                </div>
+                <div class="source">
+                  <div class="source-title">
+                    <strong>Research overview</strong>
+                    <span>Web page · Processing</span>
+                  </div>
+                  <span class="check">✓</span>
+                </div>
+              </div>
+            </aside>
+            <section class="chat">
+              <header class="chat-header"><h3>Transformer research</h3></header>
+              <div class="messages">
+                <div class="user-message">What is the central architectural idea?</div>
+                <div class="assistant-message">
+                  <p>
+                    The architecture replaces recurrence with attention, allowing the
+                    model to connect every token directly to the rest of the sequence.
+                    <span class="citation">1</span>
+                  </p>
+                  <p>
+                    This makes training more parallel while preserving the ability to
+                    model long-range relationships through multi-head attention.
+                    <span class="citation">1</span><span class="citation">2</span>
+                  </p>
+                </div>
+              </div>
+              <div class="composer-wrap">
+                <div class="composer">
+                  <textarea placeholder="Ask about your sources" aria-label="Chat message"></textarea>
+                  <div class="composer-actions">
+                    <span class="composer-hint">Enter to send · Shift + Enter for a new line</span>
+                    <button class="send-button" type="button">Send</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="study" data-palette="neutral">
+          <header class="study-header">
+            <div>
+              <p class="study-number">Palette 3</p>
+              <h2>Clean neutral</h2>
+              <p>
+                The crispest option. Pine carries more of the warmth against clean,
+                quiet surfaces suited to longer working sessions.
+              </p>
+            </div>
+            <div class="swatches" aria-label="Clean neutral color swatches">
+              <span class="swatch" style="--swatch: var(--background)" title="Background"></span>
+              <span class="swatch" style="--swatch: var(--surface)" title="Surface"></span>
+              <span class="swatch" style="--swatch: var(--primary)" title="Pine"></span>
+              <span class="swatch" style="--swatch: var(--text)" title="Text"></span>
+            </div>
+          </header>
+          <div class="workspace">
+            <aside class="sources">
+              <div class="brand-row">
+                <span class="brand-mark">C</span>
+                <span>Corpus</span>
+              </div>
+              <div class="sources-heading">
+                <h3>Sources</h3>
+                <button class="add-button" type="button">Add source</button>
+              </div>
+              <input class="search" type="search" placeholder="Search sources" aria-label="Search sources" />
+              <div class="source-list">
+                <div class="source">
+                  <div class="source-title">
+                    <strong>Attention Is All You Need</strong>
+                    <span>PDF · Ready</span>
+                  </div>
+                  <span class="check">✓</span>
+                </div>
+                <div class="source">
+                  <div class="source-title">
+                    <strong>Transformer architecture notes</strong>
+                    <span>Pasted text · Ready</span>
+                  </div>
+                  <span class="check">✓</span>
+                </div>
+                <div class="source">
+                  <div class="source-title">
+                    <strong>Research overview</strong>
+                    <span>Web page · Processing</span>
+                  </div>
+                  <span class="check">✓</span>
+                </div>
+              </div>
+            </aside>
+            <section class="chat">
+              <header class="chat-header"><h3>Transformer research</h3></header>
+              <div class="messages">
+                <div class="user-message">What is the central architectural idea?</div>
+                <div class="assistant-message">
+                  <p>
+                    The architecture replaces recurrence with attention, allowing the
+                    model to connect every token directly to the rest of the sequence.
+                    <span class="citation">1</span>
+                  </p>
+                  <p>
+                    This makes training more parallel while preserving the ability to
+                    model long-range relationships through multi-head attention.
+                    <span class="citation">1</span><span class="citation">2</span>
+                  </p>
+                </div>
+              </div>
+              <div class="composer-wrap">
+                <div class="composer">
+                  <textarea placeholder="Ask about your sources" aria-label="Chat message"></textarea>
+                  <div class="composer-actions">
+                    <span class="composer-hint">Enter to send · Shift + Enter for a new line</span>
+                    <button class="send-button" type="button">Send</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      const studies = document.querySelector(".studies")
+      const warmPaperStudy = studies.querySelector('[data-palette="paper"]')
+      const earthyPalettes = [
+        {
+          id: "earth",
+          number: "Palette 4",
+          name: "Earthy paper",
+          description:
+            "A grounded evolution of Warm paper. Clay-tinted neutrals add depth while pine keeps the workspace calm and legible.",
+        },
+        {
+          id: "moss",
+          number: "Palette 5",
+          name: "Moss and linen",
+          description:
+            "The most organic direction. Soft olive neutrals feel natural and quiet without turning the interface rustic.",
+        },
+        {
+          id: "walnut",
+          number: "Palette 6",
+          name: "Walnut and pine",
+          description:
+            "The richest option. Brown mineral surfaces and deeper shadows create a warm, settled workspace with stronger contrast.",
+        },
+      ]
+
+      for (const palette of earthyPalettes) {
+        const study = warmPaperStudy.cloneNode(true)
+        study.dataset.palette = palette.id
+        study.querySelector(".study-number").textContent = palette.number
+        study.querySelector("h2").textContent = palette.name
+        study.querySelector(".study-header p:last-child").textContent = palette.description
+        study
+          .querySelector(".swatches")
+          .setAttribute("aria-label", `${palette.name} color swatches`)
+        studies.append(study)
+      }
+
+      const themeButtons = document.querySelectorAll("[data-theme]")
+
+      for (const button of themeButtons) {
+        button.addEventListener("click", () => {
+          const theme = button.dataset.theme
+          studies.dataset.previewTheme = theme
+
+          for (const candidate of themeButtons) {
+            candidate.setAttribute("aria-pressed", String(candidate === button))
+          }
+        })
+      }
+    </script>
+  </body>
+</html>
