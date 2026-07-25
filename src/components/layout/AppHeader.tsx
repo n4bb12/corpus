@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { AccountMenu } from "src/components/layout/AccountMenu"
 import { BrandLockup } from "src/components/layout/BrandLockup"
 import { ThemeMenu } from "src/components/layout/ThemeMenu"
@@ -6,7 +7,7 @@ import { cn } from "src/lib/utils"
 export type AppHeaderProps = {
 	email?: string | null
 	name?: string | null
-	notebookTitle?: React.ReactNode
+	notebookTitle?: ReactNode
 	showAccount?: boolean
 	className?: string
 	workspace?: boolean

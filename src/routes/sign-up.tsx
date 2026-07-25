@@ -5,6 +5,7 @@ import {
 	useNavigate,
 } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
+import type { SubmitEvent } from "react"
 import { useState } from "react"
 import { AuthShell } from "src/components/auth/AuthShell"
 import { GoogleSignInButton } from "src/components/auth/GoogleSignInButton"
@@ -39,7 +40,7 @@ function SignUpPage() {
 	const [error, setError] = useState<string | null>(null)
 	const [pending, setPending] = useState(false)
 
-	async function onSubmit(event: React.FormEvent) {
+	async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault()
 		setPending(true)
 		setError(null)

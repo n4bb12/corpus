@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import type { SubmitEvent } from "react"
 import { useState } from "react"
 import { AuthShell } from "src/components/auth/AuthShell"
 import { Button } from "src/components/ui/button"
@@ -16,7 +17,7 @@ function ForgotPasswordPage() {
 	const [error, setError] = useState<string | null>(null)
 	const [pending, setPending] = useState(false)
 
-	async function onSubmit(event: React.FormEvent) {
+	async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault()
 		setPending(true)
 		setError(null)

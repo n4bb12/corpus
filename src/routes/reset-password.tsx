@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import type { SubmitEvent } from "react"
 import { useState } from "react"
 import { z } from "zod"
 import { AuthShell } from "src/components/auth/AuthShell"
@@ -21,7 +22,7 @@ function ResetPasswordPage() {
 	const [error, setError] = useState<string | null>(null)
 	const [pending, setPending] = useState(false)
 
-	async function onSubmit(event: React.FormEvent) {
+	async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault()
 
 		if (!token) {

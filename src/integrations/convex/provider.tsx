@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import {
 	type AuthClient,
 	ConvexBetterAuthProvider,
@@ -15,7 +16,7 @@ if (!convexUrl) {
 export const convexClient = new ConvexReactClient(convexUrl)
 
 export type AppConvexProviderProps = {
-	children: React.ReactNode
+	children: ReactNode
 	initialToken?: string | null
 }
 
