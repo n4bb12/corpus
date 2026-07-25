@@ -3,13 +3,14 @@ import { createClient } from "@convex-dev/better-auth"
 import { convex } from "@convex-dev/better-auth/plugins"
 import { betterAuth } from "better-auth/minimal"
 import { magicLink } from "better-auth/plugins"
+import { requireEnv } from "src/lib/env"
 import { components } from "./_generated/api"
 import type { DataModel } from "./_generated/dataModel"
 import { query } from "./_generated/server"
 import authConfig from "./auth.config"
 import { sendMagicLinkEmail } from "./emails/send"
 
-const siteUrl = process.env.SITE_URL!
+const siteUrl = requireEnv("SITE_URL")
 
 const trustedOrigins = [
 	"http://localhost:3000",
@@ -27,12 +28,12 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 			protocol: "auto",
 		},
 		trustedOrigins: [...trustedOrigins],
-		secret: process.env.BETTER_AUTH_SECRET,
+		secret: requireEnv("BETTER_AUTH_SECRET"),
 		database: authComponent.adapter(ctx),
 		socialProviders: {
 			google: {
-				clientId: process.env.GOOGLE_CLIENT_ID as string,
-				clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+				clientId: requireEnv("GOOGLE_CLIENT_ID"),
+				clientSecret: requireEnv("GOOGLE_CLIENT_SECRET"),
 			},
 		},
 		account: {

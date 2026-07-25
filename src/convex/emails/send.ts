@@ -1,26 +1,15 @@
 import type { GenericCtx } from "@convex-dev/better-auth"
 import Plunk from "@plunk/node"
+import { requireEnv } from "src/lib/env"
 import type { DataModel } from "../_generated/dataModel"
 
 function getPlunkClient() {
-	const apiKey = process.env.PLUNK_API_KEY
-
-	if (!apiKey) {
-		throw new Error("PLUNK_API_KEY is not set")
-	}
-
-	return new Plunk(apiKey)
+	return new Plunk(requireEnv("PLUNK_API_KEY"))
 }
 
 function getFromAddress() {
-	const fromEmail = process.env.PLUNK_FROM_EMAIL
-
-	if (!fromEmail) {
-		throw new Error("PLUNK_FROM_EMAIL is not set")
-	}
-
 	return {
-		from: fromEmail,
+		from: requireEnv("PLUNK_FROM_EMAIL"),
 		name: process.env.PLUNK_FROM_NAME || "Corpus",
 	}
 }

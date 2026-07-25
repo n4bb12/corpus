@@ -3,6 +3,7 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { generateText } from "ai"
 import { v } from "convex/values"
+import { requireEnv } from "src/lib/env"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
 import { MODELS, UNTITLED_NOTEBOOK } from "./lib/limits"
@@ -48,7 +49,7 @@ export const maybeGenerateNotebookTitle = internalAction({
 
 			const markdown = (await blob.text()).slice(0, 4000)
 			const openai = createOpenAI({
-				apiKey: process.env.OPENAI_API_KEY,
+				apiKey: requireEnv("OPENAI_API_KEY"),
 			})
 
 			const result = await generateText({

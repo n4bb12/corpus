@@ -11,6 +11,7 @@ import {
 	fetchAuthMutation,
 	getToken,
 } from "src/lib/auth-server"
+import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
 
 export const Route = createFileRoute("/api/chat")({
@@ -79,7 +80,7 @@ export const Route = createFileRoute("/api/chat")({
 				}
 
 				const openai = createOpenAI({
-					apiKey: process.env.OPENAI_API_KEY,
+					apiKey: requireEnv("OPENAI_API_KEY"),
 				})
 
 				const evidenceBlock = evidencePack.evidence
