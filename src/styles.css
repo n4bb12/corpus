@@ -195,3 +195,25 @@
 .dark .citation-highlight {
 	background: rgb(121 185 153 / 12%);
 }
+
+@keyframes triple-dot {
+	0%,
+	80%,
+	100% {
+		opacity: 0.28;
+		transform: translateY(0);
+	}
+	40% {
+		opacity: 1;
+		transform: translateY(-1px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-\[triple-dot_1\.05s_ease-in-out_infinite\],
+	.animate-\[triple-dot_1\.05s_ease-in-out_0\.15s_infinite\],
+	.animate-\[triple-dot_1\.05s_ease-in-out_0\.3s_infinite\] {
+		animation: none;
+		opacity: 0.7;
+	}
+}

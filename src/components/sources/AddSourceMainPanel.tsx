@@ -3,6 +3,7 @@ import { motion } from "motion/react"
 import type { RefObject } from "react"
 import { Button } from "src/components/ui/button"
 import { Input } from "src/components/ui/input"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 import { layoutTransition } from "src/lib/motion"
 
 export type AddSourceMainPanelProps = {
@@ -55,7 +56,9 @@ export function AddSourceMainPanel({
 					className="rounded-xl"
 				/>
 				<Button type="submit" className="rounded-sm" disabled={pending}>
-					Add
+					<PendingLabel pending={pending} pendingLabel="Adding source">
+						Add
+					</PendingLabel>
 				</Button>
 			</form>
 

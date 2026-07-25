@@ -8,6 +8,7 @@ import { AppHeader } from "src/components/layout/AppHeader"
 import { NotebookCard } from "src/components/library/NotebookCard"
 import { Button } from "src/components/ui/button"
 import { Input } from "src/components/ui/input"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 import { api } from "src/convex/_generated/api"
 import { authClient } from "src/lib/auth-client"
 import { LIMITS } from "src/lib/limits"
@@ -22,6 +23,8 @@ export function LibraryPage() {
 	const removeNotebook = useMutation(api.notebooks.remove)
 	const renameNotebook = useMutation(api.notebooks.rename)
 	const session = authClient.useSession()
+
+	const [creating, setCreating] = useState(false)
 
 	useEffect(() => {
 		const handle = window.setTimeout(() => {
@@ -64,12 +67,18 @@ export function LibraryPage() {
 	const noMatches = !isLoading && !!search.q && !result.page.length
 
 	async function onCreate() {
-		const notebookId = await createNotebook({})
-		await navigate({
-			to: "/notebooks/$notebookId",
-			params: { notebookId },
-			search: { tab: "sources" },
-		})
+		setCreating(true)
+
+		try {
+			const notebookId = await createNotebook({})
+			await navigate({
+				to: "/notebooks/$notebookId",
+				params: { notebookId },
+				search: { tab: "sources" },
+			})
+		} catch {
+			setCreating(false)
+		}
 	}
 
 	return (
@@ -84,9 +93,17 @@ export function LibraryPage() {
 						<h1 className="text-2xl font-semibold tracking-tight">
 							Your notebooks
 						</h1>
-						<Button className="rounded-sm" onClick={onCreate}>
-							<Plus size={16} className="mr-1.5" />
-							New notebook
+						<Button
+							className="rounded-sm"
+							disabled={creating}
+							onClick={() => void onCreate()}
+						>
+							<PendingLabel pending={creating} pendingLabel="Creating notebook">
+								<span className="inline-flex items-center">
+									<Plus size={16} className="mr-1.5" />
+									New notebook
+								</span>
+							</PendingLabel>
 						</Button>
 					</div>
 
@@ -118,9 +135,20 @@ export function LibraryPage() {
 									to every answer.
 								</p>
 							</div>
-							<Button className="rounded-sm" onClick={onCreate}>
-								<Plus size={16} className="mr-1.5" />
-								New notebook
+							<Button
+								className="rounded-sm"
+								disabled={creating}
+								onClick={() => void onCreate()}
+							>
+								<PendingLabel
+									pending={creating}
+									pendingLabel="Creating notebook"
+								>
+									<span className="inline-flex items-center">
+										<Plus size={16} className="mr-1.5" />
+										New notebook
+									</span>
+								</PendingLabel>
 							</Button>
 						</div>
 					) : null}

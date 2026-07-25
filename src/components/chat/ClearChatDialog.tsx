@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Button } from "src/components/ui/button"
 import {
 	Dialog,
@@ -7,6 +8,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "src/components/ui/dialog"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 
 export type ClearChatDialogProps = {
 	open: boolean
@@ -19,6 +21,18 @@ export function ClearChatDialog({
 	onOpenChange,
 	onConfirm,
 }: ClearChatDialogProps) {
+	const [pending, setPending] = useState(false)
+
+	async function confirm() {
+		setPending(true)
+
+		try {
+			await onConfirm()
+		} finally {
+			setPending(false)
+		}
+	}
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="rounded-2xl sm:max-w-md">
@@ -33,6 +47,7 @@ export function ClearChatDialog({
 					<Button
 						variant="outline"
 						className="rounded-sm"
+						disabled={pending}
 						onClick={() => onOpenChange(false)}
 					>
 						Cancel
@@ -40,9 +55,12 @@ export function ClearChatDialog({
 					<Button
 						variant="destructive"
 						className="rounded-sm"
-						onClick={() => void onConfirm()}
+						disabled={pending}
+						onClick={() => void confirm()}
 					>
-						Clear chat
+						<PendingLabel pending={pending} pendingLabel="Clearing chat">
+							Clear chat
+						</PendingLabel>
 					</Button>
 				</DialogFooter>
 			</DialogContent>

@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Button } from "src/components/ui/button"
 import {
 	Dialog,
@@ -7,6 +8,7 @@ import {
 	DialogTitle,
 } from "src/components/ui/dialog"
 import { Input } from "src/components/ui/input"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 
 export type SourceRenameDialogProps = {
 	open: boolean
@@ -23,6 +25,18 @@ export function SourceRenameDialog({
 	onOpenChange,
 	onSave,
 }: SourceRenameDialogProps) {
+	const [pending, setPending] = useState(false)
+
+	async function save() {
+		setPending(true)
+
+		try {
+			await onSave()
+		} finally {
+			setPending(false)
+		}
+	}
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="rounded-2xl sm:max-w-md">
@@ -34,11 +48,18 @@ export function SourceRenameDialog({
 					onChange={(event) => onTitleChange(event.target.value)}
 					className="rounded-xl"
 					autoFocus
+					disabled={pending}
 					onFocus={(event) => event.currentTarget.select()}
 				/>
 				<DialogFooter>
-					<Button className="rounded-sm" onClick={() => void onSave()}>
-						Save
+					<Button
+						className="rounded-sm"
+						disabled={pending}
+						onClick={() => void save()}
+					>
+						<PendingLabel pending={pending} pendingLabel="Saving">
+							Save
+						</PendingLabel>
 					</Button>
 				</DialogFooter>
 			</DialogContent>

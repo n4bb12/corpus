@@ -5,6 +5,7 @@ import { GoogleSignInButton } from "src/components/auth/GoogleSignInButton"
 import { Button } from "src/components/ui/button"
 import { Input } from "src/components/ui/input"
 import { Label } from "src/components/ui/label"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 import { Separator } from "src/components/ui/separator"
 import { authClient } from "src/lib/auth-client"
 import {
@@ -18,11 +19,12 @@ export function SignInPage() {
 	const [email, setEmail] = useState("")
 	const [error, setError] = useState<string | null>(null)
 	const [sent, setSent] = useState(false)
-	const [pending, setPending] = useState(false)
+	const [pendingEmail, setPendingEmail] = useState(false)
+	const [pendingGoogle, setPendingGoogle] = useState(false)
 
 	async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault()
-		setPending(true)
+		setPendingEmail(true)
 		setError(null)
 		setSent(false)
 
@@ -31,7 +33,7 @@ export function SignInPage() {
 			callbackURL: "/",
 		})
 
-		setPending(false)
+		setPendingEmail(false)
 
 		if (result.error) {
 			setError(result.error.message || "Could not send magic link.")
@@ -40,6 +42,15 @@ export function SignInPage() {
 
 		setLastSignInMethod("email")
 		setSent(true)
+	}
+
+	function onGoogle() {
+		setPendingGoogle(true)
+		setLastSignInMethod("google")
+		void authClient.signIn.social({
+			provider: "google",
+			callbackURL: "/",
+		})
 	}
 
 	return (
@@ -54,13 +65,8 @@ export function SignInPage() {
 
 				<GoogleSignInButton
 					highlighted={lastMethod === "google"}
-					onClick={() => {
-						setLastSignInMethod("google")
-						authClient.signIn.social({
-							provider: "google",
-							callbackURL: "/",
-						})
-					}}
+					pending={pendingGoogle}
+					onClick={onGoogle}
 				/>
 
 				<div className="flex items-center gap-3">
@@ -94,6 +100,7 @@ export function SignInPage() {
 							onChange={(event) => setEmail(event.target.value)}
 							className="rounded-xl"
 							required
+							disabled={pendingEmail || pendingGoogle}
 						/>
 					</div>
 					{error ? <p className="text-sm text-destructive">{error}</p> : null}
@@ -105,9 +112,14 @@ export function SignInPage() {
 					<Button
 						type="submit"
 						className="h-11 w-full rounded-sm"
-						disabled={pending}
+						disabled={pendingEmail || pendingGoogle}
 					>
-						{pending ? "Sending…" : "Email me a magic link"}
+						<PendingLabel
+							pending={pendingEmail}
+							pendingLabel="Sending magic link"
+						>
+							Email me a magic link
+						</PendingLabel>
 					</Button>
 				</form>
 			</div>

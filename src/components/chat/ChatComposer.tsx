@@ -1,5 +1,6 @@
 import { Layers, Square } from "lucide-react"
 import { Button } from "src/components/ui/button"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 import { Textarea } from "src/components/ui/textarea"
 import { LIMITS } from "src/lib/limits"
 
@@ -70,7 +71,7 @@ export function ChatComposer({
 								<Layers size={16} className="mr-1" />
 								{readySourceCount} sources
 							</Button>
-							{streaming || sending ? (
+							{streaming ? (
 								<Button
 									type="button"
 									className="min-w-20 rounded-sm"
@@ -83,10 +84,12 @@ export function ChatComposer({
 								<Button
 									type="button"
 									className="min-w-20 rounded-sm"
-									disabled={!readySourceCount || !prompt.trim()}
+									disabled={!readySourceCount || !prompt.trim() || sending}
 									onClick={onSend}
 								>
-									Send
+									<PendingLabel pending={sending} pendingLabel="Sending">
+										Send
+									</PendingLabel>
 								</Button>
 							)}
 						</div>

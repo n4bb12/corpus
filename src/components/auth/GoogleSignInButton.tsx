@@ -1,9 +1,11 @@
 import { Button } from "src/components/ui/button"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 import { cn } from "src/lib/utils"
 
 export type GoogleSignInButtonProps = {
 	className?: string
 	highlighted?: boolean
+	pending?: boolean
 	onClick: () => void
 }
 
@@ -38,6 +40,7 @@ function GoogleMark() {
 export function GoogleSignInButton({
 	className,
 	highlighted = false,
+	pending = false,
 	onClick,
 }: GoogleSignInButtonProps) {
 	return (
@@ -50,6 +53,7 @@ export function GoogleSignInButton({
 			<Button
 				type="button"
 				variant="outline"
+				disabled={pending}
 				className={cn(
 					"h-11 w-full gap-3 rounded-md border-[#dadce0] bg-white text-[#3c4043] shadow-sm hover:bg-[#f8f9fa] hover:text-[#3c4043] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]",
 					highlighted &&
@@ -58,8 +62,14 @@ export function GoogleSignInButton({
 				)}
 				onClick={onClick}
 			>
-				<GoogleMark />
-				Continue with Google
+				<PendingLabel
+					pending={pending}
+					pendingLabel="Signing in with Google"
+					className="w-full gap-3"
+				>
+					<GoogleMark />
+					Continue with Google
+				</PendingLabel>
 			</Button>
 		</div>
 	)

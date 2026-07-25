@@ -1,6 +1,7 @@
 import { motion } from "motion/react"
 import type { RefObject } from "react"
 import { Button } from "src/components/ui/button"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 import { Textarea } from "src/components/ui/textarea"
 import { layoutTransition } from "src/lib/motion"
 
@@ -50,7 +51,9 @@ export function AddSourceTextPanel({
 					disabled={pending}
 					onClick={() => void onSubmit()}
 				>
-					Add text
+					<PendingLabel pending={pending} pendingLabel="Adding text">
+						Add text
+					</PendingLabel>
 				</Button>
 			</div>
 		</motion.div>

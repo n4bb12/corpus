@@ -1,4 +1,5 @@
 import { LogOut, User } from "lucide-react"
+import { useState } from "react"
 import { Button } from "src/components/ui/button"
 import {
 	DropdownMenu,
@@ -8,6 +9,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 import { authClient } from "src/lib/auth-client"
 
 export type AccountMenuProps = {
@@ -16,6 +18,23 @@ export type AccountMenuProps = {
 }
 
 export function AccountMenu({ email, name }: AccountMenuProps) {
+	const [pending, setPending] = useState(false)
+
+	async function onSignOut() {
+		setPending(true)
+
+		await authClient.signOut({
+			fetchOptions: {
+				onSuccess: () => {
+					location.reload()
+				},
+				onError: () => {
+					setPending(false)
+				},
+			},
+		})
+	}
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -40,19 +59,17 @@ export function AccountMenu({ email, name }: AccountMenuProps) {
 					) : null}
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem
-					onClick={() =>
-						authClient.signOut({
-							fetchOptions: {
-								onSuccess: () => {
-									location.reload()
-								},
-							},
-						})
-					}
-				>
-					<LogOut size={16} className="mr-2" />
-					Sign out
+				<DropdownMenuItem disabled={pending} onClick={() => void onSignOut()}>
+					<PendingLabel
+						pending={pending}
+						pendingLabel="Signing out"
+						className="w-full justify-start"
+					>
+						<span className="inline-flex items-center">
+							<LogOut size={16} className="mr-2" />
+							Sign out
+						</span>
+					</PendingLabel>
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
