@@ -159,13 +159,6 @@ bun run fix
 bun run build
 ```
 
-Optional browser smoke:
-
-```bash
-bunx playwright install chromium
-bun run test:e2e
-```
-
 Before calling the deployment done, manually verify Google sign-in, email verification, one URL/file/text ingestion, grounded chat, citations, and light/dark layouts.
 
 ## Product docs
