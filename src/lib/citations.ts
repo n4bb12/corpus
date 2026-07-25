@@ -69,7 +69,12 @@ export function attachParagraphCitations(
 				return paragraph
 			}
 
-			const chunkId = orderedChunkIds[cursor % orderedChunkIds.length]!
+			const chunkId = orderedChunkIds[cursor % orderedChunkIds.length]
+
+			if (typeof chunkId !== "string") {
+				return paragraph
+			}
+
 			cursor += 1
 			return `${paragraph} [[cite:${chunkId}]]`
 		})

@@ -35,6 +35,7 @@ function FloatingPage({
 			}
 		>
 			<svg viewBox="0 0 120 150" className="h-full w-full" fill="none">
+				<title>Notebook page</title>
 				<rect
 					x="8"
 					y="8"
@@ -96,6 +97,7 @@ function CitationOrb({
 			}
 		>
 			<svg viewBox="0 0 96 96" className="h-full w-full" fill="none">
+				<title>Citation marker</title>
 				<circle
 					cx="48"
 					cy="48"
@@ -136,6 +138,7 @@ function LinkTrail({ className }: { className?: string }) {
 						}
 			}
 		>
+			<title>Source trail</title>
 			<path
 				d="M12 88C48 28 96 24 140 52c36 24 72 40 128 8"
 				className="stroke-primary/30"

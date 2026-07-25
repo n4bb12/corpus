@@ -9,6 +9,18 @@ export type SourcePreviewProps = {
 	onBack: () => void
 }
 
+function linesWithOffsets(content: string) {
+	return content
+		.split("\n")
+		.reduce<Array<{ line: string; start: number }>>((lines, line) => {
+			const previous = lines.at(-1)
+			const start = previous ? previous.start + previous.line.length + 1 : 0
+
+			lines.push({ line, start })
+			return lines
+		}, [])
+}
+
 export function SourcePreview({
 	title,
 	markdown,
@@ -16,6 +28,7 @@ export function SourcePreview({
 	onBack,
 }: SourcePreviewProps) {
 	const content = markdown ?? "Loading preview…"
+	const lines = linesWithOffsets(content)
 
 	return (
 		<div className="flex h-full flex-col">
@@ -33,8 +46,7 @@ export function SourcePreview({
 			</div>
 			<div className="flex-1 overflow-auto px-4 py-4">
 				<article className="prose prose-sm dark:prose-invert max-w-none">
-					{content.split("\n").map((line, index) => {
-						const start = content.split("\n").slice(0, index).join("\n").length
+					{lines.map(({ line, start }) => {
 						const end = start + line.length
 						const highlighted =
 							highlightOffsets &&
@@ -43,7 +55,7 @@ export function SourcePreview({
 
 						return (
 							<p
-								key={`${index}-${line.slice(0, 12)}`}
+								key={start}
 								className={cn(highlighted && "citation-highlight")}
 							>
 								{line || "\u00A0"}
