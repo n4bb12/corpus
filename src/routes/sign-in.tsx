@@ -7,6 +7,7 @@ import {
 import { createServerFn } from "@tanstack/react-start"
 import { useState } from "react"
 import { AuthShell } from "#/components/auth/AuthShell"
+import { GoogleSignInButton } from "#/components/auth/GoogleSignInButton"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -66,19 +67,14 @@ function SignInPage() {
 					</p>
 				</div>
 
-				<Button
-					type="button"
-					variant="outline"
-					className="h-11 w-full rounded-[10px]"
+				<GoogleSignInButton
 					onClick={() =>
 						authClient.signIn.social({
 							provider: "google",
 							callbackURL: "/",
 						})
 					}
-				>
-					Continue with Google
-				</Button>
+				/>
 
 				<div className="flex items-center gap-3">
 					<Separator className="flex-1" />
