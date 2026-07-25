@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { TooltipProvider } from "src/components/ui/tooltip"
+import { ThemeScript } from "src/components/layout/ThemeScript"
 import { AppConvexProvider } from "src/integrations/convex/provider"
 import { getToken } from "src/lib/auth-server"
 import appCss from "src/styles.css?url"
@@ -68,11 +69,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		<html lang="en" suppressHydrationWarning>
 			<head>
 				<HeadContent />
-				<script
-					dangerouslySetInnerHTML={{
-						__html: `(function(){try{var p=localStorage.getItem('corpus-theme')||'system';var d=p==='dark'||(p==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){}})();`,
-					}}
-				/>
+				<ThemeScript />
 			</head>
 			<body className="min-h-dvh bg-background text-foreground">
 				{children}
