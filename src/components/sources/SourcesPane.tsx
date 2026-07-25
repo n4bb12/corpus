@@ -1,37 +1,16 @@
-import {
-	ArrowLeft,
-	FileText,
-	Link as LinkIcon,
-	LoaderCircle,
-	MoreHorizontal,
-	Plus,
-	Search,
-	Type,
-} from "lucide-react"
+import { Plus, Search } from "lucide-react"
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence } from "motion/react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { AddSourceDialog } from "src/components/sources/AddSourceDialog"
+import { SourceDeleteDialog } from "src/components/sources/SourceDeleteDialog"
+import { SourceListItem } from "src/components/sources/SourceListItem"
+import { SourcePreview } from "src/components/sources/SourcePreview"
+import { SourceRenameDialog } from "src/components/sources/SourceRenameDialog"
 import { Button } from "src/components/ui/button"
 import { Checkbox } from "src/components/ui/checkbox"
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "src/components/ui/dialog"
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "src/components/ui/dropdown-menu"
 import { Input } from "src/components/ui/input"
-import { layoutTransition } from "src/lib/motion"
-import { cn } from "src/lib/utils"
 import { describeRejectedFile, isAcceptedUpload } from "src/convex/lib/file-types"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
@@ -42,15 +21,6 @@ export type SourcesPaneProps = {
 	highlightOffsets?: { start: number; end: number } | null
 	onPreviewSource: (sourceId: string | null) => void
 	onHighlightHandled?: () => void
-}
-
-const STATUS_LABEL: Record<string, string> = {
-	pending: "Queued",
-	extracting: "Extracting",
-	chunking: "Chunking",
-	embedding: "Embedding",
-	ready: "Ready",
-	failed: "Failed",
 }
 
 export function SourcesPane({
@@ -85,24 +55,18 @@ export function SourcesPane({
 			return list
 		}
 
-		return list.filter((source: any) =>
-			source.title.toLowerCase().includes(needle),
-		)
+		return list.filter((source) => source.title.toLowerCase().includes(needle))
 	}, [query, sources])
 
 	const selectable = filtered.filter(
-		(source: any) => source.processingState !== "failed",
+		(source) => source.processingState !== "failed",
 	)
-	const selectedCount = selectable.filter(
-		(source: any) => source.selected,
-	).length
+	const selectedCount = selectable.filter((source) => source.selected).length
 	const allSelected =
 		selectable.length > 0 && selectedCount === selectable.length
 	const someSelected = selectedCount > 0 && !allSelected
 
-	const previewSource = sources?.find(
-		(source: any) => source._id === previewSourceId,
-	)
+	const previewSource = sources?.find((source) => source._id === previewSourceId)
 	const previewUrl = useQuery(
 		api.sources.getNormalizedContent,
 		previewSourceId ? { sourceId: previewSourceId as Id<"sources"> } : "skip",
@@ -188,54 +152,19 @@ export function SourcesPane({
 
 	if (previewSource) {
 		return (
-			<div className="flex h-full flex-col">
-				<div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
-					<Button
-						variant="ghost"
-						size="sm"
-						className="rounded-sm"
-						onClick={() => {
-							onPreviewSource(null)
-							requestAnimationFrame(() => {
-								if (listRef.current) {
-									listRef.current.scrollTop = scrollMemory.current
-								}
-							})
-						}}
-					>
-						<ArrowLeft size={16} className="mr-1" />
-						Back
-					</Button>
-					<div className="min-w-0 flex-1 truncate font-medium">
-						{previewSource.title}
-					</div>
-				</div>
-				<div className="flex-1 overflow-auto px-4 py-4">
-					<article className="prose prose-sm dark:prose-invert max-w-none">
-						{(previewMarkdown ?? "Loading preview…")
-							.split("\n")
-							.map((line, index) => {
-								const start =
-									previewMarkdown?.split("\n").slice(0, index).join("\n")
-										.length ?? 0
-								const end = start + line.length
-								const highlighted =
-									highlightOffsets &&
-									start <= highlightOffsets.start &&
-									end >= highlightOffsets.start
-
-								return (
-									<p
-										key={`${index}-${line.slice(0, 12)}`}
-										className={cn(highlighted && "citation-highlight")}
-									>
-										{line || "\u00A0"}
-									</p>
-								)
-							})}
-					</article>
-				</div>
-			</div>
+			<SourcePreview
+				title={previewSource.title}
+				markdown={previewMarkdown}
+				highlightOffsets={highlightOffsets}
+				onBack={() => {
+					onPreviewSource(null)
+					requestAnimationFrame(() => {
+						if (listRef.current) {
+							listRef.current.scrollTop = scrollMemory.current
+						}
+					})
+				}}
+			/>
 		)
 	}
 
@@ -252,6 +181,7 @@ export function SourcesPane({
 				event.preventDefault()
 				setDragging(false)
 				const files = [...event.dataTransfer.files]
+
 				if (files.length) {
 					await uploadFiles(files)
 				}
@@ -297,7 +227,7 @@ export function SourcesPane({
 					onCheckedChange={(checked) =>
 						void setSelectedMany({
 							notebookId,
-							sourceIds: selectable.map((source: any) => source._id),
+							sourceIds: selectable.map((source) => source._id),
 							selected: checked === true,
 						})
 					}
@@ -310,103 +240,25 @@ export function SourcesPane({
 
 			<div ref={listRef} className="relative flex-1 overflow-auto px-2 pb-4">
 				<AnimatePresence initial={false}>
-					{(filtered ?? []).map((source: any) => {
-						const Icon =
-							source.kind === "url"
-								? LinkIcon
-								: source.kind === "file"
-									? FileText
-									: Type
-						const busy =
-							source.processingState !== "ready" &&
-							source.processingState !== "failed"
-
-						return (
-							<motion.div
-								layout
-								key={source._id}
-								transition={layoutTransition}
-								className="group mb-1 flex items-start gap-2 rounded-xl px-2 py-2 hover:bg-muted/60"
-							>
-								<button
-									type="button"
-									className="flex min-w-0 flex-1 items-start gap-2 text-left"
-									onClick={() => {
-										scrollMemory.current = listRef.current?.scrollTop ?? 0
-										onPreviewSource(source._id)
-									}}
-								>
-									<span className="mt-0.5 text-primary">
-										{busy ? (
-											<LoaderCircle size={18} className="animate-spin" />
-										) : (
-											<Icon size={18} />
-										)}
-									</span>
-									<span className="min-w-0">
-										<span className="line-clamp-2 text-sm font-medium">
-											{source.title}
-										</span>
-										<span className="mt-0.5 block text-xs text-muted-foreground">
-											{source.processingState === "failed"
-												? source.errorCode || "Failed"
-												: STATUS_LABEL[source.processingState]}
-										</span>
-									</span>
-								</button>
-								<div className="flex items-center gap-1">
-									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<Button
-												variant="ghost"
-												size="icon-xs"
-												className="rounded-sm opacity-100 touch-manipulation md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-												aria-label={`Source menu for ${source.title}`}
-											>
-												<MoreHorizontal size={16} />
-											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent align="end" className="rounded-xl">
-											<DropdownMenuItem
-												onClick={() => {
-													setRenameId(source._id)
-													setRenameDraft(source.title)
-												}}
-											>
-												Rename
-											</DropdownMenuItem>
-											{source.processingState === "failed" ? (
-												<DropdownMenuItem
-													onClick={() =>
-														void retrySource({ sourceId: source._id })
-													}
-												>
-													Retry
-												</DropdownMenuItem>
-											) : null}
-											<DropdownMenuItem
-												variant="destructive"
-												onClick={() => setDeleteId(source._id)}
-											>
-												Delete
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
-									<Checkbox
-										checked={source.selected}
-										disabled={source.processingState === "failed"}
-										onCheckedChange={(checked) =>
-											void setSelected({
-												sourceId: source._id,
-												selected: checked === true,
-											})
-										}
-										aria-label={`Select ${source.title}`}
-									/>
-								</div>
-							</motion.div>
-						)
-					})}
+					{filtered.map((source) => (
+						<SourceListItem
+							key={source._id}
+							source={source}
+							onPreview={() => {
+								scrollMemory.current = listRef.current?.scrollTop ?? 0
+								onPreviewSource(source._id)
+							}}
+							onRename={() => {
+								setRenameId(source._id)
+								setRenameDraft(source.title)
+							}}
+							onRetry={() => void retrySource({ sourceId: source._id })}
+							onDelete={() => setDeleteId(source._id)}
+							onSelect={(selected) =>
+								void setSelected({ sourceId: source._id, selected })
+							}
+						/>
+					))}
 				</AnimatePresence>
 			</div>
 
@@ -421,77 +273,41 @@ export function SourcesPane({
 				onFiles={uploadFiles}
 			/>
 
-			<Dialog
+			<SourceRenameDialog
 				open={!!renameId}
-				onOpenChange={(open) => !open && setRenameId(null)}
-			>
-				<DialogContent className="rounded-2xl sm:max-w-md">
-					<DialogHeader>
-						<DialogTitle>Rename source</DialogTitle>
-					</DialogHeader>
-					<Input
-						value={renameDraft}
-						onChange={(event) => setRenameDraft(event.target.value)}
-						className="rounded-xl"
-						autoFocus
-						onFocus={(event) => event.currentTarget.select()}
-					/>
-					<DialogFooter>
-						<Button
-							className="rounded-sm"
-							onClick={async () => {
-								if (!renameId) {
-									return
-								}
+				title={renameDraft}
+				onTitleChange={setRenameDraft}
+				onOpenChange={(open) => {
+					if (!open) {
+						setRenameId(null)
+					}
+				}}
+				onSave={async () => {
+					if (!renameId) {
+						return
+					}
 
-								await renameSource({ sourceId: renameId, title: renameDraft })
-								setRenameId(null)
-							}}
-						>
-							Save
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+					await renameSource({ sourceId: renameId, title: renameDraft })
+					setRenameId(null)
+				}}
+			/>
 
-			<Dialog
+			<SourceDeleteDialog
 				open={!!deleteId}
-				onOpenChange={(open) => !open && setDeleteId(null)}
-			>
-				<DialogContent className="rounded-2xl sm:max-w-md">
-					<DialogHeader>
-						<DialogTitle>Delete source</DialogTitle>
-						<DialogDescription>
-							This removes the upload, normalized content, chunks, and
-							embeddings. Citation excerpts already saved in chat remain until
-							chat or notebook deletion.
-						</DialogDescription>
-					</DialogHeader>
-					<DialogFooter>
-						<Button
-							variant="outline"
-							className="rounded-sm"
-							onClick={() => setDeleteId(null)}
-						>
-							Cancel
-						</Button>
-						<Button
-							variant="destructive"
-							className="rounded-sm"
-							onClick={async () => {
-								if (!deleteId) {
-									return
-								}
+				onOpenChange={(open) => {
+					if (!open) {
+						setDeleteId(null)
+					}
+				}}
+				onConfirm={async () => {
+					if (!deleteId) {
+						return
+					}
 
-								await removeSource({ sourceId: deleteId })
-								setDeleteId(null)
-							}}
-						>
-							Delete
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+					await removeSource({ sourceId: deleteId })
+					setDeleteId(null)
+				}}
+			/>
 		</div>
 	)
 }

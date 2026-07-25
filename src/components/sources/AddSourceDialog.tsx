@@ -1,17 +1,14 @@
-import { Upload } from "lucide-react"
 import { useMutation } from "convex/react"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence } from "motion/react"
 import { useEffect, useRef, useState } from "react"
-import { Button } from "src/components/ui/button"
+import { AddSourceMainPanel } from "src/components/sources/AddSourceMainPanel"
+import { AddSourceTextPanel } from "src/components/sources/AddSourceTextPanel"
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 } from "src/components/ui/dialog"
-import { Input } from "src/components/ui/input"
-import { Textarea } from "src/components/ui/textarea"
-import { layoutTransition } from "src/lib/motion"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 
@@ -59,6 +56,34 @@ export function AddSourceDialog({
 		return () => window.clearTimeout(handle)
 	}, [open, mode])
 
+	async function submitUrl() {
+		setPending(true)
+		setError(null)
+
+		try {
+			await addUrl({ notebookId, url })
+			onOpenChange(false)
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Could not add URL.")
+		} finally {
+			setPending(false)
+		}
+	}
+
+	async function submitText() {
+		setPending(true)
+		setError(null)
+
+		try {
+			await addText({ notebookId, text })
+			onOpenChange(false)
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Could not add text.")
+		} finally {
+			setPending(false)
+		}
+	}
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="max-w-[32rem] overflow-hidden rounded-2xl">
@@ -67,163 +92,28 @@ export function AddSourceDialog({
 				</DialogHeader>
 				<AnimatePresence mode="wait" initial={false}>
 					{mode === "main" ? (
-						<motion.div
-							key="main"
-							initial={{ opacity: 0, y: 4 }}
-							animate={{ opacity: 1, y: 0 }}
-							exit={{ opacity: 0, y: -4 }}
-							transition={layoutTransition}
-							layout
-							className="space-y-4"
-						>
-							<form
-								className="flex gap-2"
-								onSubmit={async (event) => {
-									event.preventDefault()
-									setPending(true)
-									setError(null)
-
-									try {
-										await addUrl({ notebookId, url })
-										onOpenChange(false)
-									} catch (err) {
-										setError(
-											err instanceof Error ? err.message : "Could not add URL.",
-										)
-									} finally {
-										setPending(false)
-									}
-								}}
-							>
-								<Input
-									ref={urlRef}
-									value={url}
-									onChange={(event) => setUrl(event.target.value)}
-									placeholder="https://example.com/article"
-									className="rounded-xl"
-								/>
-								<Button
-									type="submit"
-									className="rounded-sm"
-									disabled={pending}
-								>
-									Add
-								</Button>
-							</form>
-
-							<div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
-								<div className="h-px flex-1 bg-border" />
-								or
-								<div className="h-px flex-1 bg-border" />
-							</div>
-
-							<button
-								type="button"
-								className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-10 text-sm text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5"
-								onClick={() => fileRef.current?.click()}
-								onDragOver={(event) => event.preventDefault()}
-								onDrop={async (event) => {
-									event.preventDefault()
-									const files = [...event.dataTransfer.files]
-									if (!files.length) {
-										return
-									}
-
-									await onFiles(files)
-									onOpenChange(false)
-								}}
-							>
-								<Upload size={22} />
-								Drop files here or browse
-							</button>
-							<input
-								ref={fileRef}
-								type="file"
-								multiple
-								className="hidden"
-								onChange={async (event) => {
-									const files = [...(event.target.files ?? [])]
-									if (!files.length) {
-										return
-									}
-
-									await onFiles(files)
-									onOpenChange(false)
-								}}
-							/>
-
-							<Button
-								type="button"
-								variant="ghost"
-								className="w-full rounded-sm"
-								onClick={() => setMode("text")}
-							>
-								Add pasted text
-							</Button>
-							{error ? (
-								<motion.p
-									layout
-									className="text-sm text-destructive"
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-								>
-									{error}
-								</motion.p>
-							) : null}
-						</motion.div>
+						<AddSourceMainPanel
+							url={url}
+							error={error}
+							pending={pending}
+							urlRef={urlRef}
+							fileRef={fileRef}
+							onUrlChange={setUrl}
+							onSubmitUrl={submitUrl}
+							onFiles={onFiles}
+							onDone={() => onOpenChange(false)}
+							onPasteText={() => setMode("text")}
+						/>
 					) : (
-						<motion.div
-							key="text"
-							initial={{ opacity: 0, y: 4 }}
-							animate={{ opacity: 1, y: 0 }}
-							exit={{ opacity: 0, y: -4 }}
-							transition={layoutTransition}
-							layout
-							className="space-y-4"
-						>
-							<Textarea
-								ref={textRef}
-								value={text}
-								onChange={(event) => setText(event.target.value)}
-								className="min-h-40 rounded-xl"
-								placeholder="Paste source text"
-							/>
-							{error ? (
-								<p className="text-sm text-destructive">{error}</p>
-							) : null}
-							<div className="flex justify-between gap-2">
-								<Button
-									variant="outline"
-									className="rounded-sm"
-									onClick={() => setMode("main")}
-								>
-									Back
-								</Button>
-								<Button
-									className="rounded-sm"
-									disabled={pending}
-									onClick={async () => {
-										setPending(true)
-										setError(null)
-
-										try {
-											await addText({ notebookId, text })
-											onOpenChange(false)
-										} catch (err) {
-											setError(
-												err instanceof Error
-													? err.message
-													: "Could not add text.",
-											)
-										} finally {
-											setPending(false)
-										}
-									}}
-								>
-									Add text
-								</Button>
-							</div>
-						</motion.div>
+						<AddSourceTextPanel
+							text={text}
+							error={error}
+							pending={pending}
+							textRef={textRef}
+							onTextChange={setText}
+							onBack={() => setMode("main")}
+							onSubmit={submitText}
+						/>
 					)}
 				</AnimatePresence>
 			</DialogContent>
