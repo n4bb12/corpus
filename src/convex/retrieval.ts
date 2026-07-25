@@ -1,7 +1,8 @@
 "use node"
 
+import { voyage } from "@ai-sdk/voyage"
+import { embed, rerank } from "ai"
 import { v } from "convex/values"
-import { VoyageAIClient } from "voyageai"
 import { api, internal } from "./_generated/api"
 import { action } from "./_generated/server"
 import { authComponent } from "./auth"
@@ -10,16 +11,6 @@ import {
 	mergeRetrievalCandidates,
 	selectEvidenceWithinBudget,
 } from "./lib/retrieval"
-
-function getVoyage() {
-	const apiKey = process.env.VOYAGE_API_KEY
-
-	if (!apiKey) {
-		throw new Error("VOYAGE_API_KEY is not configured.")
-	}
-
-	return new VoyageAIClient({ apiKey })
-}
 
 export const prepareEvidence = action({
 	args: {
@@ -38,17 +29,15 @@ export const prepareEvidence = action({
 			notebookId: args.notebookId,
 		})
 
-		const voyage = getVoyage()
-		const embedded = await voyage.embed({
-			input: [args.prompt],
-			model: MODELS.embed,
-			inputType: "query",
+		const { embedding: vector } = await embed({
+			model: voyage.textEmbedding(MODELS.embed),
+			value: args.prompt,
+			providerOptions: {
+				voyage: {
+					inputType: "query",
+				},
+			},
 		})
-		const vector = embedded.data?.[0]?.embedding
-
-		if (!vector) {
-			throw new Error("Could not embed the question.")
-		}
 
 		const vectorHits = await ctx.runAction(
 			internal.retrievalHelpers.searchVectors,
@@ -70,29 +59,27 @@ export const prepareEvidence = action({
 
 		if (merged.length) {
 			try {
-				const reranked = await voyage.rerank({
-					query: args.prompt,
+				const { ranking } = await rerank({
+					model: voyage.reranking(MODELS.rerank),
 					documents: merged.map((item) => item.text),
-					model: MODELS.rerank,
-					topK: Math.min(12, merged.length),
+					query: args.prompt,
+					topN: Math.min(12, merged.length),
 				})
 
-				ranked =
-					reranked.data
-						?.map((item) => {
-							const candidate = merged[item.index ?? 0]
+				ranked = ranking
+					.map((item) => {
+						const candidate = merged[item.originalIndex]
 
-							if (!candidate) {
-								return null
-							}
+						if (!candidate) {
+							return null
+						}
 
-							return {
-								...candidate,
-								score: item.relevanceScore ?? candidate.score,
-							}
-						})
-						.filter((item): item is (typeof merged)[number] => Boolean(item)) ??
-					merged
+						return {
+							...candidate,
+							score: item.score,
+						}
+					})
+					.filter((item): item is (typeof merged)[number] => Boolean(item))
 			} catch {
 				ranked = merged
 			}

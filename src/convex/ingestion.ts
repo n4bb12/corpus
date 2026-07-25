@@ -1,10 +1,11 @@
 "use node"
 
-import dns from "node:dns/promises"
-import { MDocument } from "@mastra/rag"
+import { voyage } from "@ai-sdk/voyage"
+import { embedMany } from "ai"
 import { v } from "convex/values"
+import { MDocument } from "@mastra/rag"
+import dns from "node:dns/promises"
 import { MarkItDown } from "markitdown-ts"
-import { VoyageAIClient } from "voyageai"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
 import { deriveChunkLocators } from "./lib/chunk-locators"
@@ -16,16 +17,6 @@ import {
 } from "./lib/url-safety"
 
 const markitdown = new MarkItDown()
-
-function getVoyage() {
-	const apiKey = process.env.VOYAGE_API_KEY
-
-	if (!apiKey) {
-		throw new Error("VOYAGE_API_KEY is not configured.")
-	}
-
-	return new VoyageAIClient({ apiKey })
-}
 
 async function assertSafeUrl(raw: string) {
 	const validated = validatePublicHttpUrl(raw)
@@ -239,14 +230,15 @@ export const processSource = internalAction({
 				processingState: "embedding",
 			})
 
-			const voyage = getVoyage()
-			const embedded = await voyage.embed({
-				input: texts,
-				model: MODELS.embed,
-				inputType: "document",
+			const { embeddings: vectors } = await embedMany({
+				model: voyage.textEmbedding(MODELS.embed),
+				values: texts,
+				providerOptions: {
+					voyage: {
+						inputType: "document",
+					},
+				},
 			})
-
-			const vectors = embedded.data?.map((item) => item.embedding ?? []) ?? []
 
 			await ctx.runMutation(internal.ingestionHelpers.replaceChunks, {
 				sourceId: args.sourceId,
