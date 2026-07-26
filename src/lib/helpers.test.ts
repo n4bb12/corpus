@@ -2,12 +2,13 @@ import { describe, expect, test } from "bun:test"
 import { formatChatError } from "./chat_errors"
 import {
 	canRetryLatestAssistant,
+	getOptimisticUserPrompt,
 	hashSourceSelection,
 	planSourceBoundary,
 	shouldCreateSourceRevision,
 	successfulPairsAfterBoundary,
 } from "./chat_history"
-import { parseSseChunk } from "./chat_sse"
+import { consumeChatSse, parseSseChunk } from "./chat_sse"
 import { deriveChunkLocators } from "./chunk_locators"
 import { resolveCitationOffsets } from "./citation_highlight"
 import {
@@ -283,6 +284,30 @@ describe("pdf text helpers", () => {
 })
 
 describe("chat history", () => {
+	test("shows a submitted prompt until server messages arrive", () => {
+		const submission = {
+			content: "What are the main claims?",
+			existingMessageCount: 0,
+		}
+
+		expect(getOptimisticUserPrompt([], submission)).toMatchInlineSnapshot(
+			`"What are the main claims?"`,
+		)
+		expect(
+			getOptimisticUserPrompt(
+				[
+					{
+						kind: "message",
+						role: "user",
+						content: submission.content,
+						createdAt: 1,
+					},
+				],
+				submission,
+			),
+		).toMatchInlineSnapshot(`null`)
+	})
+
 	test("windows successful pairs and retry eligibility", () => {
 		const entries = [
 			{
@@ -419,6 +444,44 @@ describe("chat sse", () => {
           "event": "error",
         },
       ]
+    `)
+	})
+
+	test("reports each accumulated text update while consuming", async () => {
+		const updates: string[] = []
+		const response = new Response(
+			new ReadableStream({
+				start(controller) {
+					const encoder = new TextEncoder()
+
+					controller.enqueue(
+						encoder.encode('event: text\ndata: {"delta":"Hello"}\n\n'),
+					)
+					controller.enqueue(
+						encoder.encode('event: text\ndata: {"delta":" world"}\n\n'),
+					)
+					controller.enqueue(encoder.encode("event: done\ndata: {}\n\n"))
+					controller.close()
+				},
+			}),
+		)
+
+		const result = await consumeChatSse(response, (text) => {
+			updates.push(text)
+		})
+
+		expect(updates).toMatchInlineSnapshot(`
+      [
+        "Hello",
+        "Hello world",
+      ]
+    `)
+		expect(result).toMatchInlineSnapshot(`
+      {
+        "done": true,
+        "error": null,
+        "text": "Hello world",
+      }
     `)
 	})
 })

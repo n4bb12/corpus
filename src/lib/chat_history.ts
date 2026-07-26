@@ -7,6 +7,27 @@ export type ChatEntryLike = {
 	createdAt: number
 }
 
+export type OptimisticChatSubmission = {
+	content: string
+	existingMessageCount: number
+}
+
+export function getOptimisticUserPrompt(
+	entries: ChatEntryLike[] | undefined,
+	submission: OptimisticChatSubmission | null,
+) {
+	if (!submission) {
+		return null
+	}
+
+	const messageCount =
+		entries?.filter((entry) => entry.kind === "message").length ?? 0
+
+	return messageCount > submission.existingMessageCount
+		? null
+		: submission.content
+}
+
 export function latestBoundaryIndex(entries: ChatEntryLike[]) {
 	for (let index = entries.length - 1; index >= 0; index -= 1) {
 		if (entries[index]?.kind === "sourceBoundary") {

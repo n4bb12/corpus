@@ -9,6 +9,7 @@ type ChatListEntry = FunctionReturnType<typeof api.chat.list>[number]
 export type ChatAssistantMessageProps = {
 	entry: ChatListEntry
 	entries: ChatListEntry[] | undefined
+	streamedContent: string | null
 	canRetry: boolean
 	onCite: (args: ChatCiteArgs) => void
 	onRetry: (prompt: string, assistantId: string) => void
@@ -17,17 +18,20 @@ export type ChatAssistantMessageProps = {
 export function ChatAssistantMessage({
 	entry,
 	entries,
+	streamedContent,
 	canRetry,
 	onCite,
 	onRetry,
 }: ChatAssistantMessageProps) {
+	const content = streamedContent ?? entry.content
+	const citations = streamedContent ? [] : (entry.citations ?? [])
 	const latestFailed =
 		canRetry &&
 		(entry.status === "failed" ||
 			entry.status === "canceled" ||
 			(entry.status === "complete" && !entry.content?.trim()))
 	const showProgress =
-		!entry.content &&
+		!content &&
 		(entry.status === "pending" || entry.status === "streaming") &&
 		!!entry.progressLabel
 	const showFailure =
@@ -42,10 +46,10 @@ export function ChatAssistantMessage({
 					{entry.progressLabel}
 				</p>
 			) : null}
-			{entry.content ? (
+			{content ? (
 				<AssistantContent
-					content={entry.content}
-					citations={entry.citations ?? []}
+					content={content}
+					citations={citations}
 					onCite={onCite}
 				/>
 			) : null}

@@ -12,6 +12,8 @@ type ChatListEntry = FunctionReturnType<typeof api.chat.list>[number]
 
 export type ChatMessageListProps = {
 	entries: ChatListEntry[] | undefined
+	streamedContent: string | null
+	optimisticUserPrompt: string | null
 	hasReadySources: boolean
 	canRetry: boolean
 	onAddSource: () => void
@@ -22,6 +24,8 @@ export type ChatMessageListProps = {
 
 export const ChatMessageList = memo(function ChatMessageList({
 	entries,
+	streamedContent,
+	optimisticUserPrompt,
 	hasReadySources,
 	canRetry,
 	onAddSource,
@@ -29,7 +33,8 @@ export const ChatMessageList = memo(function ChatMessageList({
 	onSendSuggestion,
 	onRetry,
 }: ChatMessageListProps) {
-	const empty = !entries?.some((entry) => entry.kind === "message")
+	const empty =
+		!optimisticUserPrompt && !entries?.some((entry) => entry.kind === "message")
 
 	return (
 		<div className="mx-auto flex min-h-full w-full max-w-[50rem] flex-col gap-6 py-4">
@@ -62,11 +67,7 @@ export const ChatMessageList = memo(function ChatMessageList({
 
 				if (entry.role === "user") {
 					return (
-						<div key={entry._id} className="flex justify-end">
-							<div className="max-w-[85%] rounded-2xl bg-card px-4 py-3 shadow-(--shadow-pine)">
-								<p className="whitespace-pre-wrap text-sm">{entry.content}</p>
-							</div>
-						</div>
+						<ChatUserMessage key={entry._id} content={entry.content ?? ""} />
 					)
 				}
 
@@ -75,12 +76,31 @@ export const ChatMessageList = memo(function ChatMessageList({
 						key={entry._id}
 						entry={entry}
 						entries={entries}
+						streamedContent={
+							entry.status === "pending" || entry.status === "streaming"
+								? streamedContent
+								: null
+						}
 						canRetry={canRetry}
 						onCite={onCite}
 						onRetry={onRetry}
 					/>
 				)
 			})}
+
+			{optimisticUserPrompt ? (
+				<ChatUserMessage content={optimisticUserPrompt} />
+			) : null}
 		</div>
 	)
 })
+
+function ChatUserMessage({ content }: { content?: string }) {
+	return (
+		<div className="flex justify-end">
+			<div className="max-w-[85%] rounded-2xl bg-card px-4 py-3 shadow-(--shadow-pine)">
+				<p className="whitespace-pre-wrap text-sm">{content}</p>
+			</div>
+		</div>
+	)
+}

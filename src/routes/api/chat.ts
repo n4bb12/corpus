@@ -82,7 +82,27 @@ export const Route = createFileRoute("/api/chat")({
 					async start(streamController) {
 						let fullText = ""
 						let lastPersist = 0
+						let persistInFlight: Promise<unknown> | null = null
 						let settled = false
+
+						const persistLatest = () => {
+							if (persistInFlight) {
+								return
+							}
+
+							persistInFlight = fetchAuthMutation(
+								api.chat.appendAssistantText,
+								{
+									messageId: prepared.assistantMessageId as never,
+									generationId: prepared.generationId,
+									content: fullText,
+								},
+							)
+								.catch(() => undefined)
+								.finally(() => {
+									persistInFlight = null
+								})
+						}
 
 						const emitStatus = async (label: string) => {
 							streamController.enqueue(encodeSse("status", { label }))
@@ -112,6 +132,7 @@ export const Route = createFileRoute("/api/chat")({
 							settled = true
 
 							try {
+								await persistInFlight
 								await fetchAuthMutation(api.chat.finalizeAssistant, {
 									messageId: prepared.assistantMessageId as never,
 									generationId: prepared.generationId,
@@ -223,11 +244,7 @@ Never cite chunk IDs that were not supplied.`
 
 								if (now - lastPersist > 400) {
 									lastPersist = now
-									await fetchAuthMutation(api.chat.appendAssistantText, {
-										messageId: prepared.assistantMessageId as never,
-										generationId: prepared.generationId,
-										content: fullText,
-									})
+									persistLatest()
 								}
 							}
 

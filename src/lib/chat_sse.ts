@@ -44,6 +44,7 @@ export function parseSseChunk(
 
 export async function consumeChatSse(
 	response: Response,
+	onText?: (text: string) => void,
 ): Promise<ChatSseResult> {
 	const reader = response.body?.getReader()
 
@@ -96,6 +97,7 @@ export async function consumeChatSse(
 					typeof data.delta === "string"
 				) {
 					text += data.delta
+					onText?.(text)
 				}
 			},
 		)
