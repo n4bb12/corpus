@@ -5,7 +5,6 @@ import {
 	MoreHorizontal,
 	Type,
 } from "lucide-react"
-import { motion } from "motion/react"
 import { Button } from "src/components/ui/button"
 import { Checkbox } from "src/components/ui/checkbox"
 import {
@@ -16,7 +15,6 @@ import {
 } from "src/components/ui/dropdown-menu"
 import { Label } from "src/components/ui/label"
 import type { Doc } from "src/convex/_generated/dataModel"
-import { layoutTransition } from "src/lib/motion"
 import { formatTitle } from "src/lib/source_title"
 
 const STATUS_LABEL: Record<string, string> = {
@@ -52,11 +50,7 @@ export function SourceListItem({
 	const checkboxId = `source-select-${source._id}`
 
 	return (
-		<motion.div
-			layout
-			transition={layoutTransition}
-			className="group flex items-start gap-2 rounded-xl px-2 py-2 hover:bg-muted/60"
-		>
+		<div className="group flex items-start gap-2 rounded-xl px-2 py-2 hover:bg-muted/60">
 			<button
 				type="button"
 				className="flex min-w-0 flex-1 items-start gap-2 text-left"
@@ -115,6 +109,6 @@ export function SourceListItem({
 					/>
 				</Label>
 			</div>
-		</motion.div>
+		</div>
 	)
 }

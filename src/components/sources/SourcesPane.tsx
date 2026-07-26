@@ -1,7 +1,6 @@
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { Plus, Search } from "lucide-react"
-import { AnimatePresence } from "motion/react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { AddSourceCard } from "src/components/sources/AddSourceCard"
 import { AddSourceDialog } from "src/components/sources/AddSourceDialog"
@@ -269,32 +268,30 @@ export function SourcesPane({
 			>
 				<div className="flex flex-col gap-1">
 					<AddSourceCard onClick={() => setAddOpen(true)} />
-					<AnimatePresence initial={false}>
-						{filtered.map((source) => (
-							<SourceListItem
-								key={source._id}
-								source={source}
-								onPreview={() => {
-									scrollMemory.current = listRef.current?.scrollTop ?? 0
-									onPreviewSource(source._id)
-								}}
-								onRename={() => {
-									setRenameId(source._id)
-									setRenameDraft(source.title)
-								}}
-								onRetry={() =>
-									void startSourceIngest({
-										action: "retry",
-										sourceId: source._id,
-									})
-								}
-								onDelete={() => setDeleteId(source._id)}
-								onSelect={(selected) =>
-									void setSelected({ sourceId: source._id, selected })
-								}
-							/>
-						))}
-					</AnimatePresence>
+					{filtered.map((source) => (
+						<SourceListItem
+							key={source._id}
+							source={source}
+							onPreview={() => {
+								scrollMemory.current = listRef.current?.scrollTop ?? 0
+								onPreviewSource(source._id)
+							}}
+							onRename={() => {
+								setRenameId(source._id)
+								setRenameDraft(source.title)
+							}}
+							onRetry={() =>
+								void startSourceIngest({
+									action: "retry",
+									sourceId: source._id,
+								})
+							}
+							onDelete={() => setDeleteId(source._id)}
+							onSelect={(selected) =>
+								void setSelected({ sourceId: source._id, selected })
+							}
+						/>
+					))}
 				</div>
 			</div>
 
