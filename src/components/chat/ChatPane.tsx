@@ -151,7 +151,7 @@ export function ChatPane({
 
 			<div
 				ref={scrollerRef}
-				className="min-h-0 flex-1 overflow-auto px-4 pb-40"
+				className="min-h-0 flex-1 overflow-auto px-4 pb-56"
 				onScroll={(event) => {
 					const node = event.currentTarget
 					stickToBottom.current =
