@@ -3,7 +3,7 @@ import { ChatPane } from "src/components/chat/ChatPane"
 import type { SourcePreviewHighlight } from "src/components/sources/SourcePreview"
 import { SourcesPane } from "src/components/sources/SourcesPane"
 import type { Id } from "src/convex/_generated/dataModel"
-import { layoutTransition } from "src/lib/motion"
+import { layoutTransition, respectReducedMotion } from "src/lib/motion"
 import { cn } from "src/lib/utils"
 
 export type NotebookWorkspaceProps = {
@@ -40,11 +40,9 @@ export function NotebookWorkspace({
 					"flex min-h-0 w-full flex-col overflow-hidden border-r border-border/60 bg-[color-mix(in_oklab,var(--background)_70%,var(--card))] md:w-[25rem] md:shrink-0",
 					tab === "sources" ? "flex" : "hidden md:flex",
 				)}
-				initial={
-					reduceMotion ? false : { opacity: 0, x: -14, filter: "blur(4px)" }
-				}
+				initial={{ opacity: 0, x: -14, filter: "blur(4px)" }}
 				animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-				transition={layoutTransition}
+				transition={respectReducedMotion(reduceMotion, layoutTransition)}
 			>
 				<SourcesPane
 					notebookId={notebookId as Id<"notebooks">}
@@ -65,14 +63,12 @@ export function NotebookWorkspace({
 					"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background",
 					tab === "chat" ? "flex" : "hidden md:flex",
 				)}
-				initial={
-					reduceMotion ? false : { opacity: 0, y: 10, filter: "blur(4px)" }
-				}
+				initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
 				animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-				transition={{
+				transition={respectReducedMotion(reduceMotion, {
 					...layoutTransition,
-					delay: reduceMotion ? 0 : 0.04,
-				}}
+					delay: 0.04,
+				})}
 			>
 				<AnimatePresence mode="wait" initial={false}>
 					<motion.div
@@ -88,11 +84,6 @@ export function NotebookWorkspace({
 							onOpenSources={() => {
 								onPreviewSource(null)
 								onTabChange("sources")
-							}}
-							onAddSource={() => {
-								onPreviewSource(null)
-								onTabChange("sources")
-								onAddSourceOpenChange(true)
 							}}
 							onCite={({
 								sourceId,

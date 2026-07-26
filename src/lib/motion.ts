@@ -29,3 +29,19 @@ export const revealTransition = {
 	duration: MOTION.reveal,
 	ease: EASE_SPRING,
 }
+
+/**
+ * Keep Motion `initial` identical on server and client.
+ * `useReducedMotion()` is null during SSR and may be true on the client —
+ * branching `initial` on it causes React hydration mismatch #418.
+ * Zero the transition instead so reduced-motion still snaps without a flash.
+ */
+export function respectReducedMotion<
+	T extends { duration: number; delay?: number },
+>(reduceMotion: boolean | null | undefined, transition: T): T {
+	if (!reduceMotion) {
+		return transition
+	}
+
+	return { ...transition, duration: 0, delay: 0 }
+}

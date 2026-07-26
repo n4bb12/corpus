@@ -4,7 +4,7 @@ import { CitationExcerptPopover } from "src/components/notebook/CitationExcerptP
 import { InlineNotebookTitle } from "src/components/notebook/InlineNotebookTitle"
 import { NotebookMobileTabs } from "src/components/notebook/NotebookMobileTabs"
 import { NotebookWorkspace } from "src/components/notebook/NotebookWorkspace"
-import { layoutTransition } from "src/lib/motion"
+import { layoutTransition, respectReducedMotion } from "src/lib/motion"
 import { useNotebookPage } from "src/pages/notebooks/useNotebookPage"
 
 export function NotebookPage() {
@@ -18,11 +18,9 @@ export function NotebookPage() {
 				name={page.session.data?.user.name}
 				notebookTitle={
 					<motion.div
-						initial={
-							reduceMotion ? false : { opacity: 0, y: 6, filter: "blur(3px)" }
-						}
+						initial={{ opacity: 0, y: 6, filter: "blur(3px)" }}
 						animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-						transition={layoutTransition}
+						transition={respectReducedMotion(reduceMotion, layoutTransition)}
 					>
 						<InlineNotebookTitle
 							title={page.notebook?.title ?? ""}

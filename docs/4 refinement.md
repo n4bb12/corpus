@@ -2742,3 +2742,35 @@ Done. Text extraction now uses `pdfjs-dist` directly (`getDocument` → `getText
 
 `pdf-parse` remains only as a transitive dep of `markitdown-ts` (unused for our `.pdf` path).
 
+# Vercel hydration warning
+_Exported on 7/27/2026 at 00:38:27 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Vercel shows a hydration warning on page load on the library page.
+
+Uncaught Error: Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+
+
+---
+
+**Cursor**
+
+I'll diagnose the library-page hydration mismatch (React #418). Checking the page and anything that could render differently on server vs client.
+
+`useReducedMotion` in `Reveal` is a strong suspect for SSR/client mismatch. Next I'll check the root layout and try to reproduce the hydration warning.
+
+Dev server is up. I'll capture console hydration errors on the library page and inspect how Motion handles `useReducedMotion` during SSR.
+
+Confirmed: `useReducedMotion()` is `null` on the server and `true` on the client when reduced motion is on, so branching `initial` causes the style mismatch. Building a repro script, then fixing every call site that does that.
+
+**Cause:** `useReducedMotion()` is `null` during SSR and can be `true` on the client (OS “reduce motion”). Several components branched `initial={reduceMotion ? false : { opacity: 0, … }}`, so the server HTML had hidden styles and the client skipped them → React #418.
+
+That hits the library page because it wraps the header/CTA/grid in `Reveal`.
+
+**Fix:** Keep `initial` identical on server and client; when reduced motion is on, zero the transition via `respectReducedMotion` instead. Updated `Reveal`, sign-in, and notebook motion the same way.
+
+Repro/`scripts/check-hydration.sh` went red → green with `--force-prefers-reduced-motion`.
+
