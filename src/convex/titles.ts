@@ -9,6 +9,16 @@ import { normalizeTitle } from "src/lib/source_title"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
 
+function cleanGeneratedTitle(raw: string) {
+	return normalizeTitle(
+		raw
+			.replace(/^["'`“”]+|["'`“”]+$/g, "")
+			.replace(/\s+/g, " ")
+			.trim(),
+		"",
+	)
+}
+
 export const maybeGenerateNotebookTitle = internalAction({
 	args: {
 		notebookId: v.id("notebooks"),
@@ -40,6 +50,20 @@ export const maybeGenerateNotebookTitle = internalAction({
 			titleGenerationState: "pending",
 		})
 
+		const applyTitle = async (title: string) => {
+			await ctx.runMutation(internal.titlesHelpers.applyGeneratedTitle, {
+				notebookId: args.notebookId,
+				title,
+			})
+		}
+
+		const fail = async () => {
+			await ctx.runMutation(internal.titlesHelpers.setTitleState, {
+				notebookId: args.notebookId,
+				titleGenerationState: "failed",
+			})
+		}
+
 		try {
 			const blob = await ctx.storage.get(source.normalizedStorageId)
 
@@ -57,21 +81,23 @@ export const maybeGenerateNotebookTitle = internalAction({
 				prompt: `Create a short notebook title (max 8 words) for notes grounded in this source. Return only the title.\n\n${markdown}`,
 			})
 
-			const title = normalizeTitle(result.text, "")
+			const title = cleanGeneratedTitle(result.text)
 
-			if (!title) {
-				throw new Error("Empty generated title.")
+			if (title) {
+				await applyTitle(title)
+				return
 			}
 
-			await ctx.runMutation(internal.titlesHelpers.applyGeneratedTitle, {
-				notebookId: args.notebookId,
-				title,
-			})
+			throw new Error("Empty generated title.")
 		} catch {
-			await ctx.runMutation(internal.titlesHelpers.setTitleState, {
-				notebookId: args.notebookId,
-				titleGenerationState: "failed",
-			})
+			const fallback = normalizeTitle(source.title, "")
+
+			if (fallback) {
+				await applyTitle(fallback)
+				return
+			}
+
+			await fail()
 		}
 	},
 })
