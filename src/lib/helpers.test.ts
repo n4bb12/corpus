@@ -12,8 +12,8 @@ import {
 	splitCitedParagraphs,
 	validateCitations,
 } from "./citations"
-import { markdownToPlainText } from "./markdown_plain"
 import { describeRejectedFile, isAcceptedUpload } from "./file_types"
+import { markdownToPlainText } from "./markdown_plain"
 import { remainingQuota, utcDateKey } from "./quotas"
 import {
 	mergeRetrievalCandidates,
@@ -225,9 +225,7 @@ describe("markdown plain text", () => {
 			markdownToPlainText(
 				"## Heading\n\nA **bold** claim with a [link](https://example.com) and `code`.",
 			),
-		).toMatchInlineSnapshot(
-			`"Heading A bold claim with a link and code."`,
-		)
+		).toMatchInlineSnapshot(`"Heading A bold claim with a link and code."`)
 	})
 })
 

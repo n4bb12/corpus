@@ -3,10 +3,7 @@ import { marked } from "marked"
 import { CitationPill } from "src/components/chat/CitationPill"
 import { Button } from "src/components/ui/button"
 import type { api } from "src/convex/_generated/api"
-import {
-	splitCitedParagraphs,
-	stripCitationMarkers,
-} from "src/lib/citations"
+import { splitCitedParagraphs, stripCitationMarkers } from "src/lib/citations"
 
 export type ChatCiteArgs = {
 	sourceId?: string
@@ -115,13 +112,14 @@ function AssistantContent({
 
 	return (
 		<div className="space-y-3">
-			{paragraphs.map((paragraph, paragraphIndex) => {
+			{paragraphs.map((paragraph) => {
 				const html = paragraph.text
 					? (marked.parse(paragraph.text, { async: false }) as string)
 					: ""
+				const key = `${paragraph.text}:${paragraph.citationIndexes.join(",")}`
 
 				return (
-					<div key={`paragraph-${paragraphIndex}`} className="space-y-2">
+					<div key={key} className="space-y-2">
 						{html ? (
 							<div
 								className="prose prose-sm dark:prose-invert max-w-none"
