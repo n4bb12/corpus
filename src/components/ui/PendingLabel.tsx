@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { TripleDot } from "src/components/ui/TripleDot"
+import { Spinner } from "src/components/ui/spinner"
 import { cn } from "src/lib/utils"
 
 export type PendingLabelProps = {
@@ -16,20 +16,11 @@ export function PendingLabel({
 	pendingLabel = "Loading",
 }: PendingLabelProps) {
 	return (
-		<span
-			className={cn(
-				"relative inline-flex items-center justify-center",
-				className,
-			)}
-		>
-			<span className={cn("inline-flex items-center", pending && "invisible")}>
-				{children}
-			</span>
+		<span className={cn("inline-flex items-center gap-2", className)}>
 			{pending ? (
-				<span className="absolute inset-0 flex items-center justify-center">
-					<TripleDot label={pendingLabel} />
-				</span>
+				<Spinner aria-label={pendingLabel} className="size-4 shrink-0" />
 			) : null}
+			<span className="inline-flex items-center">{children}</span>
 		</span>
 	)
 }
