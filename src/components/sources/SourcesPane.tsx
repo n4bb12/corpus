@@ -1,6 +1,6 @@
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
-import { Search } from "lucide-react"
+import { Search, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { AddSourceCard } from "src/components/sources/AddSourceCard"
 import { AddSourceDialog } from "src/components/sources/AddSourceDialog"
@@ -226,9 +226,19 @@ export function SourcesPane({
 						value={query}
 						onChange={(event) => setQuery(event.target.value)}
 						placeholder="Search sources"
-						className="rounded-xl pl-9"
+						className={query ? "rounded-xl pr-9 pl-9" : "rounded-xl pl-9"}
 						aria-label="Search sources"
 					/>
+					{query ? (
+						<button
+							type="button"
+							className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+							aria-label="Clear search"
+							onClick={() => setQuery("")}
+						>
+							<X size={16} />
+						</button>
+					) : null}
 				</div>
 			</div>
 

@@ -162,7 +162,7 @@ export function LibraryPage() {
 						{draft ? (
 							<button
 								type="button"
-								className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+								className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
 								aria-label="Clear search"
 								onClick={() => {
 									setDraft("")
