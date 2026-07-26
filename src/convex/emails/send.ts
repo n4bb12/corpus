@@ -4,10 +4,22 @@ import type { DataModel } from "../_generated/dataModel"
 
 const PLUNK_API_URL = "https://api.useplunk.com/v1/send"
 
+function getPlunkApiKey() {
+	const key = requireEnv("PLUNK_API_KEY").trim()
+
+	if (!key.startsWith("sk_")) {
+		throw new Error(
+			"PLUNK_API_KEY must be the secret key (sk_…). Public keys (pk_…) cannot send email.",
+		)
+	}
+
+	return key
+}
+
 function getFromAddress() {
 	return {
-		from: requireEnv("PLUNK_FROM_EMAIL"),
-		name: process.env.PLUNK_FROM_NAME || "Corpus",
+		from: requireEnv("PLUNK_FROM_EMAIL").trim(),
+		name: (process.env.PLUNK_FROM_NAME || "Corpus").trim(),
 	}
 }
 
@@ -32,7 +44,7 @@ export async function sendMagicLinkEmail(
 	const response = await fetch(PLUNK_API_URL, {
 		method: "POST",
 		headers: {
-			Authorization: `Bearer ${requireEnv("PLUNK_API_KEY")}`,
+			Authorization: `Bearer ${getPlunkApiKey()}`,
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({
@@ -54,7 +66,14 @@ export async function sendMagicLinkEmail(
 		const payload = (await response.json().catch(() => null)) as {
 			message?: string
 		} | null
+		const message = payload?.message || "Could not send magic link email."
 
-		throw new Error(payload?.message || "Could not send magic link email.")
+		if (response.status === 401) {
+			throw new Error(
+				`${message} Check that Convex PLUNK_API_KEY is the secret key (sk_…) from Plunk → Settings → API Keys.`,
+			)
+		}
+
+		throw new Error(message)
 	}
 }
