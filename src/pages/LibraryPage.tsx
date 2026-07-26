@@ -2,7 +2,7 @@ import { getRouteApi, useNavigate } from "@tanstack/react-router"
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { formatDistanceToNow } from "date-fns"
-import { BookOpen, Plus, Search } from "lucide-react"
+import { BookOpen, Plus, Search, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { AppHeader } from "src/components/layout/AppHeader"
 import { AddNotebookCard } from "src/components/library/AddNotebookCard"
@@ -156,9 +156,22 @@ export function LibraryPage() {
 							value={draft}
 							onChange={(event) => setDraft(event.target.value)}
 							placeholder="Search notebooks"
-							className="rounded-xl pl-9"
+							className={draft ? "rounded-xl pr-9 pl-9" : "rounded-xl pl-9"}
 							aria-label="Search notebooks"
 						/>
+						{draft ? (
+							<button
+								type="button"
+								className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+								aria-label="Clear search"
+								onClick={() => {
+									setDraft("")
+									void navigate({ to: "/", search: {} })
+								}}
+							>
+								<X size={16} />
+							</button>
+						) : null}
 					</div>
 
 					{isEmpty ? (
