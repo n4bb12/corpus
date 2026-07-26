@@ -30,8 +30,8 @@ export function ChatComposer({
 	const remaining = LIMITS.maxPromptCharacters - prompt.length
 
 	return (
-		<div className="border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
-			<div className="mx-auto w-full max-w-[50rem] space-y-2">
+		<div className="pointer-events-none bg-linear-to-t from-background via-background/95 to-transparent px-4 pt-8 pb-3">
+			<div className="pointer-events-auto mx-auto w-full max-w-[50rem] space-y-2">
 				{error ? <p className="text-sm text-destructive">{error}</p> : null}
 				<div className="rounded-2xl border border-border bg-card p-3 shadow-(--shadow-pine)">
 					<Textarea
@@ -53,7 +53,7 @@ export function ChatComposer({
 								: "Select ready sources to start chatting"
 						}
 						disabled={!readySourceCount || sending}
-						className="min-h-24 max-h-60 resize-none border-0 bg-transparent p-1 shadow-none focus-visible:ring-0"
+						className="min-h-24 max-h-60 resize-none border-0 bg-transparent p-1 text-base shadow-none focus-visible:ring-0 md:text-base"
 					/>
 					<div className="mt-2 flex items-center justify-between gap-3">
 						<div className="text-xs text-muted-foreground tabular-nums">

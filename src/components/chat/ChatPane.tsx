@@ -118,7 +118,7 @@ export function ChatPane({
 	}
 
 	return (
-		<div className="flex h-full min-w-0 flex-col">
+		<div className="relative flex h-full min-w-0 flex-col">
 			<div className="flex items-center justify-end px-4 pt-3">
 				<Button
 					variant="ghost"
@@ -132,7 +132,7 @@ export function ChatPane({
 
 			<div
 				ref={scrollerRef}
-				className="flex-1 overflow-auto px-4"
+				className="min-h-0 flex-1 overflow-auto px-4 pb-40"
 				onScroll={(event) => {
 					const node = event.currentTarget
 					stickToBottom.current =
@@ -152,17 +152,19 @@ export function ChatPane({
 				/>
 			</div>
 
-			<ChatComposer
-				prompt={prompt}
-				error={error}
-				readySourceCount={readySelected.length}
-				sending={sending}
-				streaming={!!streaming}
-				onPromptChange={setPrompt}
-				onSend={() => void send()}
-				onStop={() => void stop()}
-				onOpenSources={onOpenSources}
-			/>
+			<div className="absolute inset-x-0 bottom-0 z-10">
+				<ChatComposer
+					prompt={prompt}
+					error={error}
+					readySourceCount={readySelected.length}
+					sending={sending}
+					streaming={!!streaming}
+					onPromptChange={setPrompt}
+					onSend={() => void send()}
+					onStop={() => void stop()}
+					onOpenSources={onOpenSources}
+				/>
+			</div>
 
 			<ClearChatDialog
 				open={clearOpen}
