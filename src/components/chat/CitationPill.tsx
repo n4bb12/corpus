@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import {
 	Popover,
 	PopoverContent,
@@ -12,6 +12,8 @@ export type CitationPillProps = {
 	title: string
 	excerpt: string
 	canNavigate: boolean
+	open: boolean
+	onOpenChange: (open: boolean) => void
 	onOpen: () => void
 }
 
@@ -20,11 +22,12 @@ export function CitationPill({
 	title,
 	excerpt,
 	canNavigate,
+	open,
+	onOpenChange,
 	onOpen,
 }: CitationPillProps) {
 	const displayTitle = formatTitle(title)
 	const plainExcerpt = markdownToPlainText(excerpt)
-	const [open, setOpen] = useState(false)
 	const closeTimer = useRef<number | null>(null)
 
 	function clearCloseTimer() {
@@ -36,19 +39,25 @@ export function CitationPill({
 
 	function openPopover() {
 		clearCloseTimer()
-		setOpen(true)
+		onOpenChange(true)
 	}
 
 	function scheduleClose() {
 		clearCloseTimer()
 		closeTimer.current = window.setTimeout(() => {
-			setOpen(false)
+			onOpenChange(false)
 			closeTimer.current = null
-		}, 120)
+		}, 80)
 	}
 
 	return (
-		<Popover open={open} onOpenChange={setOpen}>
+		<Popover
+			open={open}
+			onOpenChange={(nextOpen) => {
+				clearCloseTimer()
+				onOpenChange(nextOpen)
+			}}
+		>
 			<PopoverTrigger asChild>
 				<button
 					type="button"
@@ -60,7 +69,7 @@ export function CitationPill({
 					onBlur={scheduleClose}
 					onClick={() => {
 						clearCloseTimer()
-						setOpen(false)
+						onOpenChange(false)
 
 						if (canNavigate) {
 							onOpen()

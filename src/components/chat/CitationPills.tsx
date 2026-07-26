@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { CitationPill } from "src/components/chat/CitationPill"
 
 export type ChatCiteArgs = {
@@ -29,6 +30,7 @@ export function CitationPills({
 	onCite,
 }: CitationPillsProps) {
 	const uniqueIndexes = [...new Set(indexes)]
+	const [openIndex, setOpenIndex] = useState<number | null>(null)
 
 	return (
 		<div className="flex flex-wrap gap-2">
@@ -46,6 +48,10 @@ export function CitationPills({
 						title={citation.liveTitle}
 						excerpt={citation.excerpt}
 						canNavigate={citation.canNavigate}
+						open={openIndex === index}
+						onOpenChange={(nextOpen) => {
+							setOpenIndex(nextOpen ? index : null)
+						}}
 						onOpen={() =>
 							onCite({
 								sourceId: citation.sourceId,
