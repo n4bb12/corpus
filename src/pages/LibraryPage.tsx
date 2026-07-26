@@ -10,8 +10,10 @@ import { Button } from "src/components/ui/button"
 import { Input } from "src/components/ui/input"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 import { api } from "src/convex/_generated/api"
+import type { Id } from "src/convex/_generated/dataModel"
 import { authClient } from "src/lib/auth-client"
-import { LIMITS } from "src/lib/limits"
+import { LIMITS, UNTITLED_NOTEBOOK } from "src/lib/limits"
+import { normalizeTitle } from "src/lib/source_title"
 
 const routeApi = getRouteApi("/")
 
@@ -21,7 +23,40 @@ export function LibraryPage() {
 	const [draft, setDraft] = useState(search.q ?? "")
 	const createNotebook = useMutation(api.notebooks.create)
 	const removeNotebook = useMutation(api.notebooks.remove)
-	const renameNotebook = useMutation(api.notebooks.rename)
+	const renameNotebook = useMutation(api.notebooks.rename).withOptimisticUpdate(
+		(localStore, args) => {
+			const title = normalizeTitle(args.title, UNTITLED_NOTEBOOK)
+
+			for (const { args: queryArgs, value } of localStore.getAllQueries(
+				api.notebooks.list,
+			)) {
+				if (!value) {
+					continue
+				}
+
+				localStore.setQuery(api.notebooks.list, queryArgs, {
+					...value,
+					page: value.page.map((notebook) =>
+						notebook._id === args.notebookId
+							? { ...notebook, title }
+							: notebook,
+					),
+				})
+			}
+
+			const current = localStore.getQuery(api.notebooks.get, {
+				notebookId: args.notebookId,
+			})
+
+			if (current) {
+				localStore.setQuery(
+					api.notebooks.get,
+					{ notebookId: args.notebookId },
+					{ ...current, title },
+				)
+			}
+		},
+	)
 	const session = authClient.useSession()
 
 	const [creating, setCreating] = useState(false)
@@ -65,6 +100,8 @@ export function LibraryPage() {
 	const page = isLoading ? placeholders : result.page
 	const isEmpty = !isLoading && !search.q && !result.page.length
 	const noMatches = !isLoading && !!search.q && !result.page.length
+	const showPagination =
+		!isLoading && (!!search.cursor || (result !== undefined && !result.isDone))
 
 	async function onCreate() {
 		setCreating(true)
@@ -82,7 +119,7 @@ export function LibraryPage() {
 	}
 
 	return (
-		<div className="atmosphere atmosphere-noise relative min-h-dvh">
+		<div className="relative min-h-dvh">
 			<div className="relative z-10">
 				<AppHeader
 					email={session.data?.user.email}
@@ -192,62 +229,57 @@ export function LibraryPage() {
 										})}
 										sourceCount={notebook.sourceCount}
 										loading={isLoading}
-										onOpen={() =>
-											void navigate({
-												to: "/notebooks/$notebookId",
-												params: { notebookId: String(notebook._id) },
-												search: { tab: "chat" },
-											})
-										}
 										onRename={async (title) => {
 											await renameNotebook({
-												notebookId: notebook._id as never,
+												notebookId: notebook._id as Id<"notebooks">,
 												title,
 											})
 										}}
 										onDelete={async () => {
 											await removeNotebook({
-												notebookId: notebook._id as never,
+												notebookId: notebook._id as Id<"notebooks">,
 											})
 										}}
 									/>
 								))}
 							</div>
 
-							<div className="mt-8 flex items-center justify-between gap-3">
-								<Button
-									variant="outline"
-									className="rounded-sm"
-									disabled={!search.cursor}
-									onClick={() =>
-										void navigate({
-											to: "/",
-											search: {
-												q: search.q,
-												cursor: undefined,
-											},
-										})
-									}
-								>
-									Previous
-								</Button>
-								<Button
-									variant="outline"
-									className="rounded-sm"
-									disabled={isLoading || result?.isDone}
-									onClick={() =>
-										void navigate({
-											to: "/",
-											search: {
-												q: search.q,
-												cursor: result?.continueCursor ?? undefined,
-											},
-										})
-									}
-								>
-									Next
-								</Button>
-							</div>
+							{showPagination ? (
+								<div className="mt-8 flex items-center justify-center gap-3">
+									<Button
+										variant="outline"
+										className="rounded-sm"
+										disabled={!search.cursor}
+										onClick={() =>
+											void navigate({
+												to: "/",
+												search: {
+													q: search.q,
+													cursor: undefined,
+												},
+											})
+										}
+									>
+										Previous
+									</Button>
+									<Button
+										variant="outline"
+										className="rounded-sm"
+										disabled={isLoading || result?.isDone}
+										onClick={() =>
+											void navigate({
+												to: "/",
+												search: {
+													q: search.q,
+													cursor: result?.continueCursor ?? undefined,
+												},
+											})
+										}
+									>
+										Next
+									</Button>
+								</div>
+							) : null}
 						</>
 					) : null}
 				</main>
