@@ -23,7 +23,7 @@ export function AuthShell({ children, className }: AuthShellProps) {
 					</div>
 				</header>
 				<main className="flex flex-1 items-center justify-center px-4 py-24 md:px-8 md:py-28">
-					<div className={cn("w-full max-w-5xl", className)}>{children}</div>
+					<div className={cn("w-full", className)}>{children}</div>
 				</main>
 			</div>
 		</div>

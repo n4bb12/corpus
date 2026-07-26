@@ -1,4 +1,3 @@
-import { BookMarked, Link2, Sparkles } from "lucide-react"
 import { motion, useReducedMotion } from "motion/react"
 import type { SubmitEvent } from "react"
 import { useState } from "react"
@@ -16,24 +15,6 @@ import {
 } from "src/lib/last-sign-in-method"
 import { layoutTransition } from "src/lib/motion"
 import { cn } from "src/lib/utils"
-
-const FEATURES = [
-	{
-		icon: Link2,
-		title: "Bring your sources",
-		body: "Drop in URLs, files, or pasted notes. Corpus normalizes them into a notebook you can search and chat over.",
-	},
-	{
-		icon: Sparkles,
-		title: "Ask grounded questions",
-		body: "Answers stay tethered to ready, selected sources. If the evidence is thin, Corpus says so instead of inventing.",
-	},
-	{
-		icon: BookMarked,
-		title: "Open the exact passage",
-		body: "Every citation jumps to the paragraph that earned it, so you can verify and keep researching.",
-	},
-] as const
 
 export function SignInPage() {
 	const lastMethod = useLastSignInMethod()
@@ -77,61 +58,30 @@ export function SignInPage() {
 
 	return (
 		<AuthShell>
-			<div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,24rem)] lg:gap-14">
+			<div className="mx-auto grid w-full max-w-5xl items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,22.5rem)] lg:gap-16">
 				<motion.div
-					className="space-y-8 text-center lg:text-left"
+					className="space-y-4 text-center lg:text-left"
 					initial={reduceMotion ? false : { opacity: 0, y: 12 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={layoutTransition}
 				>
-					<div className="space-y-4">
-						<p className="font-heading text-sm tracking-[0.18em] text-primary uppercase">
-							Grounded research notebooks
-						</p>
-						<h1 className="font-heading text-4xl leading-[1.05] font-semibold tracking-tight text-balance md:text-5xl">
-							Turn your sources into answers you can trust.
-						</h1>
-						<p className="mx-auto max-w-xl text-base text-muted-foreground md:text-lg lg:mx-0">
-							Corpus is a calm place to collect reading, ask precise questions,
-							and follow every claim back to the passage that supports it.
-						</p>
-					</div>
-
-					<ul className="grid gap-4 text-left sm:grid-cols-3 lg:grid-cols-1">
-						{FEATURES.map((feature, index) => {
-							const Icon = feature.icon
-
-							return (
-								<motion.li
-									key={feature.title}
-									className="rounded-2xl border border-border/70 bg-card/55 p-4 backdrop-blur-sm"
-									initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{
-										...layoutTransition,
-										delay: reduceMotion ? 0 : 0.08 * (index + 1),
-									}}
-								>
-									<div className="mb-3 flex size-9 items-center justify-center rounded-sm bg-primary/10 text-primary">
-										<Icon size={18} aria-hidden />
-									</div>
-									<h2 className="text-sm font-semibold tracking-tight">
-										{feature.title}
-									</h2>
-									<p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-										{feature.body}
-									</p>
-								</motion.li>
-							)
-						})}
-					</ul>
+					<p className="font-heading text-sm tracking-[0.18em] text-primary uppercase">
+						Grounded research notebooks
+					</p>
+					<h1 className="font-heading text-4xl leading-[1.05] font-semibold tracking-tight text-balance md:text-5xl">
+						Turn your sources into answers you can trust.
+					</h1>
+					<p className="mx-auto max-w-xl text-base text-muted-foreground md:text-lg lg:mx-0">
+						Corpus is a calm place to collect reading, ask precise questions,
+						and follow every claim back to the passage that supports it.
+					</p>
 				</motion.div>
 
 				<motion.div
-					className="mx-auto w-full max-w-[28rem] rounded-2xl border border-border bg-card p-6 shadow-(--shadow-pine) lg:mx-0"
+					className="mx-auto flex w-full max-w-[22.5rem] aspect-2/3 flex-col justify-center rounded-2xl border border-border bg-card p-8 shadow-(--shadow-pine) sm:p-10 lg:mx-0"
 					initial={reduceMotion ? false : { opacity: 0, y: 16 }}
 					animate={{ opacity: 1, y: 0 }}
-					transition={{ ...layoutTransition, delay: reduceMotion ? 0 : 0.12 }}
+					transition={{ ...layoutTransition, delay: reduceMotion ? 0 : 0.08 }}
 				>
 					<div className="space-y-6">
 						<div className="space-y-2">
@@ -167,7 +117,7 @@ export function SignInPage() {
 							onSubmit={onSubmit}
 						>
 							{lastMethod === "email" ? (
-								<span className="absolute -top-2 right-3 z-10 rounded-sm bg-primary px-2 py-0.5 text-xs font-medium tracking-wide text-primary-foreground uppercase">
+								<span className="absolute -top-1.5 -right-1 z-10 rounded-sm bg-foreground px-1.5 py-px text-[10px] font-medium tracking-wide text-background uppercase">
 									Last used
 								</span>
 							) : null}
@@ -195,7 +145,7 @@ export function SignInPage() {
 							) : null}
 							<Button
 								type="submit"
-								className="h-11 w-full rounded-sm"
+								className="w-full rounded-sm"
 								disabled={pendingEmail || pendingGoogle}
 							>
 								<PendingLabel
