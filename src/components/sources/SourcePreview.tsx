@@ -199,33 +199,35 @@ export function SourcePreview({
 					{formatTitle(title)}
 				</div>
 			</div>
-			<ScrollArea className="min-h-0 flex-1 px-4 py-4">
-				{markdown ? (
-					<article className="prose prose-sm dark:prose-invert max-w-none space-y-4">
-						{blocks.map(({ text, start }) => {
-							const end = start + text.length
-							const highlighted =
-								!!resolvedOffsets &&
-								start < resolvedOffsets.end &&
-								end > resolvedOffsets.start
-							const html = marked.parse(text, { async: false }) as string
+			<ScrollArea className="min-h-0 flex-1">
+				<div className="px-4 py-4">
+					{markdown ? (
+						<article className="prose prose-sm dark:prose-invert max-w-none space-y-4">
+							{blocks.map(({ text, start }) => {
+								const end = start + text.length
+								const highlighted =
+									!!resolvedOffsets &&
+									start < resolvedOffsets.end &&
+									end > resolvedOffsets.start
+								const html = marked.parse(text, { async: false }) as string
 
-							return (
-								<div
-									key={start}
-									ref={start === targetStart ? highlightRef : undefined}
-									className={cn(
-										"[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-										highlighted && "citation-highlight",
-									)}
-									dangerouslySetInnerHTML={{ __html: html }}
-								/>
-							)
-						})}
-					</article>
-				) : (
-					<SourcePreviewSkeleton />
-				)}
+								return (
+									<div
+										key={start}
+										ref={start === targetStart ? highlightRef : undefined}
+										className={cn(
+											"[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+											highlighted && "citation-highlight",
+										)}
+										dangerouslySetInnerHTML={{ __html: html }}
+									/>
+								)
+							})}
+						</article>
+					) : (
+						<SourcePreviewSkeleton />
+					)}
+				</div>
 			</ScrollArea>
 		</div>
 	)

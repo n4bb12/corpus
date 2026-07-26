@@ -186,19 +186,21 @@
 	}
 }
 
-/* Panel content uses px-4 (1rem). Highlight takes the inner half as
-   green padding and leaves the outer half as white gutter, so text
-   stays on the same column as unhighlighted paragraphs. */
 .citation-highlight {
-	--citation-pad: 0.5rem;
-	margin-block: calc(var(--citation-pad) * -1);
-	margin-inline: calc(var(--citation-pad) * -1);
-	padding-block: var(--citation-pad);
-	padding-inline: var(--citation-pad);
-	border-radius: 0.5rem;
-	background: rgb(36 88 68 / 10%);
+	position: relative;
+	isolation: isolate;
 }
 
-.dark .citation-highlight {
+.citation-highlight::before {
+	position: absolute;
+	inset-block: -0.25rem;
+	inset-inline: -0.5rem;
+	z-index: -1;
+	border-radius: 0.5rem;
+	background: rgb(36 88 68 / 10%);
+	content: "";
+}
+
+.dark .citation-highlight::before {
 	background: rgb(121 185 153 / 12%);
 }
