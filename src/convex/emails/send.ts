@@ -1,11 +1,8 @@
 import type { GenericCtx } from "@convex-dev/better-auth"
-import Plunk from "@plunk/node"
 import { requireEnv } from "src/lib/env"
 import type { DataModel } from "../_generated/dataModel"
 
-function getPlunkClient() {
-	return new Plunk(requireEnv("PLUNK_API_KEY"))
-}
+const PLUNK_API_URL = "https://api.useplunk.com/v1/send"
 
 function getFromAddress() {
 	return {
@@ -31,20 +28,33 @@ export async function sendMagicLinkEmail(
 	_ctx: GenericCtx<DataModel>,
 	args: { to: string; url: string },
 ) {
-	const plunk = getPlunkClient()
 	const from = getFromAddress()
-
-	await plunk.emails.send({
-		to: args.to,
-		from: from.from,
-		name: from.name,
-		subject: "Sign in to Corpus",
-		body: emailShell(
-			"Your sign-in link",
-			"Use the button below to sign in to Corpus. If you did not ask for this, you can ignore the message.",
-			args.url,
-			"Sign in",
-		),
-		type: "html",
+	const response = await fetch(PLUNK_API_URL, {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${requireEnv("PLUNK_API_KEY")}`,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			to: args.to,
+			from: from.from,
+			name: from.name,
+			subject: "Sign in to Corpus",
+			body: emailShell(
+				"Your sign-in link",
+				"Use the button below to sign in to Corpus. If you did not ask for this, you can ignore the message.",
+				args.url,
+				"Sign in",
+			),
+			type: "html",
+		}),
 	})
+
+	if (!response.ok) {
+		const payload = (await response.json().catch(() => null)) as {
+			message?: string
+		} | null
+
+		throw new Error(payload?.message || "Could not send magic link email.")
+	}
 }
