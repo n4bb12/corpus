@@ -52,6 +52,7 @@ export function useLibraryPage() {
 	)
 	const session = authClient.useSession()
 	const [creating, setCreating] = useState(false)
+	const [creatingNotebookId, setCreatingNotebookId] = useState<string>()
 
 	useEffect(() => {
 		const handle = window.setTimeout(() => {
@@ -92,7 +93,9 @@ export function useLibraryPage() {
 	)
 
 	const isLoading = result === undefined
-	const page = isLoading ? placeholders : result.page
+	const page = isLoading
+		? placeholders
+		: result.page.filter((notebook) => notebook._id !== creatingNotebookId)
 	const isEmpty = !isLoading && !search.q && !result.page.length
 	const noMatches = !isLoading && !!search.q && !result.page.length
 	const showPagination =
@@ -103,12 +106,14 @@ export function useLibraryPage() {
 
 		try {
 			const notebookId = await createNotebook({})
+			setCreatingNotebookId(notebookId)
 			await navigate({
 				to: "/notebooks/$notebookId",
 				params: { notebookId },
 				search: { tab: "sources" },
 			})
 		} catch {
+			setCreatingNotebookId(undefined)
 			setCreating(false)
 		}
 	}
