@@ -16,6 +16,7 @@ import type * as http from "../http.js";
 import type * as ingestion from "../ingestion.js";
 import type * as ingestionHelpers from "../ingestionHelpers.js";
 import type * as lib_ownership from "../lib/ownership.js";
+import type * as lib_sourceBoundaries from "../lib/sourceBoundaries.js";
 import type * as notebooks from "../notebooks.js";
 import type * as retrieval from "../retrieval.js";
 import type * as retrievalHelpers from "../retrievalHelpers.js";
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   ingestion: typeof ingestion;
   ingestionHelpers: typeof ingestionHelpers;
   "lib/ownership": typeof lib_ownership;
+  "lib/sourceBoundaries": typeof lib_sourceBoundaries;
   notebooks: typeof notebooks;
   retrieval: typeof retrieval;
   retrievalHelpers: typeof retrievalHelpers;
