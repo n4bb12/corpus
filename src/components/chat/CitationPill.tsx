@@ -3,6 +3,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "src/components/ui/popover"
+import { formatTitle } from "src/lib/source_title"
 
 export type CitationPillProps = {
 	index: number
@@ -19,13 +20,15 @@ export function CitationPill({
 	canNavigate,
 	onOpen,
 }: CitationPillProps) {
+	const displayTitle = formatTitle(title)
+
 	return (
 		<Popover>
 			<PopoverTrigger asChild>
 				<button
 					type="button"
 					className="relative inline-flex min-h-6 min-w-6 items-center justify-center rounded-full bg-primary/15 px-2 text-xs font-medium text-primary before:absolute before:-inset-2"
-					aria-label={`Citation ${index}: ${title}`}
+					aria-label={`Citation ${index}: ${displayTitle}`}
 					onClick={() => {
 						if (canNavigate) {
 							onOpen()
@@ -36,7 +39,7 @@ export function CitationPill({
 				</button>
 			</PopoverTrigger>
 			<PopoverContent className="max-w-sm rounded-xl text-sm">
-				<p className="mb-2 font-medium">{title}</p>
+				<p className="mb-2 font-medium">{displayTitle}</p>
 				<p className="text-muted-foreground">{excerpt}</p>
 				{!canNavigate ? (
 					<p className="mt-2 text-xs text-muted-foreground">
