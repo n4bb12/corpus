@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Button } from "src/components/ui/button"
 import {
 	Dialog,
@@ -7,6 +8,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "src/components/ui/dialog"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 
 export type NotebookDeleteDialogProps = {
 	open: boolean
@@ -21,6 +23,18 @@ export function NotebookDeleteDialog({
 	onOpenChange,
 	onConfirm,
 }: NotebookDeleteDialogProps) {
+	const [pending, setPending] = useState(false)
+
+	async function confirm() {
+		setPending(true)
+
+		try {
+			await onConfirm()
+		} finally {
+			setPending(false)
+		}
+	}
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="rounded-2xl sm:max-w-md">
@@ -35,6 +49,7 @@ export function NotebookDeleteDialog({
 					<Button
 						variant="outline"
 						className="rounded-sm"
+						disabled={pending}
 						onClick={() => onOpenChange(false)}
 					>
 						Cancel
@@ -42,9 +57,12 @@ export function NotebookDeleteDialog({
 					<Button
 						variant="destructive"
 						className="rounded-sm"
-						onClick={() => void onConfirm()}
+						disabled={pending}
+						onClick={() => void confirm()}
 					>
-						Delete notebook
+						<PendingLabel pending={pending} pendingLabel="Deleting notebook">
+							Delete notebook
+						</PendingLabel>
 					</Button>
 				</DialogFooter>
 			</DialogContent>
