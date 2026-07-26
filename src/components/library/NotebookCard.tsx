@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router"
 import { MoreHorizontal, Notebook } from "lucide-react"
 import { motion } from "motion/react"
 import { useState } from "react"
@@ -26,17 +27,16 @@ export type NotebookCardProps = {
 	lastUsedLabel: string
 	sourceCount: number
 	loading?: boolean
-	onOpen: () => void
 	onRename: (title: string) => Promise<void>
 	onDelete: () => Promise<void>
 }
 
 export function NotebookCard({
+	notebookId,
 	title,
 	lastUsedLabel,
 	sourceCount,
 	loading = false,
-	onOpen,
 	onRename,
 	onDelete,
 }: NotebookCardProps) {
@@ -56,14 +56,15 @@ export function NotebookCard({
 					loading && "pointer-events-none",
 				)}
 			>
-				<button
-					type="button"
-					className="absolute inset-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-					onClick={onOpen}
-					tabIndex={loading ? -1 : 0}
-					aria-hidden={loading}
-					aria-label={loading ? undefined : `Open ${title}`}
-				/>
+				{loading ? null : (
+					<Link
+						to="/notebooks/$notebookId"
+						params={{ notebookId }}
+						search={{ tab: "chat" }}
+						className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+						aria-label={`Open ${title}`}
+					/>
+				)}
 				<div
 					className={cn(
 						"relative z-10 flex size-11 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary",
@@ -73,7 +74,7 @@ export function NotebookCard({
 				>
 					<Notebook size={22} />
 				</div>
-				<div className="relative z-10 mt-4 min-w-0 flex-1 max-sm:mt-0">
+				<div className="relative z-10 mt-4 min-w-0 flex-1 max-sm:mt-0 max-sm:pr-10">
 					<h2
 						className={cn(
 							"line-clamp-2 text-base font-semibold tracking-tight",
@@ -102,7 +103,7 @@ export function NotebookCard({
 						{sourceCount} sources
 					</p>
 				</div>
-				<div className="relative z-20 mt-3 flex justify-end max-sm:mt-0">
+				<div className="absolute top-2 right-2 z-20 max-sm:top-1/2 max-sm:-translate-y-1/2">
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
@@ -111,6 +112,7 @@ export function NotebookCard({
 								className="rounded-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
 								aria-label={`Notebook menu for ${title}`}
 								disabled={loading}
+								onClick={(event) => event.preventDefault()}
 							>
 								<MoreHorizontal size={18} />
 							</Button>
