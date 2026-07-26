@@ -3,6 +3,7 @@
 import { voyage } from "@ai-sdk/voyage"
 import { embed, rerank } from "ai"
 import { v } from "convex/values"
+import { CHAT_PROGRESS } from "src/lib/chat_progress"
 import { MODELS } from "src/lib/limits"
 import {
 	mergeRetrievalCandidates,
@@ -17,6 +18,8 @@ export const prepareEvidence = action({
 		notebookId: v.id("notebooks"),
 		prompt: v.string(),
 		sourceIds: v.array(v.id("sources")),
+		messageId: v.optional(v.id("chatEntries")),
+		generationId: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		const user = await authComponent.getAuthUser(ctx)
@@ -28,6 +31,20 @@ export const prepareEvidence = action({
 		await ctx.runQuery(api.notebooks.get, {
 			notebookId: args.notebookId,
 		})
+
+		async function setProgress(progressLabel: string) {
+			if (!args.messageId || !args.generationId) {
+				return
+			}
+
+			await ctx.runMutation(api.chat.setProgressLabel, {
+				messageId: args.messageId,
+				generationId: args.generationId,
+				progressLabel,
+			})
+		}
+
+		await setProgress(CHAT_PROGRESS.searching)
 
 		const { embedding: vector } = await embed({
 			model: voyage.textEmbedding(MODELS.embed),
@@ -58,6 +75,8 @@ export const prepareEvidence = action({
 		let ranked = merged
 
 		if (merged.length) {
+			await setProgress(CHAT_PROGRESS.ranking)
+
 			try {
 				const { ranking } = await rerank({
 					model: voyage.reranking(MODELS.rerank),

@@ -124,6 +124,7 @@ export default defineSchema({
 		exchangeId: v.optional(v.string()),
 		generationId: v.optional(v.string()),
 		errorMessage: v.optional(v.string()),
+		progressLabel: v.optional(v.string()),
 		createdAt: v.number(),
 	}).index("by_notebook_epoch_createdAt", [
 		"notebookId",

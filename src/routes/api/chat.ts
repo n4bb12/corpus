@@ -7,9 +7,16 @@ import {
 	fetchAuthMutation,
 	getToken,
 } from "src/lib/auth-server"
+import { CHAT_PROGRESS } from "src/lib/chat_progress"
 import { parseCitationMarkers, validateCitations } from "src/lib/citations"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
+
+function encodeSse(event: string, data: unknown) {
+	return new TextEncoder().encode(
+		`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`,
+	)
+}
 
 export const Route = createFileRoute("/api/chat")({
 	server: {
@@ -59,53 +66,10 @@ export const Route = createFileRoute("/api/chat")({
 					)
 				}
 
-				const evidencePack = (await fetchAuthAction(
-					api.retrieval.prepareEvidence,
-					{
-						notebookId: body.notebookId as never,
-						prompt: prepared.prompt,
-						sourceIds: prepared.sourceIds as never,
-					},
-				)) as {
-					evidence: Array<{
-						chunkId: string
-						sourceId: string
-						text: string
-						score: number
-					}>
-					insufficient: boolean
-				}
-
 				const openai = createOpenAI({
 					apiKey: requireEnv("OPENAI_API_KEY"),
 				})
 
-				const evidenceBlock = evidencePack.evidence
-					.map(
-						(item: (typeof evidencePack.evidence)[number], index: number) =>
-							`[${index + 1}] chunk:${item.chunkId} source:${item.sourceId}\n${item.text}`,
-					)
-					.join("\n\n")
-
-				const historyText = prepared.history
-					.map(
-						(pair: (typeof prepared.history)[number]) =>
-							`User: ${pair.user.content ?? ""}\nAssistant: ${pair.assistant.content ?? ""}`,
-					)
-					.join("\n\n")
-
-				const system = `You are Corpus, a strictly source-grounded assistant.
-Only answer using the supplied evidence chunks.
-If evidence is insufficient, say that the selected sources do not support the answer.
-For every substantive factual paragraph, cite chunk IDs using [[cite:CHUNK_ID]] markers.
-Do not invent facts from general knowledge.
-Never cite chunk IDs that were not supplied.`
-
-				const userPrompt = `Evidence:\n${evidenceBlock || "(none)"}\n\nRecent exchanges:\n${historyText || "(none)"}\n\nQuestion:\n${prepared.prompt}`
-
-				const encoder = new TextEncoder()
-				let fullText = ""
-				let lastPersist = 0
 				const controller = new AbortController()
 
 				request.signal.addEventListener("abort", () => {
@@ -114,7 +78,68 @@ Never cite chunk IDs that were not supplied.`
 
 				const stream = new ReadableStream({
 					async start(streamController) {
+						let fullText = ""
+						let lastPersist = 0
+
+						const emitStatus = async (label: string) => {
+							streamController.enqueue(
+								encodeSse("status", { label }),
+							)
+							await fetchAuthMutation(api.chat.setProgressLabel, {
+								messageId: prepared.assistantMessageId as never,
+								generationId: prepared.generationId,
+								progressLabel: label,
+							})
+						}
+
 						try {
+							await emitStatus(CHAT_PROGRESS.looking)
+
+							const evidencePack = (await fetchAuthAction(
+								api.retrieval.prepareEvidence,
+								{
+									notebookId: body.notebookId as never,
+									prompt: prepared.prompt,
+									sourceIds: prepared.sourceIds as never,
+									messageId: prepared.assistantMessageId as never,
+									generationId: prepared.generationId,
+								},
+							)) as {
+								evidence: Array<{
+									chunkId: string
+									sourceId: string
+									text: string
+									score: number
+								}>
+								insufficient: boolean
+							}
+
+							const evidenceBlock = evidencePack.evidence
+								.map(
+									(
+										item: (typeof evidencePack.evidence)[number],
+										index: number,
+									) =>
+										`[${index + 1}] chunk:${item.chunkId} source:${item.sourceId}\n${item.text}`,
+								)
+								.join("\n\n")
+
+							const historyText = prepared.history
+								.map(
+									(pair: (typeof prepared.history)[number]) =>
+										`User: ${pair.user.content ?? ""}\nAssistant: ${pair.assistant.content ?? ""}`,
+								)
+								.join("\n\n")
+
+							const system = `You are Corpus, a strictly source-grounded assistant.
+Only answer using the supplied evidence chunks.
+If evidence is insufficient, say that the selected sources do not support the answer.
+For every substantive factual paragraph, cite chunk IDs using [[cite:CHUNK_ID]] markers.
+Do not invent facts from general knowledge.
+Never cite chunk IDs that were not supplied.`
+
+							const userPrompt = `Evidence:\n${evidenceBlock || "(none)"}\n\nRecent exchanges:\n${historyText || "(none)"}\n\nQuestion:\n${prepared.prompt}`
+
 							if (evidencePack.insufficient) {
 								fullText =
 									"The selected sources do not support an answer to that question."
@@ -125,10 +150,15 @@ Never cite chunk IDs that were not supplied.`
 									status: "complete",
 									citations: [],
 								})
-								streamController.enqueue(encoder.encode(fullText))
+								streamController.enqueue(
+									encodeSse("text", { delta: fullText }),
+								)
+								streamController.enqueue(encodeSse("done", {}))
 								streamController.close()
 								return
 							}
+
+							await emitStatus(CHAT_PROGRESS.writing)
 
 							const result = streamText({
 								model: openai(MODELS.chat),
@@ -139,7 +169,7 @@ Never cite chunk IDs that were not supplied.`
 
 							for await (const delta of result.textStream) {
 								fullText += delta
-								streamController.enqueue(encoder.encode(delta))
+								streamController.enqueue(encodeSse("text", { delta }))
 
 								const now = Date.now()
 
@@ -181,6 +211,11 @@ Never cite chunk IDs that were not supplied.`
 									status: "failed",
 									errorMessage: "Citation validation failed.",
 								})
+								streamController.enqueue(
+									encodeSse("error", {
+										message: "Citation validation failed.",
+									}),
+								)
 								streamController.close()
 								return
 							}
@@ -200,7 +235,6 @@ Never cite chunk IDs that were not supplied.`
 								}
 							})
 
-							// Enrich titles from selected sources when possible
 							const titled = citations.map((citation) => ({
 								...citation,
 								sourceTitleSnapshot: citation.excerpt
@@ -216,6 +250,7 @@ Never cite chunk IDs that were not supplied.`
 								citations: titled,
 							})
 
+							streamController.enqueue(encodeSse("done", {}))
 							streamController.close()
 						} catch (error) {
 							const canceled = controller.signal.aborted
@@ -225,8 +260,22 @@ Never cite chunk IDs that were not supplied.`
 								content: fullText,
 								status: canceled ? "canceled" : "failed",
 								errorMessage:
-									error instanceof Error ? error.message : "Generation failed.",
+									error instanceof Error
+										? error.message
+										: "Generation failed.",
 							})
+
+							if (!canceled) {
+								streamController.enqueue(
+									encodeSse("error", {
+										message:
+											error instanceof Error
+												? error.message
+												: "Generation failed.",
+									}),
+								)
+							}
+
 							streamController.close()
 						}
 					},
@@ -234,8 +283,9 @@ Never cite chunk IDs that were not supplied.`
 
 				return new Response(stream, {
 					headers: {
-						"Content-Type": "text/plain; charset=utf-8",
-						"Cache-Control": "no-cache",
+						"Content-Type": "text/event-stream; charset=utf-8",
+						"Cache-Control": "no-cache, no-transform",
+						Connection: "keep-alive",
 					},
 				})
 			},

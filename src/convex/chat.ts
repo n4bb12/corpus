@@ -3,6 +3,7 @@ import {
 	canRetryLatestAssistant,
 	successfulPairsAfterBoundary,
 } from "src/lib/chat_history"
+import { CHAT_PROGRESS } from "src/lib/chat_progress"
 import { LIMITS } from "src/lib/limits"
 import { quotaResetMessage, utcDateKey } from "src/lib/quotas"
 import { mutation, query } from "./_generated/server"
@@ -179,6 +180,7 @@ export const prepareGeneration = mutation({
 				status: "pending",
 				generationId,
 				errorMessage: undefined,
+				progressLabel: CHAT_PROGRESS.looking,
 				sourceRevision: notebook.sourceRevision,
 			})
 			assistantMessageId = assistant._id
@@ -203,6 +205,7 @@ export const prepareGeneration = mutation({
 				role: "assistant",
 				content: "",
 				status: "pending",
+				progressLabel: CHAT_PROGRESS.looking,
 				sourceRevision: notebook.sourceRevision,
 				exchangeId,
 				generationId,
@@ -253,6 +256,30 @@ export const prepareGeneration = mutation({
 	},
 })
 
+export const setProgressLabel = mutation({
+	args: {
+		messageId: v.id("chatEntries"),
+		generationId: v.string(),
+		progressLabel: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.db.get(args.messageId)
+
+		if (!message || message.generationId !== args.generationId) {
+			return
+		}
+
+		if (message.status !== "pending" && message.status !== "streaming") {
+			return
+		}
+
+		await requireNotebookOwner(ctx, message.notebookId)
+		await ctx.db.patch(message._id, {
+			progressLabel: args.progressLabel,
+		})
+	},
+})
+
 export const appendAssistantText = mutation({
 	args: {
 		messageId: v.id("chatEntries"),
@@ -270,6 +297,7 @@ export const appendAssistantText = mutation({
 		await ctx.db.patch(message._id, {
 			content: args.content,
 			status: "streaming",
+			progressLabel: undefined,
 		})
 	},
 })
@@ -333,6 +361,7 @@ export const finalizeAssistant = mutation({
 			content: args.content,
 			status: args.status,
 			errorMessage: args.errorMessage,
+			progressLabel: undefined,
 		})
 	},
 })
@@ -365,6 +394,7 @@ export const cancelGeneration = mutation({
 
 		await ctx.db.patch(active._id, {
 			status: "canceled",
+			progressLabel: undefined,
 		})
 
 		return active.generationId ?? null

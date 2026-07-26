@@ -116,14 +116,24 @@ export function ChatMessageList({
 				}) as string
 				const latestFailed =
 					canRetry && (entry.status === "failed" || entry.status === "canceled")
+				const showProgress =
+					!entry.content &&
+					(entry.status === "pending" || entry.status === "streaming") &&
+					!!entry.progressLabel
 
 				return (
 					<div key={entry._id} className="space-y-3">
-						<div
-							className="prose prose-sm dark:prose-invert max-w-none"
-							dangerouslySetInnerHTML={{ __html: html }}
-						/>
-						{entry.citations?.length ? (
+						{showProgress ? (
+							<p className="status-shimmer text-sm font-medium" role="status">
+								{entry.progressLabel}
+							</p>
+						) : null}
+						{entry.content ? (
+							<div
+								className="prose prose-sm dark:prose-invert max-w-none"
+								dangerouslySetInnerHTML={{ __html: html }}
+							/>
+						) : null}						{entry.citations?.length ? (
 							<div className="flex flex-wrap gap-2">
 								{entry.citations.map((citation, index) => (
 									<CitationPill
