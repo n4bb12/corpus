@@ -2017,7 +2017,7 @@ The gapless inner wrapper in `PendingLabel` is the culprit — removing it so ic
 Removed that inner wrapper so children (and the spinner when pending) share the outer flex gap. Dropped the useless `gap-3` / `w-full` on the `Button` / `PendingLabel` that weren’t spacing anything useful.
 
 # High-end visual design
-_Exported on 7/26/2026 at 23:04:57 GMT+2 from Cursor (3.13.10)_
+_Exported on 7/26/2026 at 23:09:54 GMT+2 from Cursor (3.13.10)_
 
 ---
 
@@ -2118,4 +2118,95 @@ and double the sources px.
 **Cursor**
 
 Sources pane gutters are now `px-8` (was `px-4`) on the header, list, and preview.
+
+---
+
+**User**
+
+Hovering the notebook name should provide editability affordance.
+
+---
+
+**Cursor**
+
+Switching to Lucide — the project standardized on that, not Phosphor.
+
+On hover the title now shows a muted field treatment, text cursor, and a pencil cue so it reads as editable before you click.
+
+---
+
+**User**
+
+I liked the previous version off the add source card more.
+
+---
+
+**Cursor**
+
+Restored the dashed-border add-source card.
+
+# File source upload behavior
+_Exported on 7/26/2026 at 23:19:16 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+When adding a file source, the select/deselect all appears only after the file was uploaded which is a bit weird. Also, when entering the notebook detail page, there are no animations. Speed up the library page animations.
+
+---
+
+**Cursor**
+
+I'll look at the file-source select/deselect timing and the notebook detail vs library animation setup.
+
+Motion thesis: keep Operate-mode transitions snappy, show select-all as soon as the list has rows so layout doesn’t jump, and give the notebook workspace a short continuity entrance.
+
+Implementing the three fixes: show select-all during upload, add notebook enter motion, and tighten library timing to match the design motion budget.
+
+Adding a light notebook title entrance and snappier mobile tab transitions.
+
+Three changes landed:
+
+1. **Select all during upload** — The row now shows as soon as an upload starts (`0/0`, checkbox disabled), so the list doesn’t jump when the file finishes.
+
+2. **Notebook detail entrance** — Title, sources pane, and chat pane fade/slide in on enter (respects reduced motion).
+
+3. **Faster library motion** — Reveal dropped from 800ms → 320ms, layout to 180ms, shorter stagger delays, snappier card hover (~150ms).
+
+PRODUCT.md is behind the current Impeccable schema — say if you want me to run `init` to refresh it.
+
+---
+
+**User**
+
+It starts with 0/0 selected although there is 1 visible item showing as uploading.
+
+---
+
+**Cursor**
+
+The count should include uploading rows in the total. I'll check how selection and pending uploads interact, then fix the label.
+
+Including uploading items in the total so the label matches what's visible.
+
+Cleaning up unused `allSelected` / `someSelected` props now that the select-all component owns that state.
+
+Uploading rows now count toward the total — one uploading file shows **0/1 selected**.
+
+---
+
+**User**
+
+There should be no intermediate visual state different from the final one where the new file is checked and the all-line shos 1/1
+
+---
+
+**Cursor**
+
+Uploading rows should look already selected—checked item and `1/1` on the select-all line—so there’s no jump when the upload finishes. I’ll match that to how new sources are created.
+
+Treating uploads as already selected so the row and select-all match the final checked `1/1` state.
+
+Uploading files now appear already selected: checked checkbox on the row, and **1/1 selected** with the select-all box checked—same as after the upload finishes.
 

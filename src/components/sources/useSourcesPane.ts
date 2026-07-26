@@ -208,9 +208,6 @@ export function useSourcesPane({
 		() => selectable.filter((source) => source.selected).length,
 		[selectable],
 	)
-	const allSelected =
-		selectable.length > 0 && selectedCount === selectable.length
-	const someSelected = selectedCount > 0 && !allSelected
 	const previewSource = sources?.find(
 		(source) => source._id === previewSourceId,
 	)
@@ -313,8 +310,6 @@ export function useSourcesPane({
 		filtered,
 		selectable,
 		selectedCount,
-		allSelected,
-		someSelected,
 		previewSource,
 		uploadFiles,
 		beginRename,

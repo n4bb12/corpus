@@ -16,10 +16,10 @@ export function Reveal({ children, className, delay = 0 }: RevealProps) {
 		<motion.div
 			className={cn(className)}
 			initial={
-				reduceMotion ? false : { opacity: 0, y: 20, filter: "blur(6px)" }
+				reduceMotion ? false : { opacity: 0, y: 12, filter: "blur(4px)" }
 			}
 			whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-			viewport={{ once: true, margin: "-48px" }}
+			viewport={{ once: true, margin: "-32px" }}
 			transition={{ ...revealTransition, delay: reduceMotion ? 0 : delay }}
 		>
 			{children}

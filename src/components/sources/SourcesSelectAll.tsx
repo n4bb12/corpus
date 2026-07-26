@@ -5,8 +5,7 @@ export type SourcesSelectAllProps = {
 	notebookId: Id<"notebooks">
 	sourceIds: Id<"sources">[]
 	selectedCount: number
-	allSelected: boolean
-	someSelected: boolean
+	pendingCount?: number
 	onSelectMany: (args: {
 		notebookId: Id<"notebooks">
 		sourceIds: Id<"sources">[]
@@ -18,13 +17,19 @@ export function SourcesSelectAll({
 	notebookId,
 	sourceIds,
 	selectedCount,
-	allSelected,
-	someSelected,
+	pendingCount = 0,
 	onSelectMany,
 }: SourcesSelectAllProps) {
-	if (!sourceIds.length) {
+	const totalCount = sourceIds.length + pendingCount
+
+	if (!totalCount) {
 		return null
 	}
+
+	// Uploads become selected sources, so count them as selected already.
+	const displaySelected = selectedCount + pendingCount
+	const allSelected = displaySelected === totalCount
+	const someSelected = displaySelected > 0 && !allSelected
 
 	return (
 		<div className="flex items-center justify-end gap-2 px-2 py-1.5 text-sm">
@@ -32,20 +37,24 @@ export function SourcesSelectAll({
 				htmlFor="select-all-sources"
 				className="cursor-pointer tabular-nums text-muted-foreground"
 			>
-				{selectedCount}/{sourceIds.length} selected
+				{displaySelected}/{totalCount} selected
 			</label>
 			<div className="flex items-center gap-1">
 				<span className="size-6 shrink-0" aria-hidden />
 				<Checkbox
 					id="select-all-sources"
 					checked={allSelected ? true : someSelected ? "indeterminate" : false}
-					onCheckedChange={(checked) =>
+					onCheckedChange={(checked) => {
+						if (!sourceIds.length) {
+							return
+						}
+
 						onSelectMany({
 							notebookId,
 							sourceIds,
 							selected: checked === true,
 						})
-					}
+					}}
 				/>
 			</div>
 		</div>

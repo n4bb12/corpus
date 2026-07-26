@@ -5,9 +5,9 @@ export const EASE_SPRING = [0.32, 0.72, 0, 1] as const
 export const MOTION = {
 	hover: 0.12,
 	menu: 0.15,
-	layout: 0.22,
+	layout: 0.18,
 	fade: 0.12,
-	reveal: 0.8,
+	reveal: 0.32,
 } as const
 
 export const menuTransition = {

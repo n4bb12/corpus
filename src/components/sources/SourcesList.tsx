@@ -15,8 +15,6 @@ export type SourcesListProps = {
 	uploading: UploadingSource[]
 	selectable: Doc<"sources">[]
 	selectedCount: number
-	allSelected: boolean
-	someSelected: boolean
 	onAdd: () => void
 	onSelectMany: (args: {
 		notebookId: Id<"notebooks">
@@ -37,8 +35,6 @@ export function SourcesList({
 	uploading,
 	selectable,
 	selectedCount,
-	allSelected,
-	someSelected,
 	onAdd,
 	onSelectMany,
 	onPreview,
@@ -56,7 +52,7 @@ export function SourcesList({
 		<ScrollArea
 			viewportRef={listRef}
 			wheelSpeed={2.25}
-			className="mt-3 min-h-0 flex-1 overflow-hidden px-8 pb-4"
+			className="min-h-0 flex-1 overflow-hidden p-4"
 		>
 			<div className="flex flex-col gap-1">
 				<AddSourceCard onClick={onAdd} />
@@ -64,8 +60,7 @@ export function SourcesList({
 					notebookId={notebookId}
 					sourceIds={selectableIds}
 					selectedCount={selectedCount}
-					allSelected={allSelected}
-					someSelected={someSelected}
+					pendingCount={uploading.length}
 					onSelectMany={onSelectMany}
 				/>
 				{uploading.map((source) => (

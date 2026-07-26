@@ -27,7 +27,7 @@ export function NotebookCardMenu({
 					<Button
 						variant="ghost"
 						size="icon"
-						className="pointer-events-auto rounded-full opacity-100 transition-opacity duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+						className="pointer-events-auto rounded-full opacity-100 transition-opacity duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
 						aria-label={`Notebook menu for ${label}`}
 						disabled={loading}
 						onClick={(event) => event.preventDefault()}

@@ -44,7 +44,7 @@ export function LibraryPage() {
 						</IslandCta>
 					</Reveal>
 
-					<Reveal delay={0.06}>
+					<Reveal delay={0.03}>
 						<LibrarySearchField
 							value={library.draft}
 							onChange={library.setDraft}
@@ -53,7 +53,7 @@ export function LibraryPage() {
 					</Reveal>
 
 					{library.isEmpty ? (
-						<Reveal delay={0.1}>
+						<Reveal delay={0.05}>
 							<LibraryEmptyState
 								creating={library.creating}
 								onCreate={() => void library.onCreate()}
@@ -62,7 +62,7 @@ export function LibraryPage() {
 					) : null}
 
 					{library.noMatches ? (
-						<Reveal delay={0.1} className="space-y-4">
+						<Reveal delay={0.05} className="space-y-4">
 							<p className="text-sm text-muted-foreground">
 								No notebooks match “{library.search.q}”
 							</p>
@@ -77,7 +77,7 @@ export function LibraryPage() {
 					) : null}
 
 					{!library.isEmpty && !library.noMatches ? (
-						<Reveal delay={0.1}>
+						<Reveal delay={0.05}>
 							<LibraryNotebookGrid
 								page={library.page}
 								isLoading={library.isLoading}

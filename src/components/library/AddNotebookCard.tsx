@@ -18,7 +18,7 @@ export function AddNotebookCard({
 			type="button"
 			disabled={disabled}
 			className={cn(
-				"group h-full w-full text-left transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 disabled:pointer-events-none disabled:opacity-60",
+				"group h-full w-full text-left transition-transform duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 disabled:pointer-events-none disabled:opacity-60",
 				tall && "lg:min-h-full",
 			)}
 			onClick={onClick}
@@ -26,12 +26,12 @@ export function AddNotebookCard({
 			<Bezel
 				className="h-full"
 				innerClassName={cn(
-					"flex h-full flex-col items-center justify-center gap-4 border border-dashed border-border/80 bg-card/70 p-5 text-center transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:border-primary/40 group-hover:bg-muted/40",
+					"flex h-full flex-col items-center justify-center gap-4 border border-dashed border-border/80 bg-card/70 p-5 text-center transition-colors duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:border-primary/40 group-hover:bg-muted/40",
 					"max-sm:min-h-0 max-sm:flex-row max-sm:justify-start max-sm:gap-3 max-sm:text-left",
 					tall ? "min-h-[16rem] lg:min-h-[22rem]" : "min-h-[10.5rem]",
 				)}
 			>
-				<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
+				<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
 					<Plus size={22} aria-hidden strokeWidth={1.5} />
 				</span>
 				<span className="min-w-0 leading-tight">

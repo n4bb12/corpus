@@ -52,7 +52,7 @@ export const SourceListItem = memo(function SourceListItem({
 	const label = formatTitle(source.title)
 
 	return (
-		<div className="group relative flex items-start gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-muted/55">
+		<div className="group relative flex items-start gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-muted/55 hover:transition-none">
 			<button
 				type="button"
 				className="absolute inset-0 z-0 rounded-2xl"

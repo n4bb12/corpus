@@ -14,7 +14,7 @@ export function SourcesPaneHeader({
 	onQueryChange,
 }: SourcesPaneHeaderProps) {
 	return (
-		<div className="flex flex-col gap-4 px-8 pt-5">
+		<div className="flex flex-col gap-4 p-4 pb-0">
 			<div className="flex h-10 items-center justify-between gap-3">
 				<h2 className="font-heading text-lg font-semibold tracking-tight">
 					Sources

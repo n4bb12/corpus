@@ -98,8 +98,6 @@ export function SourcesPane({
 				uploading={pane.uploading}
 				selectable={pane.selectable}
 				selectedCount={pane.selectedCount}
-				allSelected={pane.allSelected}
-				someSelected={pane.someSelected}
 				onAdd={handleAdd}
 				onSelectMany={pane.handleSelectMany}
 				onPreview={handlePreview}

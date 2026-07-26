@@ -1,5 +1,4 @@
 import { Plus } from "lucide-react"
-import { cn } from "src/lib/utils"
 
 export type AddSourceCardProps = {
 	onClick: () => void
@@ -9,15 +8,11 @@ export function AddSourceCard({ onClick }: AddSourceCardProps) {
 	return (
 		<button
 			type="button"
-			className={cn(
-				"group flex w-full items-center gap-3 rounded-2xl bg-card/70 px-3.5 py-3.5 text-left",
-				"ring-1 ring-foreground/6 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
-				"hover:translate-y-[-1px] hover:bg-muted/50 hover:ring-primary/25",
-			)}
+			className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-card/50 px-3 py-3 text-left transition-colors hover:border-primary/45 hover:bg-muted/50"
 			onClick={onClick}
 		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
-				<Plus size={18} aria-hidden strokeWidth={1.5} />
+			<span className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary">
+				<Plus size={18} aria-hidden />
 			</span>
 			<span className="min-w-0 leading-tight">
 				<span className="block text-sm font-medium text-foreground">

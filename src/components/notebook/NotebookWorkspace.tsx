@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { ChatPane } from "src/components/chat/ChatPane"
 import type { SourcePreviewHighlight } from "src/components/sources/SourcePreview"
 import { SourcesPane } from "src/components/sources/SourcesPane"
@@ -31,13 +31,20 @@ export function NotebookWorkspace({
 	onExcerptOnly,
 	onHighlight,
 }: NotebookWorkspaceProps) {
+	const reduceMotion = useReducedMotion()
+
 	return (
 		<div className="flex min-h-0 flex-1 overflow-hidden">
-			<aside
+			<motion.aside
 				className={cn(
 					"flex min-h-0 w-full flex-col overflow-hidden border-r border-border/60 bg-[color-mix(in_oklab,var(--background)_70%,var(--card))] md:w-[25rem] md:shrink-0",
 					tab === "sources" ? "flex" : "hidden md:flex",
 				)}
+				initial={
+					reduceMotion ? false : { opacity: 0, x: -14, filter: "blur(4px)" }
+				}
+				animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+				transition={layoutTransition}
 			>
 				<SourcesPane
 					notebookId={notebookId as Id<"notebooks">}
@@ -51,13 +58,21 @@ export function NotebookWorkspace({
 					addOpen={addSourceOpen}
 					onAddOpenChange={onAddSourceOpenChange}
 				/>
-			</aside>
+			</motion.aside>
 
-			<section
+			<motion.section
 				className={cn(
 					"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background",
 					tab === "chat" ? "flex" : "hidden md:flex",
 				)}
+				initial={
+					reduceMotion ? false : { opacity: 0, y: 10, filter: "blur(4px)" }
+				}
+				animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+				transition={{
+					...layoutTransition,
+					delay: reduceMotion ? 0 : 0.04,
+				}}
 			>
 				<AnimatePresence mode="wait" initial={false}>
 					<motion.div
@@ -103,7 +118,7 @@ export function NotebookWorkspace({
 						/>
 					</motion.div>
 				</AnimatePresence>
-			</section>
+			</motion.section>
 		</div>
 	)
 }

@@ -17,7 +17,7 @@ export function NotebookMobileTabs({
 						key={value}
 						type="button"
 						className={cn(
-							"rounded-lg px-3 py-2 text-sm font-medium capitalize transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+							"rounded-lg px-3 py-2 text-sm font-medium capitalize transition-all duration-150 ease-[cubic-bezier(0.32,0.72,0,1)]",
 							tab === value
 								? "bg-card text-foreground shadow-(--shadow-pine)"
 								: "text-muted-foreground hover:text-foreground",
