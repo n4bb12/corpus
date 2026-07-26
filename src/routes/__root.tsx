@@ -1,15 +1,16 @@
-/// <reference types="vite/client" />
-
 import {
 	createRootRoute,
 	HeadContent,
+	Link,
 	Outlet,
 	Scripts,
 	useRouteContext,
 } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import type { ReactNode } from "react"
+import { BrandLockup } from "src/components/layout/BrandLockup"
 import { ThemeScript } from "src/components/layout/ThemeScript"
+import { Button } from "src/components/ui/button"
 import { TooltipProvider } from "src/components/ui/tooltip"
 import { AppConvexProvider } from "src/integrations/convex/provider"
 import { getToken } from "src/lib/auth-server"
@@ -78,7 +79,25 @@ export const Route = createRootRoute({
 	},
 	component: RootComponent,
 	shellComponent: RootDocument,
+	notFoundComponent: NotFoundPage,
 })
+
+function NotFoundPage() {
+	return (
+		<div className="atmosphere flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
+			<BrandLockup />
+			<div className="space-y-2">
+				<h1 className="text-2xl font-semibold tracking-tight">Page not found</h1>
+				<p className="text-sm text-muted-foreground">
+					That route does not exist, or the notebook may have been removed.
+				</p>
+			</div>
+			<Button asChild className="rounded-sm">
+				<Link to="/">Back to notebooks</Link>
+			</Button>
+		</div>
+	)
+}
 
 function RootComponent() {
 	const context = useRouteContext({ from: Route.id })
