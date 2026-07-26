@@ -48,7 +48,7 @@ export function NotebookDeleteDialog({
 				<DialogFooter>
 					<Button
 						variant="outline"
-						className="rounded-sm"
+						className="rounded-full"
 						disabled={pending}
 						onClick={() => onOpenChange(false)}
 					>
@@ -56,7 +56,7 @@ export function NotebookDeleteDialog({
 					</Button>
 					<Button
 						variant="destructive"
-						className="rounded-sm"
+						className="rounded-full"
 						disabled={pending}
 						onClick={() => void confirm()}
 					>

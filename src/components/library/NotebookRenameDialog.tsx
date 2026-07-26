@@ -73,13 +73,13 @@ export function NotebookRenameDialog({
 						<Button
 							type="button"
 							variant="outline"
-							className="rounded-sm"
+							className="rounded-full"
 							disabled={pending}
 							onClick={() => onOpenChange(false)}
 						>
 							Cancel
 						</Button>
-						<Button type="submit" className="rounded-sm" disabled={pending}>
+						<Button type="submit" className="rounded-full" disabled={pending}>
 							<PendingLabel pending={pending} pendingLabel="Saving">
 								Save
 							</PendingLabel>

@@ -64,7 +64,7 @@ export function AddSourceMainPanel({
 				/>
 				<Button
 					type="submit"
-					className="rounded-sm"
+					className="rounded-full"
 					disabled={pending || !url.trim()}
 				>
 					<PendingLabel pending={pending} pendingLabel="Adding source">
@@ -82,7 +82,7 @@ export function AddSourceMainPanel({
 			<Button
 				type="button"
 				variant="ghost"
-				className="w-full shrink-0 rounded-sm"
+				className="w-full shrink-0 rounded-full"
 				onClick={onPasteText}
 			>
 				Paste text

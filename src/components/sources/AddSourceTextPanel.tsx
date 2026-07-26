@@ -44,11 +44,11 @@ export function AddSourceTextPanel({
 				<p className="shrink-0 text-sm text-destructive">{error}</p>
 			) : null}
 			<div className="flex shrink-0 justify-between gap-2">
-				<Button variant="outline" className="rounded-sm" onClick={onBack}>
+				<Button variant="outline" className="rounded-full" onClick={onBack}>
 					Back
 				</Button>
 				<Button
-					className="rounded-sm"
+					className="rounded-full"
 					disabled={pending || !text.trim()}
 					onClick={() => void onSubmit()}
 				>

@@ -64,7 +64,7 @@ export function SourceRenameDialog({
 						onFocus={(event) => event.currentTarget.select()}
 					/>
 					<DialogFooter>
-						<Button type="submit" className="rounded-sm" disabled={pending}>
+						<Button type="submit" className="rounded-full" disabled={pending}>
 							<PendingLabel pending={pending} pendingLabel="Saving">
 								Save
 							</PendingLabel>

@@ -47,7 +47,7 @@ export function SourceDeleteDialog({
 				<DialogFooter>
 					<Button
 						variant="outline"
-						className="rounded-sm"
+						className="rounded-full"
 						disabled={pending}
 						onClick={() => onOpenChange(false)}
 					>
@@ -55,7 +55,7 @@ export function SourceDeleteDialog({
 					</Button>
 					<Button
 						variant="destructive"
-						className="rounded-sm"
+						className="rounded-full"
 						disabled={pending}
 						onClick={() => void confirm()}
 					>
