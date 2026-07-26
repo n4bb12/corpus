@@ -1,4 +1,5 @@
 import {
+	CircleAlert,
 	FileText,
 	Link as LinkIcon,
 	LoaderCircle,
@@ -17,6 +18,7 @@ import {
 import { Label } from "src/components/ui/label"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { formatTitle } from "src/lib/source_title"
+import { cn } from "src/lib/utils"
 
 const STATUS_LABEL: Record<string, string> = {
 	pending: "Waiting",
@@ -46,32 +48,54 @@ export const SourceListItem = memo(function SourceListItem({
 }: SourceListItemProps) {
 	const Icon =
 		source.kind === "url" ? LinkIcon : source.kind === "file" ? FileText : Type
+	const failed = source.processingState === "failed"
 	const busy =
 		source.processingState !== "ready" && source.processingState !== "failed"
 	const checkboxId = `source-select-${source._id}`
 	const label = formatTitle(source.title)
+	const statusText = failed
+		? source.errorCode || STATUS_LABEL.failed
+		: STATUS_LABEL[source.processingState]
 
 	return (
-		<div className="group relative flex items-start gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-muted/55 hover:transition-none">
+		<div
+			className={cn(
+				"group relative flex items-start gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:transition-none",
+				failed
+					? "bg-destructive/5 hover:bg-destructive/10"
+					: "hover:bg-muted/55",
+			)}
+		>
 			<button
 				type="button"
 				className="absolute inset-0 z-0 rounded-2xl"
-				aria-label={`Open ${label}`}
+				aria-label={failed ? `Open ${label}, failed` : `Open ${label}`}
 				onClick={() => onPreview(source._id)}
 			/>
-			<span className="pointer-events-none relative z-10 mt-0.5 text-primary">
+			<span
+				className={cn(
+					"pointer-events-none relative z-10 mt-0.5",
+					failed ? "text-destructive" : "text-primary",
+				)}
+			>
 				{busy ? (
 					<LoaderCircle size={18} className="animate-spin" strokeWidth={1.5} />
+				) : failed ? (
+					<CircleAlert size={18} strokeWidth={1.5} aria-hidden />
 				) : (
 					<Icon size={18} strokeWidth={1.5} />
 				)}
 			</span>
 			<span className="pointer-events-none relative z-10 min-w-0 flex-1">
 				<span className="line-clamp-2 text-sm font-medium">{label}</span>
-				<span className="mt-0.5 block text-xs text-muted-foreground">
-					{source.processingState === "failed"
-						? source.errorCode || STATUS_LABEL.failed
-						: STATUS_LABEL[source.processingState]}
+				<span
+					className={cn(
+						"mt-0.5 block text-xs",
+						failed ? "text-destructive" : "text-muted-foreground",
+					)}
+					role={failed ? "status" : undefined}
+				>
+					{statusText}
 				</span>
 			</span>
 			<div className="relative z-10 flex items-center gap-1">
@@ -90,7 +114,7 @@ export const SourceListItem = memo(function SourceListItem({
 						<DropdownMenuItem onClick={() => onRename(source)}>
 							Rename
 						</DropdownMenuItem>
-						{source.processingState === "failed" ? (
+						{failed ? (
 							<DropdownMenuItem onClick={() => onRetry(source._id)}>
 								Retry
 							</DropdownMenuItem>
@@ -111,7 +135,7 @@ export const SourceListItem = memo(function SourceListItem({
 					<Checkbox
 						id={checkboxId}
 						checked={source.selected}
-						disabled={source.processingState === "failed"}
+						disabled={failed}
 						onCheckedChange={(checked) =>
 							onSelect(source._id, checked === true)
 						}
