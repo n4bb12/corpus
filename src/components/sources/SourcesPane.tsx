@@ -236,30 +236,6 @@ export function SourcesPane({
 						aria-label="Search sources"
 					/>
 				</div>
-
-				{selectable.length ? (
-					<div className="flex items-center justify-end gap-2 text-sm">
-						<label
-							htmlFor="select-all-sources"
-							className="cursor-pointer tabular-nums text-muted-foreground"
-						>
-							{selectedCount}/{selectable.length} selected
-						</label>
-						<Checkbox
-							id="select-all-sources"
-							checked={
-								allSelected ? true : someSelected ? "indeterminate" : false
-							}
-							onCheckedChange={(checked) =>
-								void setSelectedMany({
-									notebookId,
-									sourceIds: selectable.map((source) => source._id),
-									selected: checked === true,
-								})
-							}
-						/>
-					</div>
-				) : null}
 			</div>
 
 			<div
@@ -268,6 +244,32 @@ export function SourcesPane({
 			>
 				<div className="flex flex-col gap-1">
 					<AddSourceCard onClick={() => setAddOpen(true)} />
+					{selectable.length ? (
+						<div className="flex items-center justify-end gap-2 px-2 py-1.5 text-sm">
+							<label
+								htmlFor="select-all-sources"
+								className="cursor-pointer tabular-nums text-muted-foreground"
+							>
+								{selectedCount}/{selectable.length} selected
+							</label>
+							<div className="flex items-center gap-1">
+								<span className="size-6 shrink-0" aria-hidden />
+								<Checkbox
+									id="select-all-sources"
+									checked={
+										allSelected ? true : someSelected ? "indeterminate" : false
+									}
+									onCheckedChange={(checked) =>
+										void setSelectedMany({
+											notebookId,
+											sourceIds: selectable.map((source) => source._id),
+											selected: checked === true,
+										})
+									}
+								/>
+							</div>
+						</div>
+					) : null}
 					{filtered.map((source) => (
 						<SourceListItem
 							key={source._id}
