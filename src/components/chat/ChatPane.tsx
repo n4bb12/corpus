@@ -1,4 +1,4 @@
-import { useMutation } from "convex/react"
+import { useConvexAuth, useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useRef, useState } from "react"
 import { ChatComposer } from "src/components/chat/ChatComposer"
@@ -19,8 +19,15 @@ export type ChatPaneProps = {
 }
 
 export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
-	const entries = useQuery(api.chat.list, { notebookId })
-	const sources = useQuery(api.sources.listByNotebook, { notebookId })
+	const { isAuthenticated } = useConvexAuth()
+	const entries = useQuery(
+		api.chat.list,
+		isAuthenticated ? { notebookId } : "skip",
+	)
+	const sources = useQuery(
+		api.sources.listByNotebook,
+		isAuthenticated ? { notebookId } : "skip",
+	)
 	const clearChat = useMutation(api.notebooks.clearChat)
 	const cancelGeneration = useMutation(api.chat.cancelGeneration)
 	const [prompt, setPrompt] = useState("")

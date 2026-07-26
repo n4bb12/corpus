@@ -1,4 +1,4 @@
-import { useMutation } from "convex/react"
+import { useConvexAuth, useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { Plus, Search } from "lucide-react"
 import { AnimatePresence } from "motion/react"
@@ -31,7 +31,11 @@ export function SourcesPane({
 	highlightOffsets,
 	onPreviewSource,
 }: SourcesPaneProps) {
-	const sources = useQuery(api.sources.listByNotebook, { notebookId })
+	const { isAuthenticated } = useConvexAuth()
+	const sources = useQuery(
+		api.sources.listByNotebook,
+		isAuthenticated ? { notebookId } : "skip",
+	)
 	const setSelected = useMutation(api.sources.setSelected)
 	const setSelectedMany = useMutation(api.sources.setSelectedMany)
 	const renameSource = useMutation(api.sources.rename)
@@ -71,7 +75,9 @@ export function SourcesPane({
 	)
 	const previewUrl = useQuery(
 		api.sources.getNormalizedContent,
-		previewSourceId ? { sourceId: previewSourceId as Id<"sources"> } : "skip",
+		isAuthenticated && previewSourceId
+			? { sourceId: previewSourceId as Id<"sources"> }
+			: "skip",
 	)
 	const [previewMarkdown, setPreviewMarkdown] = useState<string | null>(null)
 

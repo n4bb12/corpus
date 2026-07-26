@@ -1,5 +1,5 @@
 import { getRouteApi, useNavigate } from "@tanstack/react-router"
-import { useMutation } from "convex/react"
+import { useConvexAuth, useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useState } from "react"
@@ -22,13 +22,16 @@ export function NotebookPage() {
 	const { notebookId } = routeApi.useParams()
 	const search = routeApi.useSearch()
 	const navigate = useNavigate()
+	const { isAuthenticated } = useConvexAuth()
 	const session = authClient.useSession()
-	const notebook = useQuery(api.notebooks.get, {
-		notebookId: notebookId as Id<"notebooks">,
-	})
-	const sources = useQuery(api.sources.listByNotebook, {
-		notebookId: notebookId as Id<"notebooks">,
-	})
+	const notebook = useQuery(
+		api.notebooks.get,
+		isAuthenticated ? { notebookId: notebookId as Id<"notebooks"> } : "skip",
+	)
+	const sources = useQuery(
+		api.sources.listByNotebook,
+		isAuthenticated ? { notebookId: notebookId as Id<"notebooks"> } : "skip",
+	)
 	const rename = useMutation(api.notebooks.rename).withOptimisticUpdate(
 		(localStore, args) => {
 			const title = normalizeTitle(args.title, UNTITLED_NOTEBOOK)
