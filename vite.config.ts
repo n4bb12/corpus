@@ -12,7 +12,14 @@ const config = defineConfig({
 	},
 	plugins: [
 		devtools(),
-		nitro({ preset: "vercel" }),
+		nitro({
+			preset: "vercel",
+			vercel: {
+				functions: {
+					maxDuration: 300,
+				},
+			},
+		}),
 		tailwindcss(),
 		tanstackStart(),
 		viteReact(),
