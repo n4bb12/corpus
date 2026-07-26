@@ -34,13 +34,23 @@ export const setExtracted = mutation({
 		characterCount: v.number(),
 	},
 	handler: async (ctx, args) => {
-		await requireSourceOwner(ctx, args.sourceId)
+		const { source } = await requireSourceOwner(ctx, args.sourceId)
+
 		await ctx.db.patch(args.sourceId, {
 			title: args.title,
 			normalizedStorageId: args.normalizedStorageId,
 			characterCount: args.characterCount,
 			updatedAt: Date.now(),
 		})
+
+		await ctx.scheduler.runAfter(
+			0,
+			internal.titles.maybeGenerateNotebookTitle,
+			{
+				notebookId: source.notebookId,
+				sourceId: source._id,
+			},
+		)
 	},
 })
 
@@ -106,15 +116,6 @@ export const markReady = mutation({
 				},
 			)
 		}
-
-		await ctx.scheduler.runAfter(
-			0,
-			internal.titles.maybeGenerateNotebookTitle,
-			{
-				notebookId: source.notebookId,
-				sourceId: source._id,
-			},
-		)
 	},
 })
 
