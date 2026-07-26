@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react"
+import { marked } from "marked"
 import { useEffect, useMemo, useRef } from "react"
 import { Button } from "src/components/ui/button"
 import { ScrollArea } from "src/components/ui/scroll-area"
@@ -118,7 +119,7 @@ export function SourcePreview({
 		() => (markdown ? paragraphsWithOffsets(markdown) : []),
 		[markdown],
 	)
-	const highlightRef = useRef<HTMLParagraphElement | null>(null)
+	const highlightRef = useRef<HTMLDivElement | null>(null)
 	const unresolvedKey = useRef<string | null>(null)
 	const resolvedOffsets = useMemo(() => {
 		if (!markdown || !highlight) {
@@ -188,15 +189,18 @@ export function SourcePreview({
 								!!resolvedOffsets &&
 								start < resolvedOffsets.end &&
 								end > resolvedOffsets.start
+							const html = marked.parse(text, { async: false }) as string
 
 							return (
-								<p
+								<div
 									key={start}
 									ref={start === targetStart ? highlightRef : undefined}
-									className={cn("my-0", highlighted && "citation-highlight")}
-								>
-									{text}
-								</p>
+									className={cn(
+										"my-0 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+										highlighted && "citation-highlight",
+									)}
+									dangerouslySetInnerHTML={{ __html: html }}
+								/>
 							)
 						})}
 					</article>
