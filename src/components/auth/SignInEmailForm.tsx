@@ -1,5 +1,5 @@
 import type { FormEvent } from "react"
-import { Button } from "src/components/ui/button"
+import { IslandCta } from "src/components/ui/IslandCta"
 import { Input } from "src/components/ui/input"
 import { Label } from "src/components/ui/label"
 import { PendingLabel } from "src/components/ui/PendingLabel"
@@ -28,7 +28,7 @@ export function SignInEmailForm({
 	return (
 		<form className="relative space-y-4" onSubmit={onSubmit}>
 			{showLastUsed ? (
-				<span className="absolute -top-1.5 -right-1 z-10 rounded-sm bg-foreground px-1.5 py-px text-[10px] font-medium tracking-wide text-background uppercase">
+				<span className="absolute -top-2 -right-1 z-10 rounded-full bg-foreground px-2.5 py-0.5 text-xs font-medium tracking-wide text-background uppercase">
 					Last used
 				</span>
 			) : null}
@@ -40,26 +40,26 @@ export function SignInEmailForm({
 					autoComplete="email"
 					value={email}
 					onChange={(event) => onEmailChange(event.target.value)}
-					className="rounded-xl"
+					className="h-11 rounded-full px-4"
 					required
 					disabled={pendingEmail || pendingGoogle}
 				/>
 			</div>
 			{error ? <p className="text-sm text-destructive">{error}</p> : null}
 			{sent ? (
-				<p className="text-sm text-muted-foreground">
+				<p className="text-sm leading-relaxed text-muted-foreground">
 					Check your inbox for a sign-in link. It expires in a few minutes.
 				</p>
 			) : null}
-			<Button
+			<IslandCta
 				type="submit"
-				className="w-full rounded-sm"
+				className="w-full justify-between"
 				disabled={pendingEmail || pendingGoogle}
 			>
 				<PendingLabel pending={pendingEmail} pendingLabel="Sending magic link">
 					Email me a magic link
 				</PendingLabel>
-			</Button>
+			</IslandCta>
 		</form>
 	)
 }

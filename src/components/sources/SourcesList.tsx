@@ -56,7 +56,7 @@ export function SourcesList({
 		<ScrollArea
 			viewportRef={listRef}
 			wheelSpeed={2.25}
-			className="relative mt-3 min-h-0 flex-1 px-4 pb-4"
+			className="mt-3 min-h-0 flex-1 overflow-hidden px-8 pb-4"
 		>
 			<div className="flex flex-col gap-1">
 				<AddSourceCard onClick={onAdd} />

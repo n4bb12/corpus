@@ -5,6 +5,7 @@ import { NotebookCardContent } from "src/components/library/NotebookCardContent"
 import { NotebookCardMenu } from "src/components/library/NotebookCardMenu"
 import { NotebookDeleteDialog } from "src/components/library/NotebookDeleteDialog"
 import { NotebookRenameDialog } from "src/components/library/NotebookRenameDialog"
+import { Bezel } from "src/components/ui/Bezel"
 import { displayNotebookTitle } from "src/lib/limits"
 import { layoutTransition } from "src/lib/motion"
 import { cn } from "src/lib/utils"
@@ -15,6 +16,7 @@ export type NotebookCardProps = {
 	lastUsedLabel: string
 	sourceCount: number
 	loading?: boolean
+	featured?: boolean
 	onRename: (title: string) => Promise<void>
 	onDelete: () => Promise<void>
 }
@@ -25,6 +27,7 @@ export function NotebookCard({
 	lastUsedLabel,
 	sourceCount,
 	loading = false,
+	featured = false,
 	onRename,
 	onDelete,
 }: NotebookCardProps) {
@@ -39,34 +42,43 @@ export function NotebookCard({
 				layout
 				transition={layoutTransition}
 				className={cn(
-					"group relative rounded-2xl border border-border bg-card p-4 shadow-(--shadow-pine) transition-shadow duration-120 max-sm:flex max-sm:items-center max-sm:gap-3",
+					"group relative h-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1",
 					loading && "pointer-events-none",
 				)}
 			>
-				{loading ? null : (
-					<Link
-						to="/notebooks/$notebookId"
-						params={{ notebookId }}
-						search={{ tab: "chat" }}
-						className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-						aria-label={`Open ${label}`}
+				<Bezel
+					className="h-full shadow-(--shadow-pine)"
+					innerClassName={cn(
+						"relative h-full p-5 max-sm:flex max-sm:items-center max-sm:gap-3",
+						featured && "md:min-h-[14rem] md:p-7",
+					)}
+				>
+					{loading ? null : (
+						<Link
+							to="/notebooks/$notebookId"
+							params={{ notebookId }}
+							search={{ tab: "chat" }}
+							className="absolute inset-0 z-0 rounded-[1.125rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+							aria-label={`Open ${label}`}
+						/>
+					)}
+					<NotebookCardContent
+						label={label}
+						lastUsedLabel={lastUsedLabel}
+						sourceCount={sourceCount}
+						loading={loading}
+						featured={featured}
 					/>
-				)}
-				<NotebookCardContent
-					label={label}
-					lastUsedLabel={lastUsedLabel}
-					sourceCount={sourceCount}
-					loading={loading}
-				/>
-				<NotebookCardMenu
-					label={label}
-					loading={loading}
-					onRename={() => {
-						setDraft(title)
-						setRenameOpen(true)
-					}}
-					onDelete={() => setDeleteOpen(true)}
-				/>
+					<NotebookCardMenu
+						label={label}
+						loading={loading}
+						onRename={() => {
+							setDraft(title)
+							setRenameOpen(true)
+						}}
+						onDelete={() => setDeleteOpen(true)}
+					/>
+				</Bezel>
 			</motion.div>
 
 			<NotebookRenameDialog

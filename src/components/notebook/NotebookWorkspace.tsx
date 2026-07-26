@@ -32,11 +32,11 @@ export function NotebookWorkspace({
 	onHighlight,
 }: NotebookWorkspaceProps) {
 	return (
-		<div className="flex min-h-0 flex-1">
+		<div className="flex min-h-0 flex-1 overflow-hidden">
 			<aside
 				className={cn(
-					"w-full border-r border-border md:block md:w-[25rem] md:shrink-0",
-					tab === "sources" ? "block" : "hidden",
+					"flex min-h-0 w-full flex-col overflow-hidden border-r border-border/60 bg-[color-mix(in_oklab,var(--background)_70%,var(--card))] md:w-[25rem] md:shrink-0",
+					tab === "sources" ? "flex" : "hidden md:flex",
 				)}
 			>
 				<SourcesPane
@@ -55,17 +55,17 @@ export function NotebookWorkspace({
 
 			<section
 				className={cn(
-					"min-w-0 flex-1",
-					tab === "chat" ? "block" : "hidden md:block",
+					"flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background",
+					tab === "chat" ? "flex" : "hidden md:flex",
 				)}
 			>
 				<AnimatePresence mode="wait" initial={false}>
 					<motion.div
 						key={tab}
-						className="h-full"
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
+						className="flex min-h-0 flex-1 flex-col overflow-hidden"
+						initial={{ opacity: 0, y: 8 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: -6 }}
 						transition={layoutTransition}
 					>
 						<ChatPane

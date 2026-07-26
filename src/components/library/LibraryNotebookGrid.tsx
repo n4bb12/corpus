@@ -3,6 +3,7 @@ import { AddNotebookCard } from "src/components/library/AddNotebookCard"
 import { NotebookCard } from "src/components/library/NotebookCard"
 import { Button } from "src/components/ui/button"
 import type { Id } from "src/convex/_generated/dataModel"
+import { cn } from "src/lib/utils"
 
 export type LibraryNotebook = {
 	_id: string
@@ -43,7 +44,7 @@ export function LibraryNotebookGrid({
 	return (
 		<>
 			<div
-				className="grid gap-4 max-sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+				className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-12 lg:gap-6"
 				aria-busy={isLoading}
 			>
 				{isLoading ? (
@@ -51,33 +52,43 @@ export function LibraryNotebookGrid({
 						Loading notebooks
 					</span>
 				) : !searchQuery ? (
-					<AddNotebookCard disabled={creating} onClick={onCreate} />
+					<div className="col-span-1 sm:col-span-1 lg:col-span-4 lg:row-span-2">
+						<AddNotebookCard disabled={creating} onClick={onCreate} tall />
+					</div>
 				) : null}
-				{page.map((notebook) => (
-					<NotebookCard
+				{page.map((notebook, index) => (
+					<div
 						key={notebook._id}
-						notebookId={String(notebook._id)}
-						title={notebook.title}
-						lastUsedLabel={formatDistanceToNow(notebook.lastUsedAt, {
-							addSuffix: true,
-						})}
-						sourceCount={notebook.sourceCount}
-						loading={isLoading}
-						onRename={async (title) => {
-							await onRename(notebook._id as Id<"notebooks">, title)
-						}}
-						onDelete={async () => {
-							await onDelete(notebook._id as Id<"notebooks">)
-						}}
-					/>
+						className={cn(
+							"col-span-1",
+							!searchQuery && index === 0 ? "lg:col-span-8" : "lg:col-span-4",
+						)}
+					>
+						<NotebookCard
+							notebookId={String(notebook._id)}
+							title={notebook.title}
+							lastUsedLabel={formatDistanceToNow(notebook.lastUsedAt, {
+								addSuffix: true,
+							})}
+							sourceCount={notebook.sourceCount}
+							loading={isLoading}
+							featured={!searchQuery && index === 0}
+							onRename={async (title) => {
+								await onRename(notebook._id as Id<"notebooks">, title)
+							}}
+							onDelete={async () => {
+								await onDelete(notebook._id as Id<"notebooks">)
+							}}
+						/>
+					</div>
 				))}
 			</div>
 
 			{showPagination ? (
-				<div className="mt-8 flex items-center justify-center gap-3">
+				<div className="mt-12 flex items-center justify-center gap-3">
 					<Button
 						variant="outline"
-						className="rounded-sm"
+						className="rounded-full"
 						disabled={!canGoPrevious}
 						onClick={onPrevious}
 					>
@@ -85,7 +96,7 @@ export function LibraryNotebookGrid({
 					</Button>
 					<Button
 						variant="outline"
-						className="rounded-sm"
+						className="rounded-full"
 						disabled={!canGoNext}
 						onClick={onNext}
 					>

@@ -65,7 +65,7 @@ export function SourcesPane({
 
 	return (
 		<div
-			className="relative flex h-full flex-col"
+			className="relative flex h-full min-h-0 flex-col overflow-hidden"
 			onDragEnter={(event) => {
 				event.preventDefault()
 				pane.setDragging(true)
@@ -82,12 +82,14 @@ export function SourcesPane({
 				}
 			}}
 		>
-			<SourcesPaneHeader
-				sourceCount={pane.sources?.length ?? 0}
-				uploadNotice={pane.uploadNotice}
-				query={pane.query}
-				onQueryChange={pane.setQuery}
-			/>
+			<div className="shrink-0">
+				<SourcesPaneHeader
+					sourceCount={pane.sources?.length ?? 0}
+					uploadNotice={pane.uploadNotice}
+					query={pane.query}
+					onQueryChange={pane.setQuery}
+				/>
+			</div>
 
 			<SourcesList
 				notebookId={notebookId}

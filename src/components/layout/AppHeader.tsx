@@ -22,25 +22,29 @@ export function AppHeader({
 	return (
 		<header
 			className={cn(
-				"sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border/80 bg-[color:color-mix(in_oklab,var(--background)_88%,white)] px-4 backdrop-blur-md md:px-6",
+				"sticky top-0 z-30 border-b border-border/50",
+				"bg-[color-mix(in_oklab,var(--background)_72%,transparent)] backdrop-blur-xl",
+				"supports-backdrop-filter:bg-[color-mix(in_oklab,var(--background)_58%,transparent)]",
 				className,
 			)}
 		>
-			<div className="flex min-w-0 flex-1 items-center gap-3">
-				<BrandLockup />
-				{notebookTitle ? (
-					<>
-						<span
-							className="hidden h-5 w-px shrink-0 bg-border sm:block"
-							aria-hidden
-						/>
-						<div className="min-w-0 w-full max-w-md">{notebookTitle}</div>
-					</>
-				) : null}
-			</div>
-			<div className="flex shrink-0 items-center gap-1">
-				<ThemeMenu />
-				{showAccount ? <AccountMenu email={email} name={name} /> : null}
+			<div className="mx-auto flex h-16 max-w-[84rem] items-center justify-between gap-3 px-4 md:px-6">
+				<div className="flex min-w-0 flex-1 items-center gap-3">
+					<BrandLockup compact />
+					{notebookTitle ? (
+						<>
+							<span
+								className="hidden h-5 w-px shrink-0 bg-border/70 sm:block"
+								aria-hidden
+							/>
+							<div className="min-w-0 w-full max-w-md">{notebookTitle}</div>
+						</>
+					) : null}
+				</div>
+				<div className="flex shrink-0 items-center gap-0.5">
+					<ThemeMenu />
+					{showAccount ? <AccountMenu email={email} name={name} /> : null}
+				</div>
 			</div>
 		</header>
 	)

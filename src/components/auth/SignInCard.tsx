@@ -49,12 +49,15 @@ export function SignInCard() {
 	}
 
 	return (
-		<div className="space-y-5 md:space-y-6">
-			<div className="space-y-2">
-				<h2 className="font-heading text-2xl font-semibold tracking-tight md:text-3xl">
+		<div className="flex h-full flex-col justify-center space-y-6 md:space-y-7">
+			<div className="space-y-3">
+				<span className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
+					Sign in
+				</span>
+				<h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
 					Welcome back
 				</h2>
-				<p className="text-sm text-muted-foreground">
+				<p className="text-sm leading-relaxed text-muted-foreground md:text-base">
 					Continue your research workspace.
 				</p>
 			</div>
@@ -67,7 +70,7 @@ export function SignInCard() {
 
 			<div className="flex items-center gap-3">
 				<Separator className="flex-1" />
-				<span className="text-xs tracking-wide text-muted-foreground uppercase">
+				<span className="text-xs tracking-[0.18em] text-muted-foreground uppercase">
 					or
 				</span>
 				<Separator className="flex-1" />

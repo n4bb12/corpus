@@ -1,35 +1,48 @@
 import { Plus } from "lucide-react"
+import { Bezel } from "src/components/ui/Bezel"
 import { cn } from "src/lib/utils"
 
 export type AddNotebookCardProps = {
 	disabled?: boolean
 	onClick: () => void
+	tall?: boolean
 }
 
-export function AddNotebookCard({ disabled, onClick }: AddNotebookCardProps) {
+export function AddNotebookCard({
+	disabled,
+	onClick,
+	tall = false,
+}: AddNotebookCardProps) {
 	return (
 		<button
 			type="button"
 			disabled={disabled}
 			className={cn(
-				"flex min-h-[10.5rem] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card/50 p-4 text-center transition-colors",
-				"hover:border-primary/45 hover:bg-muted/50",
-				"max-sm:min-h-0 max-sm:flex-row max-sm:justify-start max-sm:gap-3 max-sm:text-left",
-				"disabled:pointer-events-none disabled:opacity-60",
+				"group h-full w-full text-left transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 disabled:pointer-events-none disabled:opacity-60",
+				tall && "lg:min-h-full",
 			)}
 			onClick={onClick}
 		>
-			<span className="flex size-11 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary">
-				<Plus size={22} aria-hidden />
-			</span>
-			<span className="min-w-0 leading-tight">
-				<span className="block text-base font-semibold tracking-tight text-foreground">
-					New notebook
+			<Bezel
+				className="h-full"
+				innerClassName={cn(
+					"flex h-full flex-col items-center justify-center gap-4 border border-dashed border-border/80 bg-card/70 p-5 text-center transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:border-primary/40 group-hover:bg-muted/40",
+					"max-sm:min-h-0 max-sm:flex-row max-sm:justify-start max-sm:gap-3 max-sm:text-left",
+					tall ? "min-h-[16rem] lg:min-h-[22rem]" : "min-h-[10.5rem]",
+				)}
+			>
+				<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
+					<Plus size={22} aria-hidden strokeWidth={1.5} />
 				</span>
-				<span className="mt-1 block text-sm text-muted-foreground">
-					Start from sources
+				<span className="min-w-0 leading-tight">
+					<span className="block font-heading text-lg font-semibold tracking-tight text-foreground">
+						New notebook
+					</span>
+					<span className="mt-1.5 block text-sm text-muted-foreground">
+						Start from sources
+					</span>
 				</span>
-			</span>
+			</Bezel>
 		</button>
 	)
 }

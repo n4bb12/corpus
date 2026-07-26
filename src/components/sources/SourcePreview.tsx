@@ -184,8 +184,8 @@ export function SourcePreview({
 	}, [highlight, markdown, onHighlightUnresolved, resolvedOffsets])
 
 	return (
-		<div className="flex h-full flex-col">
-			<div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
+		<div className="flex h-full min-h-0 flex-col overflow-hidden">
+			<div className="z-10 flex shrink-0 items-center gap-2 border-b border-border bg-background/95 px-8 py-3 backdrop-blur">
 				<Button
 					variant="ghost"
 					size="sm"
@@ -199,8 +199,8 @@ export function SourcePreview({
 					{formatTitle(title)}
 				</div>
 			</div>
-			<ScrollArea className="min-h-0 flex-1">
-				<div className="px-4 py-4">
+			<ScrollArea className="min-h-0 flex-1 overflow-hidden">
+				<div className="p-4 sm:p-6">
 					{markdown ? (
 						<article className="prose prose-sm dark:prose-invert max-w-none space-y-4">
 							{blocks.map(({ text, start }) => {

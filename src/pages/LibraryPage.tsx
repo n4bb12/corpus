@@ -1,10 +1,11 @@
-import { Plus } from "lucide-react"
 import { AppHeader } from "src/components/layout/AppHeader"
 import { LibraryEmptyState } from "src/components/library/LibraryEmptyState"
 import { LibraryNotebookGrid } from "src/components/library/LibraryNotebookGrid"
 import { LibrarySearchField } from "src/components/library/LibrarySearchField"
 import { Button } from "src/components/ui/button"
+import { IslandCta } from "src/components/ui/IslandCta"
 import { PendingLabel } from "src/components/ui/PendingLabel"
+import { Reveal } from "src/components/ui/Reveal"
 import { useLibraryPage } from "src/pages/useLibraryPage"
 
 export function LibraryPage() {
@@ -17,13 +18,20 @@ export function LibraryPage() {
 					email={library.session.data?.user.email}
 					name={library.session.data?.user.name}
 				/>
-				<main className="mx-auto w-full max-w-[84rem] px-4 py-8 md:px-6">
-					<div className="mb-4 flex items-center justify-between gap-4">
-						<h1 className="text-2xl font-semibold tracking-tight">
-							Your notebooks
-						</h1>
-						<Button
-							className="rounded-sm"
+				<main className="mx-auto w-full max-w-[84rem] px-4 py-16 md:px-6 md:py-24">
+					<Reveal className="mb-10 flex flex-col gap-6 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
+						<div className="space-y-3">
+							<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-medium tracking-[0.2em] text-primary uppercase">
+								Library
+							</span>
+							<h1 className="font-heading text-4xl font-semibold tracking-tight md:text-5xl">
+								Your notebooks
+							</h1>
+							<p className="max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
+								Open a notebook to gather sources and ask grounded questions.
+							</p>
+						</div>
+						<IslandCta
 							disabled={library.creating}
 							onClick={() => void library.onCreate()}
 						>
@@ -31,74 +39,77 @@ export function LibraryPage() {
 								pending={library.creating}
 								pendingLabel="Creating notebook"
 							>
-								<span className="inline-flex items-center">
-									<Plus size={16} className="mr-1.5" />
-									New notebook
-								</span>
+								New notebook
 							</PendingLabel>
-						</Button>
-					</div>
+						</IslandCta>
+					</Reveal>
 
-					<LibrarySearchField
-						value={library.draft}
-						onChange={library.setDraft}
-						onClear={library.clearSearch}
-					/>
+					<Reveal delay={0.06}>
+						<LibrarySearchField
+							value={library.draft}
+							onChange={library.setDraft}
+							onClear={library.clearSearch}
+						/>
+					</Reveal>
 
 					{library.isEmpty ? (
-						<LibraryEmptyState
-							creating={library.creating}
-							onCreate={() => void library.onCreate()}
-						/>
+						<Reveal delay={0.1}>
+							<LibraryEmptyState
+								creating={library.creating}
+								onCreate={() => void library.onCreate()}
+							/>
+						</Reveal>
 					) : null}
 
 					{library.noMatches ? (
-						<div className="space-y-3">
+						<Reveal delay={0.1} className="space-y-4">
 							<p className="text-sm text-muted-foreground">
 								No notebooks match “{library.search.q}”
 							</p>
 							<Button
 								variant="outline"
-								className="rounded-sm"
+								className="rounded-full"
 								onClick={library.clearSearch}
 							>
 								Clear search
 							</Button>
-						</div>
+						</Reveal>
 					) : null}
 
 					{!library.isEmpty && !library.noMatches ? (
-						<LibraryNotebookGrid
-							page={library.page}
-							isLoading={library.isLoading}
-							searchQuery={library.search.q}
-							creating={library.creating}
-							showPagination={library.showPagination}
-							canGoPrevious={!!library.search.cursor}
-							canGoNext={!library.isLoading && !library.result?.isDone}
-							onCreate={() => void library.onCreate()}
-							onPrevious={() =>
-								void library.navigate({
-									to: "/",
-									search: { q: library.search.q, cursor: undefined },
-								})
-							}
-							onNext={() =>
-								void library.navigate({
-									to: "/",
-									search: {
-										q: library.search.q,
-										cursor: library.result?.continueCursor ?? undefined,
-									},
-								})
-							}
-							onRename={async (notebookId, title) => {
-								await library.renameNotebook({ notebookId, title })
-							}}
-							onDelete={async (notebookId) => {
-								await library.removeNotebook({ notebookId })
-							}}
-						/>
+						<Reveal delay={0.1}>
+							<LibraryNotebookGrid
+								page={library.page}
+								isLoading={library.isLoading}
+								searchQuery={library.search.q}
+								creating={library.creating}
+								showPagination={library.showPagination}
+								canGoPrevious={!!library.search.cursor}
+								canGoNext={!library.isLoading && !library.result?.isDone}
+								onCreate={() => void library.onCreate()}
+								onPrevious={() =>
+									void library.navigate({
+										to: "/",
+										search: { q: library.search.q, cursor: undefined },
+									})
+								}
+								onNext={() =>
+									void library.navigate({
+										to: "/",
+										search: {
+											q: library.search.q,
+											cursor: library.result?.continueCursor ?? undefined,
+										},
+									})
+								}
+								onRename={async (notebookId, title) => {
+									await library.renameNotebook({ notebookId, title })
+								}}
+								onDelete={async (notebookId) => {
+									await library.removeNotebook({ notebookId })
+								}}
+							/>
+						</Reveal>
 					) : null}
 				</main>
 			</div>

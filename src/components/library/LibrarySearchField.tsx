@@ -13,26 +13,31 @@ export function LibrarySearchField({
 	onClear,
 }: LibrarySearchFieldProps) {
 	return (
-		<div className="relative mb-8 w-full md:w-80">
+		<div className="relative mb-10 w-full md:mb-12 md:w-96">
 			<Search
 				size={16}
-				className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+				strokeWidth={1.5}
+				className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted-foreground"
 			/>
 			<Input
 				value={value}
 				onChange={(event) => onChange(event.target.value)}
 				placeholder="Search notebooks"
-				className={value ? "rounded-xl pr-9 pl-9" : "rounded-xl pl-9"}
+				className={
+					value
+						? "h-11 rounded-full pr-11 pl-11 shadow-(--shadow-pine) ring-1 ring-foreground/4"
+						: "h-11 rounded-full pl-11 shadow-(--shadow-pine) ring-1 ring-foreground/4"
+				}
 				aria-label="Search notebooks"
 			/>
 			{value ? (
 				<button
 					type="button"
-					className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+					className="absolute top-1/2 right-2.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-muted hover:text-foreground"
 					aria-label="Clear search"
 					onClick={onClear}
 				>
-					<X size={16} />
+					<X size={16} strokeWidth={1.5} />
 				</button>
 			) : null}
 		</div>

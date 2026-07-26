@@ -14,13 +14,13 @@ export function SourcesPaneHeader({
 	onQueryChange,
 }: SourcesPaneHeaderProps) {
 	return (
-		<div className="flex flex-col gap-3 px-4 pt-4">
+		<div className="flex flex-col gap-4 px-8 pt-5">
 			<div className="flex h-10 items-center justify-between gap-3">
-				<h2 className="text-sm font-semibold tracking-wide uppercase">
+				<h2 className="font-heading text-lg font-semibold tracking-tight">
 					Sources
 				</h2>
-				<p className="text-sm tabular-nums text-muted-foreground">
-					{sourceCount} sources
+				<p className="rounded-full bg-muted/70 px-3 py-1 text-xs tabular-nums text-muted-foreground">
+					{sourceCount}
 				</p>
 			</div>
 

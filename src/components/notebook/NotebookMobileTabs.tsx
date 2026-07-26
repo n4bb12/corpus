@@ -10,17 +10,17 @@ export function NotebookMobileTabs({
 	onTabChange,
 }: NotebookMobileTabsProps) {
 	return (
-		<div className="sticky top-16 z-20 border-b border-border bg-background/95 px-4 py-2 backdrop-blur md:hidden">
-			<div className="grid grid-cols-2 rounded-xl bg-muted p-1 shadow-(--shadow-pine)">
+		<div className="sticky top-16 z-20 border-b border-border/40 bg-background/80 px-4 py-2 backdrop-blur-xl md:hidden">
+			<div className="grid grid-cols-2 rounded-xl bg-muted/70 p-1 ring-1 ring-foreground/5">
 				{(["sources", "chat"] as const).map((value) => (
 					<button
 						key={value}
 						type="button"
 						className={cn(
-							"rounded-sm px-3 py-2 text-sm font-medium capitalize transition",
+							"rounded-lg px-3 py-2 text-sm font-medium capitalize transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
 							tab === value
-								? "bg-card text-foreground shadow-sm"
-								: "text-muted-foreground",
+								? "bg-card text-foreground shadow-(--shadow-pine)"
+								: "text-muted-foreground hover:text-foreground",
 						)}
 						onClick={() => onTabChange(value)}
 					>

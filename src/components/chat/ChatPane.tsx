@@ -25,12 +25,12 @@ export function ChatPane({
 	const chat = useChatPane(notebookId)
 
 	return (
-		<div className="relative flex h-full min-w-0 flex-col">
-			<div className="flex items-center justify-end px-4 pt-3">
+		<div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+			<div className="flex shrink-0 items-center justify-end px-4 pt-4">
 				<Button
 					variant="ghost"
 					size="sm"
-					className="rounded-sm"
+					className="rounded-full"
 					onClick={() => chat.setClearOpen(true)}
 				>
 					Clear chat
@@ -39,7 +39,7 @@ export function ChatPane({
 
 			<ScrollArea
 				viewportRef={chat.scrollerRef}
-				className="min-h-0 flex-1 px-4 pb-56"
+				className="min-h-0 flex-1 overflow-hidden px-4 pb-56"
 				onViewportScroll={(event) => {
 					const node = event.currentTarget
 					chat.stickToBottom.current =

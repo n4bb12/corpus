@@ -2016,3 +2016,106 @@ The gapless inner wrapper in `PendingLabel` is the culprit — removing it so ic
 
 Removed that inner wrapper so children (and the spinner when pending) share the outer flex gap. Dropped the useless `gap-3` / `w-full` on the `Button` / `PendingLabel` that weren’t spacing anything useful.
 
+# High-end visual design
+_Exported on 7/26/2026 at 23:04:57 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+/high-end-visual-design 
+
+---
+
+**Cursor**
+
+You've invoked the high-end visual design skill without a specific surface. I'll check the project context and recent work so we can aim it at the right UI.
+
+Ready to apply the high-end visual design skill. What should I redesign?
+
+1. **Sign-in / auth** — branded entry, floating island feel
+2. **Library** — notebook grid, empty state, search
+3. **Notebook workspace** — sources + chat chrome
+4. **Full app shell** — header, theme, atmosphere end-to-end
+5. **Something else** — name the page/component
+
+Note: Corpus already has a pine/mineral system in `DESIGN.md` (Fraunces + Outfit, soft surfaces). I’ll elevate within that language unless you want a deliberate direction break.
+
+---
+
+**User**
+
+Same direction, just elevation. Full app.
+
+---
+
+**Cursor**
+
+Elevating the full app within the existing pine/mineral direction. I'll audit the current shell, auth, library, and notebook surfaces first, then apply haptic depth, motion, and spatial rhythm consistently.
+
+Continuing through the remaining surfaces so the elevation stays coherent across shared primitives and page layouts.
+
+Variance locked: Soft Structuralism + mineral pine, Asymmetrical Bento for the library, floating island chrome. Building shared bezel/reveal primitives, then elevating each surface.
+
+Cleaning up a few Tailwind class warnings from the elevation pass.
+
+Full-app elevation is in — same pine/mineral language, more haptic depth and spatial rhythm.
+
+**Direction:** Soft Structuralism + mineral green, asymmetrical library bento, floating island chrome.
+
+**What changed**
+- **Tokens:** richer multi-radial atmosphere, softer diffused shadows, film grain overlay, spring easing
+- **Primitives:** `Bezel` (double-shell cards), `Reveal` (scroll entry), `IslandCta` (pill + nested arrow)
+- **Shell:** floating glass header island instead of edge-stuck bar
+- **Auth:** editorial split, larger Fraunces type, bezeled sign-in card, pill inputs/CTAs
+- **Library:** breathing whitespace, bento grid (featured first notebook), bezeled cards with hover lift
+- **Notebook:** elevated composer shell, calmer sources rail, island mobile tabs, softer dialog overlays
+
+Types, format, and tests all pass. Worth a visual pass on sign-in, library, and a notebook in light/dark.
+
+---
+
+**User**
+
+The header could be mistaken for a chat input
+
+---
+
+**Cursor**
+
+The floating pill does read like a composer. I'll reshape the header so it still feels elevated but clearly reads as chrome, not an input.
+
+Removing the full-width pill shell — that shape is what reads as a field. Switching to a clear chrome bar with blur and a hairline edge.
+
+Switched the header back to a full-bleed chrome bar: blur + hairline bottom edge, no capsule shell or floating shadow. Mobile tabs follow the same idea so they don’t echo a composer either.
+
+---
+
+**User**
+
+chat and source sidebar must be scrollable independently and should use shadcn scrollbars
+
+---
+
+**Cursor**
+
+The height chain is broken — `min-h-dvh` lets the page grow with content, so panes never clip into their own ScrollAreas. Fixing the layout constraints so both panes scroll independently.
+
+Fixing aside display classes that were overriding the flex column needed for independent scrolling.
+
+Fixed. The notebook shell was growing with content (`min-h-dvh`), so neither pane ever clipped into its own scroller.
+
+Now the page is locked to `h-dvh`, both columns use a `min-h-0` / `overflow-hidden` flex chain, and chat + sources (including preview) each scroll in their own shadcn `ScrollArea`.
+
+---
+
+**User**
+
+and double the sources px.
+
+---
+
+**Cursor**
+
+Sources pane gutters are now `px-8` (was `px-4`) on the header, list, and preview.
+

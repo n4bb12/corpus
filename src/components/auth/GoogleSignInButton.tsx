@@ -47,7 +47,7 @@ export function GoogleSignInButton({
 	return (
 		<div className="relative">
 			{highlighted ? (
-				<span className="absolute -top-1.5 -right-1 z-10 rounded-sm bg-foreground px-1.5 py-px text-[10px] font-medium tracking-wide text-background uppercase">
+				<span className="absolute -top-2 -right-1 z-10 rounded-full bg-foreground px-2.5 py-0.5 text-xs font-medium tracking-wide text-background uppercase">
 					Last used
 				</span>
 			) : null}
@@ -56,7 +56,7 @@ export function GoogleSignInButton({
 				variant="outline"
 				disabled={pending}
 				className={cn(
-					"w-full rounded-md border-[#dadce0] bg-white text-[#3c4043] shadow-sm hover:bg-[#f8f9fa] hover:text-[#3c4043] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]",
+					"h-11 w-full rounded-full border-[#dadce0] bg-white text-[#3c4043] shadow-(--shadow-pine) hover:bg-[#f8f9fa] hover:text-[#3c4043] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]",
 					className,
 				)}
 				onClick={onClick}

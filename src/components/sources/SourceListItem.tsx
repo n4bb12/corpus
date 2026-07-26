@@ -52,18 +52,18 @@ export const SourceListItem = memo(function SourceListItem({
 	const label = formatTitle(source.title)
 
 	return (
-		<div className="group relative flex items-start gap-2 rounded-xl px-2 py-2 hover:bg-muted/60">
+		<div className="group relative flex items-start gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-muted/55">
 			<button
 				type="button"
-				className="absolute inset-0 z-0 rounded-xl"
+				className="absolute inset-0 z-0 rounded-2xl"
 				aria-label={`Open ${label}`}
 				onClick={() => onPreview(source._id)}
 			/>
 			<span className="pointer-events-none relative z-10 mt-0.5 text-primary">
 				{busy ? (
-					<LoaderCircle size={18} className="animate-spin" />
+					<LoaderCircle size={18} className="animate-spin" strokeWidth={1.5} />
 				) : (
-					<Icon size={18} />
+					<Icon size={18} strokeWidth={1.5} />
 				)}
 			</span>
 			<span className="pointer-events-none relative z-10 min-w-0 flex-1">

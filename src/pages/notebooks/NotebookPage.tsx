@@ -9,7 +9,7 @@ export function NotebookPage() {
 	const page = useNotebookPage()
 
 	return (
-		<div className="flex h-dvh flex-col overflow-hidden">
+		<div className="atmosphere flex h-dvh flex-col overflow-hidden">
 			<AppHeader
 				email={page.session.data?.user.email}
 				name={page.session.data?.user.name}
