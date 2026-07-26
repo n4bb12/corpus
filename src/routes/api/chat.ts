@@ -7,6 +7,7 @@ import {
 	fetchAuthMutation,
 	getToken,
 } from "src/lib/auth-server"
+import { formatChatError } from "src/lib/chat_errors"
 import { CHAT_PROGRESS } from "src/lib/chat_progress"
 import { parseCitationMarkers, validateCitations } from "src/lib/citations"
 import { requireEnv } from "src/lib/env"
@@ -57,10 +58,7 @@ export const Route = createFileRoute("/api/chat")({
 				} catch (error) {
 					return Response.json(
 						{
-							error:
-								error instanceof Error
-									? error.message
-									: "Could not start chat.",
+							error: formatChatError(error),
 						},
 						{ status: 400 },
 					)
@@ -80,6 +78,7 @@ export const Route = createFileRoute("/api/chat")({
 					async start(streamController) {
 						let fullText = ""
 						let lastPersist = 0
+						let settled = false
 
 						const emitStatus = async (label: string) => {
 							streamController.enqueue(encodeSse("status", { label }))
@@ -88,6 +87,39 @@ export const Route = createFileRoute("/api/chat")({
 								generationId: prepared.generationId,
 								progressLabel: label,
 							})
+						}
+
+						const finalize = async (args: {
+							content: string
+							status: "complete" | "failed" | "canceled"
+							errorMessage?: string
+							citations?: Array<{
+								sourceId: never
+								chunkId: never
+								sourceTitleSnapshot: string
+								excerpt: string
+								order: number
+							}>
+						}) => {
+							if (settled) {
+								return
+							}
+
+							settled = true
+
+							try {
+								await fetchAuthMutation(api.chat.finalizeAssistant, {
+									messageId: prepared.assistantMessageId as never,
+									generationId: prepared.generationId,
+									content: args.content,
+									status: args.status,
+									errorMessage: args.errorMessage,
+									citations: args.citations,
+								})
+							} catch {
+								settled = false
+								throw new Error("Could not save the chat response.")
+							}
 						}
 
 						try {
@@ -141,9 +173,7 @@ Never cite chunk IDs that were not supplied.`
 							if (evidencePack.insufficient) {
 								fullText =
 									"The selected sources do not support an answer to that question."
-								await fetchAuthMutation(api.chat.finalizeAssistant, {
-									messageId: prepared.assistantMessageId as never,
-									generationId: prepared.generationId,
+								await finalize({
 									content: fullText,
 									status: "complete",
 									citations: [],
@@ -163,7 +193,18 @@ Never cite chunk IDs that were not supplied.`
 								abortSignal: controller.signal,
 							})
 
-							for await (const delta of result.textStream) {
+							for await (const part of result.stream) {
+								if (part.type === "error") {
+									throw part.error instanceof Error
+										? part.error
+										: new Error(formatChatError(part.error))
+								}
+
+								if (part.type !== "text-delta") {
+									continue
+								}
+
+								const delta = part.text
 								fullText += delta
 								streamController.enqueue(encodeSse("text", { delta }))
 
@@ -177,6 +218,10 @@ Never cite chunk IDs that were not supplied.`
 										content: fullText,
 									})
 								}
+							}
+
+							if (!fullText.trim()) {
+								throw new Error("The model returned an empty answer.")
 							}
 
 							let parsed = parseCitationMarkers(fullText)
@@ -200,9 +245,7 @@ Never cite chunk IDs that were not supplied.`
 							}
 
 							if (validation.invalid.length) {
-								await fetchAuthMutation(api.chat.finalizeAssistant, {
-									messageId: prepared.assistantMessageId as never,
-									generationId: prepared.generationId,
+								await finalize({
 									content: parsed.text || fullText,
 									status: "failed",
 									errorMessage: "Citation validation failed.",
@@ -238,9 +281,7 @@ Never cite chunk IDs that were not supplied.`
 									: "Source",
 							}))
 
-							await fetchAuthMutation(api.chat.finalizeAssistant, {
-								messageId: prepared.assistantMessageId as never,
-								generationId: prepared.generationId,
+							await finalize({
 								content: parsed.text,
 								status: "complete",
 								citations: titled,
@@ -250,27 +291,37 @@ Never cite chunk IDs that were not supplied.`
 							streamController.close()
 						} catch (error) {
 							const canceled = controller.signal.aborted
-							await fetchAuthMutation(api.chat.finalizeAssistant, {
-								messageId: prepared.assistantMessageId as never,
-								generationId: prepared.generationId,
-								content: fullText,
-								status: canceled ? "canceled" : "failed",
-								errorMessage:
-									error instanceof Error ? error.message : "Generation failed.",
-							})
+							const message = formatChatError(error)
 
-							if (!canceled) {
-								streamController.enqueue(
-									encodeSse("error", {
-										message:
-											error instanceof Error
-												? error.message
-												: "Generation failed.",
-									}),
-								)
+							try {
+								await finalize({
+									content: fullText,
+									status: canceled ? "canceled" : "failed",
+									errorMessage: canceled ? undefined : message,
+								})
+							} catch {
+								// Client will mark the turn failed if persistence fails.
 							}
 
-							streamController.close()
+							try {
+								if (!canceled) {
+									streamController.enqueue(
+										encodeSse("error", {
+											message,
+										}),
+									)
+								}
+
+								streamController.close()
+							} catch {
+								try {
+									streamController.error(
+										error instanceof Error ? error : new Error(message),
+									)
+								} catch {
+									// Stream may already be closed.
+								}
+							}
 						}
 					},
 				})

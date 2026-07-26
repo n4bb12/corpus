@@ -115,11 +115,18 @@ export function ChatMessageList({
 					async: false,
 				}) as string
 				const latestFailed =
-					canRetry && (entry.status === "failed" || entry.status === "canceled")
+					canRetry &&
+					(entry.status === "failed" ||
+						entry.status === "canceled" ||
+						(entry.status === "complete" && !entry.content?.trim()))
 				const showProgress =
 					!entry.content &&
 					(entry.status === "pending" || entry.status === "streaming") &&
 					!!entry.progressLabel
+				const showFailure =
+					entry.status === "failed" ||
+					entry.status === "canceled" ||
+					(latestFailed && !entry.content?.trim())
 
 				return (
 					<div key={entry._id} className="space-y-3">
@@ -133,7 +140,7 @@ export function ChatMessageList({
 								className="prose prose-sm dark:prose-invert max-w-none"
 								dangerouslySetInnerHTML={{ __html: html }}
 							/>
-						) : null}{" "}
+						) : null}
 						{entry.citations?.length ? (
 							<div className="flex flex-wrap gap-2">
 								{entry.citations.map((citation, index) => (
@@ -156,7 +163,7 @@ export function ChatMessageList({
 								))}
 							</div>
 						) : null}
-						{entry.status === "failed" || entry.status === "canceled" ? (
+						{showFailure ? (
 							<div className="space-y-2">
 								{!entry.content ? (
 									<div className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-3">

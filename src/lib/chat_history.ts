@@ -80,7 +80,13 @@ export function canRetryLatestAssistant(entries: ChatEntryLike[]) {
 		return false
 	}
 
-	return latest.status === "failed" || latest.status === "canceled"
+	if (latest.status === "failed" || latest.status === "canceled") {
+		return true
+	}
+
+	// Recover turns that finished with no visible answer (e.g. provider errors
+	// previously finalized as empty complete).
+	return latest.status === "complete" && !latest.content?.trim()
 }
 
 export type SourceRevisionEvent = {

@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test"
+import { formatChatError } from "./chat_errors"
 import {
 	canRetryLatestAssistant,
 	shouldCreateSourceRevision,
 	successfulPairsAfterBoundary,
 } from "./chat_history"
+import { parseSseChunk } from "./chat_sse"
 import { deriveChunkLocators } from "./chunk_locators"
 import { parseCitationMarkers, validateCitations } from "./citations"
 import { describeRejectedFile, isAcceptedUpload } from "./file_types"
@@ -193,7 +195,73 @@ describe("chat history", () => {
 
 		expect(successfulPairsAfterBoundary(entries, 10)).toHaveLength(1)
 		expect(canRetryLatestAssistant(entries)).toBe(true)
+		expect(
+			canRetryLatestAssistant([
+				{
+					kind: "message",
+					role: "user",
+					exchangeId: "e3",
+					status: "complete",
+					content: "hi",
+					createdAt: 1,
+				},
+				{
+					kind: "message",
+					role: "assistant",
+					exchangeId: "e3",
+					status: "complete",
+					content: "",
+					createdAt: 2,
+				},
+			]),
+		).toBe(true)
 		expect(shouldCreateSourceRevision(["a"], ["a", "b"])).toBe(true)
+	})
+})
+
+describe("chat errors", () => {
+	test("maps provider failures to readable copy", () => {
+		expect(
+			formatChatError("openai insufficient_quota billing"),
+		).toMatchInlineSnapshot(
+			`"The AI provider is out of quota. Try again later."`,
+		)
+		expect(
+			formatChatError(new Error("rate_limit exceeded")),
+		).toMatchInlineSnapshot(
+			`"The AI provider is rate-limiting requests. Try again in a moment."`,
+		)
+		expect(formatChatError("boom")).toMatchInlineSnapshot(`"boom"`)
+	})
+})
+
+describe("chat sse", () => {
+	test("parses framed status and error events", () => {
+		const events: Array<{ event: string; data: unknown }> = []
+		const rest = parseSseChunk(
+			'event: status\ndata: {"label":"Writing an answer…"}\n\nevent: error\ndata: {"message":"nope"}\n\npartial',
+			(event, data) => {
+				events.push({ event, data })
+			},
+		)
+
+		expect(rest).toMatchInlineSnapshot(`"partial"`)
+		expect(events).toMatchInlineSnapshot(`
+      [
+        {
+          "data": {
+            "label": "Writing an answer…",
+          },
+          "event": "status",
+        },
+        {
+          "data": {
+            "message": "nope",
+          },
+          "event": "error",
+        },
+      ]
+    `)
 	})
 })
 

@@ -10,7 +10,9 @@ import { ClearChatDialog } from "src/components/chat/ClearChatDialog"
 import { Button } from "src/components/ui/button"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
+import { formatChatError } from "src/lib/chat_errors"
 import { canRetryLatestAssistant } from "src/lib/chat_history"
+import { consumeChatSse } from "src/lib/chat_sse"
 import { useSignedInQueryArgs } from "src/lib/use-signed-in"
 
 export type ChatPaneProps = {
@@ -62,6 +64,19 @@ export function ChatPane({
 		scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight
 	}, [])
 
+	async function markFailed(message: string) {
+		setError(message)
+
+		try {
+			await failActiveGeneration({
+				notebookId,
+				errorMessage: message,
+			})
+		} catch {
+			// Thread status may already be finalized by the server.
+		}
+	}
+
 	async function send(nextPrompt = prompt, retryAssistantId?: string) {
 		if (!nextPrompt.trim() || !readySelected.length) {
 			return
@@ -92,34 +107,24 @@ export function ChatPane({
 			}
 
 			setPrompt("")
-			const reader = response.body?.getReader()
+			const result = await consumeChatSse(response)
 
-			if (reader) {
-				while (true) {
-					const { done } = await reader.read()
+			if (result.error) {
+				await markFailed(formatChatError(result.error))
+				return
+			}
 
-					if (done) {
-						break
-					}
-				}
+			if (!result.done) {
+				await markFailed(
+					"The response was interrupted before it finished. You can try again.",
+				)
 			}
 		} catch (err) {
 			if ((err as Error).name === "AbortError") {
 				return
 			}
 
-			const message =
-				err instanceof Error ? err.message : "Chat request failed."
-			setError(message)
-
-			try {
-				await failActiveGeneration({
-					notebookId,
-					errorMessage: message,
-				})
-			} catch {
-				// Thread status may already be finalized by the server.
-			}
+			await markFailed(formatChatError(err))
 		} finally {
 			setSending(false)
 			abortRef.current = null
