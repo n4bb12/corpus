@@ -31,6 +31,7 @@ export function ChatPane({
 	const sources = useQuery(api.sources.listByNotebook, notebookArgs)
 	const clearChat = useMutation(api.notebooks.clearChat)
 	const cancelGeneration = useMutation(api.chat.cancelGeneration)
+	const failActiveGeneration = useMutation(api.chat.failActiveGeneration)
 	const [prompt, setPrompt] = useState("")
 	const [sending, setSending] = useState(false)
 	const [clearOpen, setClearOpen] = useState(false)
@@ -103,8 +104,21 @@ export function ChatPane({
 				}
 			}
 		} catch (err) {
-			if ((err as Error).name !== "AbortError") {
-				setError(err instanceof Error ? err.message : "Chat failed.")
+			if ((err as Error).name === "AbortError") {
+				return
+			}
+
+			const message =
+				err instanceof Error ? err.message : "Chat request failed."
+			setError(message)
+
+			try {
+				await failActiveGeneration({
+					notebookId,
+					errorMessage: message,
+				})
+			} catch {
+				// Thread status may already be finalized by the server.
 			}
 		} finally {
 			setSending(false)

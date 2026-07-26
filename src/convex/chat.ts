@@ -400,3 +400,41 @@ export const cancelGeneration = mutation({
 		return active.generationId ?? null
 	},
 })
+
+export const failActiveGeneration = mutation({
+	args: {
+		notebookId: v.id("notebooks"),
+		errorMessage: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		const { notebook } = await requireNotebookOwner(ctx, args.notebookId)
+		const entries = await ctx.db
+			.query("chatEntries")
+			.withIndex("by_notebook_epoch_createdAt", (q) =>
+				q.eq("notebookId", notebook._id).eq("chatEpoch", notebook.chatEpoch),
+			)
+			.collect()
+
+		const active = [...entries]
+			.reverse()
+			.find(
+				(entry) =>
+					entry.kind === "message" &&
+					entry.role === "assistant" &&
+					(entry.status === "pending" || entry.status === "streaming"),
+			)
+
+		if (!active) {
+			return null
+		}
+
+		await ctx.db.patch(active._id, {
+			status: "failed",
+			errorMessage:
+				args.errorMessage ?? "The response was interrupted. You can try again.",
+			progressLabel: undefined,
+		})
+
+		return active._id
+	},
+})

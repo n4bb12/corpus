@@ -133,7 +133,8 @@ export function ChatMessageList({
 								className="prose prose-sm dark:prose-invert max-w-none"
 								dangerouslySetInnerHTML={{ __html: html }}
 							/>
-						) : null}						{entry.citations?.length ? (
+						) : null}{" "}
+						{entry.citations?.length ? (
 							<div className="flex flex-wrap gap-2">
 								{entry.citations.map((citation, index) => (
 									<CitationPill
@@ -155,28 +156,42 @@ export function ChatMessageList({
 								))}
 							</div>
 						) : null}
-						{entry.status === "failed" && !entry.content ? (
-							<p className="text-sm text-destructive">
-								{entry.errorMessage || "Generation failed."}
-							</p>
-						) : null}
-						{latestFailed ? (
-							<Button
-								size="sm"
-								variant="outline"
-								className="rounded-sm"
-								onClick={() => {
-									const user = entries?.find(
-										(item) =>
-											item.kind === "message" &&
-											item.role === "user" &&
-											item.exchangeId === entry.exchangeId,
-									)
-									onRetry(user?.content || "", entry._id)
-								}}
-							>
-								Retry
-							</Button>
+						{entry.status === "failed" || entry.status === "canceled" ? (
+							<div className="space-y-2">
+								{!entry.content ? (
+									<div className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-3">
+										<p className="text-sm text-destructive">
+											{entry.status === "canceled"
+												? "Response canceled."
+												: entry.errorMessage || "Generation failed."}
+										</p>
+									</div>
+								) : (
+									<p className="text-xs text-muted-foreground">
+										{entry.status === "canceled"
+											? "Canceled"
+											: entry.errorMessage || "Failed"}
+									</p>
+								)}
+								{latestFailed ? (
+									<Button
+										size="sm"
+										variant="outline"
+										className="rounded-sm"
+										onClick={() => {
+											const user = entries?.find(
+												(item) =>
+													item.kind === "message" &&
+													item.role === "user" &&
+													item.exchangeId === entry.exchangeId,
+											)
+											onRetry(user?.content || "", entry._id)
+										}}
+									>
+										Retry
+									</Button>
+								) : null}
+							</div>
 						) : null}
 					</div>
 				)

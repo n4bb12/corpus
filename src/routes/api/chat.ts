@@ -82,9 +82,7 @@ export const Route = createFileRoute("/api/chat")({
 						let lastPersist = 0
 
 						const emitStatus = async (label: string) => {
-							streamController.enqueue(
-								encodeSse("status", { label }),
-							)
+							streamController.enqueue(encodeSse("status", { label }))
 							await fetchAuthMutation(api.chat.setProgressLabel, {
 								messageId: prepared.assistantMessageId as never,
 								generationId: prepared.generationId,
@@ -150,9 +148,7 @@ Never cite chunk IDs that were not supplied.`
 									status: "complete",
 									citations: [],
 								})
-								streamController.enqueue(
-									encodeSse("text", { delta: fullText }),
-								)
+								streamController.enqueue(encodeSse("text", { delta: fullText }))
 								streamController.enqueue(encodeSse("done", {}))
 								streamController.close()
 								return
@@ -260,9 +256,7 @@ Never cite chunk IDs that were not supplied.`
 								content: fullText,
 								status: canceled ? "canceled" : "failed",
 								errorMessage:
-									error instanceof Error
-										? error.message
-										: "Generation failed.",
+									error instanceof Error ? error.message : "Generation failed.",
 							})
 
 							if (!canceled) {
