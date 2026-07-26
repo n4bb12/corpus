@@ -2,7 +2,7 @@ import type { GenericCtx } from "@convex-dev/better-auth"
 import { requireEnv } from "src/lib/env"
 import type { DataModel } from "../_generated/dataModel"
 
-const PLUNK_API_URL = "https://api.useplunk.com/v1/send"
+const PLUNK_API_URL = "https://next-api.useplunk.com/v1/send"
 
 function getPlunkApiKey() {
 	const key = requireEnv("PLUNK_API_KEY").trim()
