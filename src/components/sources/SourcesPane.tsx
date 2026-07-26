@@ -44,22 +44,42 @@ export function SourcesPane({
 		onExcerptFallback?.(excerpt)
 	})
 
+	const dialogs = (
+		<SourcesPaneDialogs
+			notebookId={notebookId}
+			addOpen={pane.addOpen}
+			onAddOpenChange={pane.setAddOpen}
+			onFiles={pane.uploadFiles}
+			renameId={pane.renameId}
+			renameDraft={pane.renameDraft}
+			onRenameDraftChange={pane.setRenameDraft}
+			onRenameIdChange={pane.setRenameId}
+			onRenameSave={pane.saveRename}
+			deleteId={pane.deleteId}
+			onDeleteIdChange={pane.setDeleteId}
+			onDeleteConfirm={pane.confirmDelete}
+		/>
+	)
+
 	if (pane.previewSource) {
 		return (
-			<SourcePreview
-				title={pane.previewSource.title}
-				markdown={pane.previewMarkdown}
-				highlight={highlight}
-				onHighlightUnresolved={handleHighlightUnresolved}
-				onBack={() => {
-					onPreviewSource(null)
-					requestAnimationFrame(() => {
-						if (pane.listRef.current) {
-							pane.listRef.current.scrollTop = pane.scrollMemory.current
-						}
-					})
-				}}
-			/>
+			<>
+				<SourcePreview
+					title={pane.previewSource.title}
+					markdown={pane.previewMarkdown}
+					highlight={highlight}
+					onHighlightUnresolved={handleHighlightUnresolved}
+					onBack={() => {
+						onPreviewSource(null)
+						requestAnimationFrame(() => {
+							if (pane.listRef.current) {
+								pane.listRef.current.scrollTop = pane.scrollMemory.current
+							}
+						})
+					}}
+				/>
+				{dialogs}
+			</>
 		)
 	}
 
@@ -112,20 +132,7 @@ export function SourcesPane({
 				<div className="pointer-events-none absolute inset-3 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5" />
 			) : null}
 
-			<SourcesPaneDialogs
-				notebookId={notebookId}
-				addOpen={pane.addOpen}
-				onAddOpenChange={pane.setAddOpen}
-				onFiles={pane.uploadFiles}
-				renameId={pane.renameId}
-				renameDraft={pane.renameDraft}
-				onRenameDraftChange={pane.setRenameDraft}
-				onRenameIdChange={pane.setRenameId}
-				onRenameSave={pane.saveRename}
-				deleteId={pane.deleteId}
-				onDeleteIdChange={pane.setDeleteId}
-				onDeleteConfirm={pane.confirmDelete}
-			/>
+			{dialogs}
 		</div>
 	)
 }

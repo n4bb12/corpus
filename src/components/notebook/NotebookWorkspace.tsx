@@ -85,6 +85,9 @@ export function NotebookWorkspace({
 								onPreviewSource(null)
 								onTabChange("sources")
 							}}
+							onAddSource={() => {
+								onAddSourceOpenChange(true)
+							}}
 							onCite={({
 								sourceId,
 								startOffset,
