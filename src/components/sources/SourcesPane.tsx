@@ -224,25 +224,39 @@ export function SourcesPane({
 				/>
 			</div>
 
-			<div className="flex items-center gap-2 px-4 py-3 text-sm">
-				<Checkbox
-					checked={allSelected ? true : someSelected ? "indeterminate" : false}
-					onCheckedChange={(checked) =>
-						void setSelectedMany({
-							notebookId,
-							sourceIds: selectable.map((source) => source._id),
-							selected: checked === true,
-						})
-					}
-					aria-label="Select all visible sources"
-				/>
-				<span className="tabular-nums text-muted-foreground">
-					{selectedCount}/{selectable.length} selected
-				</span>
-			</div>
+			{selectable.length ? (
+				<label className="flex cursor-pointer items-center justify-end gap-2 px-4 py-3 text-sm">
+					<span className="tabular-nums text-muted-foreground">
+						{selectedCount}/{selectable.length} selected
+					</span>
+					<Checkbox
+						checked={
+							allSelected ? true : someSelected ? "indeterminate" : false
+						}
+						onCheckedChange={(checked) =>
+							void setSelectedMany({
+								notebookId,
+								sourceIds: selectable.map((source) => source._id),
+								selected: checked === true,
+							})
+						}
+						aria-label="Select all visible sources"
+					/>
+				</label>
+			) : null}
 
 			<div ref={listRef} className="relative flex-1 overflow-auto px-2 pb-4">
 				<AnimatePresence initial={false}>
+					<button
+						type="button"
+						className="mb-1 flex w-full items-center gap-2 rounded-xl border border-dashed border-border px-2 py-3 text-left text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted/60 hover:text-foreground"
+						onClick={() => setAddOpen(true)}
+					>
+						<span className="flex size-8 items-center justify-center rounded-sm bg-primary/10 text-primary">
+							<Plus size={16} />
+						</span>
+						Add source
+					</button>
 					{filtered.map((source) => (
 						<SourceListItem
 							key={source._id}
