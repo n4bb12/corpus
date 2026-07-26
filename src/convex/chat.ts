@@ -463,7 +463,8 @@ export const failActiveGeneration = mutation({
 		await ctx.db.patch(active._id, {
 			status: "failed",
 			errorMessage:
-				args.errorMessage ?? "The answer stopped before it finished. Try again.",
+				args.errorMessage ??
+				"The answer stopped before it finished. Try again.",
 			progressLabel: undefined,
 		})
 

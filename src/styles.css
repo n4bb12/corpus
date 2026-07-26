@@ -118,6 +118,11 @@
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
   --radius-3xl: 1.5rem;
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-hover: 120ms;
+  --duration-menu: 150ms;
+  --duration-layout: 180ms;
 }
 
 @layer base {

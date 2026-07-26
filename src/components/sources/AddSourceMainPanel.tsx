@@ -20,7 +20,7 @@ export type AddSourceMainPanelProps = {
 
 function OrSeparator() {
 	return (
-		<div className="flex shrink-0 items-center gap-3 text-xs tracking-wide text-muted-foreground uppercase">
+		<div className="flex shrink-0 items-center gap-3 text-xs tracking-[0.18em] text-muted-foreground uppercase">
 			<div className="h-px flex-1 bg-border" />
 			or
 			<div className="h-px flex-1 bg-border" />

@@ -3,6 +3,7 @@ import { LibraryEmptyState } from "src/components/library/LibraryEmptyState"
 import { LibraryNotebookGrid } from "src/components/library/LibraryNotebookGrid"
 import { LibrarySearchField } from "src/components/library/LibrarySearchField"
 import { Button } from "src/components/ui/button"
+import { Eyebrow } from "src/components/ui/Eyebrow"
 import { IslandCta } from "src/components/ui/IslandCta"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 import { Reveal } from "src/components/ui/Reveal"
@@ -21,9 +22,7 @@ export function LibraryPage() {
 				<main className="mx-auto w-full max-w-[84rem] px-4 py-16 md:px-6 md:py-24">
 					<Reveal className="mb-10 flex flex-col gap-6 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
 						<div className="space-y-3">
-							<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-medium tracking-[0.2em] text-primary uppercase">
-								Library
-							</span>
+							<Eyebrow>Library</Eyebrow>
 							<h1 className="font-heading text-4xl font-semibold tracking-tight md:text-5xl">
 								Your notebooks
 							</h1>

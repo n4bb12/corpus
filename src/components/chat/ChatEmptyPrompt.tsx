@@ -1,3 +1,4 @@
+import { Eyebrow } from "src/components/ui/Eyebrow"
 import { IslandCta } from "src/components/ui/IslandCta"
 
 const SUGGESTIONS = [
@@ -21,9 +22,7 @@ export function ChatEmptyPrompt({
 		return (
 			<div className="space-y-6 pt-10">
 				<div className="space-y-3">
-					<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-medium tracking-[0.2em] text-primary uppercase">
-						Grounded answers
-					</span>
+					<Eyebrow>Grounded answers</Eyebrow>
 					<h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
 						Ask your sources
 					</h2>
@@ -37,7 +36,7 @@ export function ChatEmptyPrompt({
 						<button
 							key={suggestion}
 							type="button"
-							className="group block w-full rounded-2xl bg-muted/45 px-4 py-3.5 text-left text-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:translate-x-1 hover:bg-muted"
+							className="group block w-full rounded-2xl bg-muted/45 px-4 py-3.5 text-left text-sm transition-all duration-(--duration-hover) ease-spring hover:translate-x-0.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 							onClick={() => onSendSuggestion(suggestion)}
 						>
 							{suggestion}
@@ -50,9 +49,7 @@ export function ChatEmptyPrompt({
 
 	return (
 		<div className="space-y-5 pt-10">
-			<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-medium tracking-[0.2em] text-primary uppercase">
-				Sources first
-			</span>
+			<Eyebrow>Sources first</Eyebrow>
 			<h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
 				Add and select sources
 			</h2>

@@ -17,23 +17,24 @@ Pine is the only decorative accent. Red, amber, and semantic green are reserved 
 
 ## Typography
 
-- Self-hosted Figtree variable font
+- Self-hosted Fraunces (headings / wordmark) + Outfit (UI / body)
 - Wordmark weight 700
+- Wordmark and section kickers use slight negative tracking; kickers use `0.18em` positive tracking
 - Tabular numerals for dates and counts
 
 ## Radius
 
-- 16px cards, dialogs, composer
-- 12px fields, menus, drop zones
-- 10px buttons and icon controls
-- Full pills only for citations and compact status
+- 16–24px cards, dialogs, composer (`rounded-2xl` / `rounded-3xl`)
+- 12px fields, menus, drop zones (`rounded-xl`)
+- 10px compact controls (`rounded-sm`)
+- Full pills for primary CTAs, search fields, auth controls, citations, and compact status
 
 ## Motion
 
 - Hover/press ~120ms
 - Menus/tooltips ~150ms
 - Dialogs/tabs/panels/layout ~180ms
-- Ease-out close to `[0.16, 1, 0.3, 1]`
+- Ease-out close to `[0.16, 1, 0.3, 1]`; spring `[0.32, 0.72, 0, 1]` for layout reveals
 - Menus fade and move ~4px
 - Dialogs fade and scale from ~98.5%
 - Notebook cards lift ≤2px
@@ -45,8 +46,8 @@ Auth, library, and empty-state backgrounds may use a fixed pine radial wash plus
 
 ## Loading
 
-Use production components with placeholder records. Placeholder text is transparent with a soft pine shimmer. Hide dummy content from assistive technology and expose one live loading status.
+Use production components with placeholder records. Placeholder text is transparent with a soft pine shimmer. Progress labels use the shadcn `shimmer` utility. Hide dummy content from assistive technology and expose one live loading status.
 
 ## Icons
 
-Phosphor regular by default. Filled variants only for selected states.
+Lucide by default at 1.5 stroke. Filled variants only when a selected state needs stronger weight.

@@ -72,7 +72,7 @@ export function InlineNotebookTitle({
 				className={cn(
 					"h-9 w-full min-w-0 truncate rounded-lg border border-transparent bg-transparent py-1 pr-9 pl-2",
 					"cursor-text text-lg font-semibold tracking-tight outline-none",
-					"transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+					"transition-all duration-(--duration-hover) ease-spring",
 					"hover:border-border/70 hover:bg-muted/55",
 					"focus-visible:border-primary focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-primary/30",
 				)}
@@ -81,7 +81,7 @@ export function InlineNotebookTitle({
 				aria-hidden
 				className={cn(
 					"pointer-events-none absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center",
-					"rounded-md text-muted-foreground transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+					"rounded-md text-muted-foreground transition-all duration-(--duration-hover) ease-spring",
 					editing
 						? "opacity-0"
 						: "opacity-0 group-hover:bg-background/70 group-hover:opacity-100 group-focus-within:opacity-0",

@@ -1,4 +1,3 @@
-import type { FormEvent } from "react"
 import { IslandCta } from "src/components/ui/IslandCta"
 import { Input } from "src/components/ui/input"
 import { Label } from "src/components/ui/label"
@@ -12,7 +11,7 @@ export type SignInEmailFormProps = {
 	pendingGoogle: boolean
 	showLastUsed: boolean
 	onEmailChange: (value: string) => void
-	onSubmit: (event: FormEvent<HTMLFormElement>) => void
+	onSubmit: (event: SubmitEvent) => void
 }
 
 export function SignInEmailForm({
@@ -26,7 +25,10 @@ export function SignInEmailForm({
 	onSubmit,
 }: SignInEmailFormProps) {
 	return (
-		<form className="relative space-y-4" onSubmit={onSubmit}>
+		<form
+			className="relative space-y-4"
+			onSubmit={(event) => onSubmit(event.nativeEvent)}
+		>
 			{showLastUsed ? (
 				<span className="absolute -top-2 -right-1 z-10 rounded-full bg-foreground px-2.5 py-0.5 text-xs font-medium tracking-wide text-background uppercase">
 					Last used
@@ -56,7 +58,10 @@ export function SignInEmailForm({
 				className="w-full justify-between"
 				disabled={pendingEmail || pendingGoogle}
 			>
-				<PendingLabel pending={pendingEmail} pendingLabel="Sending sign-in link">
+				<PendingLabel
+					pending={pendingEmail}
+					pendingLabel="Sending sign-in link"
+				>
 					Email me a sign-in link
 				</PendingLabel>
 			</IslandCta>

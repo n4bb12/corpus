@@ -23,7 +23,7 @@ export function BrandLockup({
 		>
 			<span
 				className={cn(
-					"flex items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105",
+					"flex items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-(--duration-hover) ease-spring group-hover:scale-105",
 					compact ? "size-9" : "size-10",
 				)}
 			>
@@ -31,7 +31,7 @@ export function BrandLockup({
 			</span>
 			<span
 				className={cn(
-					"font-heading font-semibold tracking-tight text-foreground",
+					"font-heading font-bold tracking-tight text-foreground",
 					compact ? "text-base" : "text-lg",
 				)}
 			>

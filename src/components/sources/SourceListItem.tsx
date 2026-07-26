@@ -60,7 +60,7 @@ export const SourceListItem = memo(function SourceListItem({
 	return (
 		<div
 			className={cn(
-				"group relative flex items-start gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:transition-none",
+				"group relative flex items-start gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-(--duration-hover) ease-spring",
 				failed
 					? "bg-destructive/5 hover:bg-destructive/10"
 					: "hover:bg-muted/55",

@@ -24,7 +24,7 @@ export function IslandCta({
 		>
 			<span className="pl-1">{children}</span>
 			{showArrow ? (
-				<span className="flex size-8 items-center justify-center rounded-full bg-primary-foreground/15 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105 dark:bg-primary-foreground/20">
+				<span className="flex size-8 items-center justify-center rounded-full bg-primary-foreground/15 transition-transform duration-(--duration-hover) ease-spring group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105 dark:bg-primary-foreground/20">
 					<ArrowUpRight size={16} aria-hidden />
 				</span>
 			) : null}

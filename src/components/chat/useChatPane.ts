@@ -113,7 +113,9 @@ export function useChatPane(notebookId: Id<"notebooks">) {
 				const payload = (await response.json().catch(() => null)) as {
 					error?: string
 				} | null
-				throw new Error(payload?.error || "Couldn't start the answer. Try again.")
+				throw new Error(
+					payload?.error || "Couldn't start the answer. Try again.",
+				)
 			}
 
 			setPrompt("")
@@ -128,9 +130,7 @@ export function useChatPane(notebookId: Id<"notebooks">) {
 			}
 
 			if (!result.done) {
-				await markFailed(
-					"The answer stopped before it finished. Try again.",
-				)
+				await markFailed("The answer stopped before it finished. Try again.")
 			}
 		} catch (err) {
 			if ((err as Error).name === "AbortError") {

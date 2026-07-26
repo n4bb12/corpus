@@ -42,7 +42,7 @@ export function NotebookCard({
 				layout
 				transition={layoutTransition}
 				className={cn(
-					"group relative h-full transition-transform duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1",
+					"group relative h-full transition-transform duration-(--duration-hover) ease-spring hover:-translate-y-0.5",
 					loading && "pointer-events-none",
 				)}
 			>

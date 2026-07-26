@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from "motion/react"
 import { AuthShell } from "src/components/auth/AuthShell"
 import { SignInCard } from "src/components/auth/SignInCard"
 import { Bezel } from "src/components/ui/Bezel"
+import { Eyebrow } from "src/components/ui/Eyebrow"
 import { layoutTransition } from "src/lib/motion"
 
 export function SignInPage() {
@@ -18,9 +19,7 @@ export function SignInPage() {
 					animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
 					transition={layoutTransition}
 				>
-					<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-medium tracking-[0.2em] text-primary uppercase">
-						Grounded research
-					</span>
+					<Eyebrow>Grounded research</Eyebrow>
 					<h1 className="font-heading text-4xl leading-[1.02] font-semibold tracking-tight text-balance md:text-6xl lg:text-7xl">
 						Turn your sources into answers you can trust.
 					</h1>

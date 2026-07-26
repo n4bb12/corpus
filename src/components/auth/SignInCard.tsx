@@ -1,7 +1,7 @@
-import type { FormEvent } from "react"
 import { useEffect, useState } from "react"
 import { GoogleSignInButton } from "src/components/auth/GoogleSignInButton"
 import { SignInEmailForm } from "src/components/auth/SignInEmailForm"
+import { Eyebrow } from "src/components/ui/Eyebrow"
 import { Separator } from "src/components/ui/separator"
 import { authClient } from "src/lib/auth-client"
 import {
@@ -35,7 +35,7 @@ export function SignInCard() {
 		}
 	}, [])
 
-	async function onSubmit(event: FormEvent<HTMLFormElement>) {
+	async function onSubmit(event: SubmitEvent) {
 		event.preventDefault()
 		setPendingEmail(true)
 		setError(null)
@@ -69,9 +69,7 @@ export function SignInCard() {
 	return (
 		<div className="flex h-full flex-col justify-center space-y-6 md:space-y-7">
 			<div className="space-y-3">
-				<span className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-					Sign in
-				</span>
+				<Eyebrow tone="muted">Sign in</Eyebrow>
 				<h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
 					Welcome back
 				</h2>
