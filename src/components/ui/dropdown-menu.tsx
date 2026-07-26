@@ -1,12 +1,34 @@
 import { CheckIcon, ChevronRightIcon } from "lucide-react"
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
-import type { ComponentProps } from "react"
+import { type ComponentProps, useId } from "react"
+import { closeMenu, openMenu, useIsMenuOpen } from "src/lib/open-menu"
 import { cn } from "src/lib/utils.ts"
 
 function DropdownMenu({
+	open: openProp,
+	onOpenChange,
 	...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-	return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+	const id = useId()
+	const exclusiveOpen = useIsMenuOpen(id)
+	const isControlled = openProp !== undefined
+
+	return (
+		<DropdownMenuPrimitive.Root
+			data-slot="dropdown-menu"
+			open={isControlled ? openProp : exclusiveOpen}
+			onOpenChange={(next) => {
+				if (next) {
+					openMenu(id)
+				} else {
+					closeMenu(id)
+				}
+
+				onOpenChange?.(next)
+			}}
+			{...props}
+		/>
+	)
 }
 
 function DropdownMenuPortal({
