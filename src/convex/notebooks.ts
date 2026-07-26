@@ -1,9 +1,13 @@
 import { v } from "convex/values"
-import { LIMITS } from "src/lib/limits"
+import { LIMITS, UNTITLED_NOTEBOOK } from "src/lib/limits"
 import { normalizeTitle } from "src/lib/source_title"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
 import { requireNotebookOwner, requireUser } from "./lib/ownership"
+
+function searchMatchesUntitled(search: string) {
+	return UNTITLED_NOTEBOOK.toLowerCase().includes(search.toLowerCase())
+}
 
 export const list = query({
 	args: {
@@ -27,7 +31,30 @@ export const list = query({
 				)
 				.take(limit + 1)
 
-			const visible = results.filter((notebook) => !notebook.deletedAt)
+			const byId = new Map(
+				results
+					.filter((notebook) => !notebook.deletedAt)
+					.map((notebook) => [notebook._id, notebook]),
+			)
+
+			if (searchMatchesUntitled(search)) {
+				const untitled = await ctx.db
+					.query("notebooks")
+					.withIndex("by_owner_title", (q) =>
+						q.eq("ownerId", user._id).eq("title", ""),
+					)
+					.collect()
+
+				for (const notebook of untitled) {
+					if (!notebook.deletedAt) {
+						byId.set(notebook._id, notebook)
+					}
+				}
+			}
+
+			const visible = [...byId.values()].sort(
+				(left, right) => right.lastUsedAt - left.lastUsedAt,
+			)
 			const page = visible.slice(0, limit)
 			const hasMore = visible.length > limit
 			const enriched = await Promise.all(
