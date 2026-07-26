@@ -175,3 +175,120 @@ export function planSourceBoundary(args: {
 		activeSourceCount: args.nextIds.length,
 	}
 }
+
+export type SourceBoundaryEntryLike = {
+	_id: string
+	kind: "message" | "sourceBoundary"
+	role?: "user" | "assistant"
+	status?: "pending" | "streaming" | "complete" | "failed" | "canceled"
+	activeSourceCount?: number
+	selectionHash?: string
+	createdAt: number
+}
+
+export function readySelectedSourceIds(
+	sources: Array<{
+		_id: string
+		selected: boolean
+		processingState: string
+		deletedAt?: number
+	}>,
+) {
+	return sources
+		.filter(
+			(source) =>
+				!source.deletedAt &&
+				source.selected &&
+				source.processingState === "ready",
+		)
+		.map((source) => source._id)
+}
+
+export function planSourceBoundaryFromEntries(
+	entries: SourceBoundaryEntryLike[],
+	args: {
+		previousIds: string[]
+		nextIds: string[]
+		chatSelectionHash?: string | null
+	},
+) {
+	const hasSuccessfulExchange = entries.some(
+		(entry) =>
+			entry.kind === "message" &&
+			entry.role === "assistant" &&
+			entry.status === "complete",
+	)
+	const activeStreaming = entries.some(
+		(entry) =>
+			entry.kind === "message" &&
+			entry.role === "assistant" &&
+			(entry.status === "pending" || entry.status === "streaming"),
+	)
+	const trailing = [...entries]
+		.reverse()
+		.find(
+			(entry) => entry.kind === "sourceBoundary" || entry.kind === "message",
+		)
+
+	return planSourceBoundary({
+		previousIds: args.previousIds,
+		nextIds: args.nextIds,
+		chatSelectionHash: args.chatSelectionHash,
+		hasSuccessfulExchange,
+		activeStreaming,
+		trailingKind:
+			trailing?.kind === "sourceBoundary" || trailing?.kind === "message"
+				? trailing.kind
+				: null,
+	})
+}
+
+export function applySourceBoundaryPlan<T extends SourceBoundaryEntryLike>(
+	entries: T[],
+	plan: SourceBoundaryPlan,
+	createBoundary: (plan: Extract<SourceBoundaryPlan, { type: "insert" }>) => T,
+) {
+	if (plan.type === "none") {
+		return entries
+	}
+
+	const trailingIndex = [...entries]
+		.map((entry, index) => ({ entry, index }))
+		.reverse()
+		.find(
+			({ entry }) =>
+				entry.kind === "sourceBoundary" || entry.kind === "message",
+		)?.index
+
+	if (plan.type === "remove") {
+		if (
+			typeof trailingIndex !== "number" ||
+			entries[trailingIndex]?.kind !== "sourceBoundary"
+		) {
+			return entries
+		}
+
+		return entries.filter((_, index) => index !== trailingIndex)
+	}
+
+	if (plan.type === "update") {
+		if (
+			typeof trailingIndex !== "number" ||
+			entries[trailingIndex]?.kind !== "sourceBoundary"
+		) {
+			return entries
+		}
+
+		return entries.map((entry, index) =>
+			index === trailingIndex
+				? {
+						...entry,
+						selectionHash: plan.selectionHash,
+						activeSourceCount: plan.activeSourceCount,
+					}
+				: entry,
+		)
+	}
+
+	return [...entries, createBoundary(plan)]
+}

@@ -1,3 +1,4 @@
+import type { OptimisticLocalStore } from "convex/browser"
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -6,6 +7,7 @@ import { useSourcePreviewMarkdown } from "src/components/sources/useSourcePrevie
 import { api } from "src/convex/_generated/api"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { startSourceIngest } from "src/lib/ingest-client"
+import { patchChatEntriesForSourceSelection } from "src/lib/optimistic_source_boundary"
 import {
 	markUploadingSourceCreated,
 	removeUploadingSource,
@@ -41,6 +43,33 @@ function patchSourcesSelectedMany(
 	})
 }
 
+function syncOptimisticChatBoundary(
+	localStore: OptimisticLocalStore,
+	notebookId: Id<"notebooks">,
+	previousSources: Doc<"sources">[],
+	nextSources: Doc<"sources">[],
+) {
+	const notebook = localStore.getQuery(api.notebooks.get, { notebookId })
+	const entries = localStore.getQuery(api.chat.list, { notebookId })
+
+	if (!notebook || !entries) {
+		return
+	}
+
+	localStore.setQuery(
+		api.chat.list,
+		{ notebookId },
+		patchChatEntriesForSourceSelection({
+			entries,
+			previousSources,
+			nextSources,
+			chatSelectionHash: notebook.chatSelectionHash,
+			notebookId,
+			chatEpoch: notebook.chatEpoch,
+		}),
+	)
+}
+
 export function useSourcesPane({
 	notebookId,
 	previewSourceId,
@@ -65,10 +94,29 @@ export function useSourcesPane({
 					continue
 				}
 
-				localStore.setQuery(
-					api.sources.listByNotebook,
-					queryArgs,
-					patchSourceSelected(value, args.sourceId, args.selected),
+				const source = value.find((entry) => entry._id === args.sourceId)
+
+				if (!source) {
+					continue
+				}
+
+				const nextSources = patchSourceSelected(
+					value,
+					args.sourceId,
+					args.selected,
+				)
+
+				localStore.setQuery(api.sources.listByNotebook, queryArgs, nextSources)
+
+				if (source.processingState !== "ready") {
+					continue
+				}
+
+				syncOptimisticChatBoundary(
+					localStore,
+					source.notebookId,
+					value,
+					nextSources,
 				)
 			}
 		},
@@ -79,14 +127,22 @@ export function useSourcesPane({
 		for (const { args: queryArgs, value } of localStore.getAllQueries(
 			api.sources.listByNotebook,
 		)) {
-			if (!value) {
+			if (!value || queryArgs.notebookId !== args.notebookId) {
 				continue
 			}
 
-			localStore.setQuery(
-				api.sources.listByNotebook,
-				queryArgs,
-				patchSourcesSelectedMany(value, args.sourceIds, args.selected),
+			const nextSources = patchSourcesSelectedMany(
+				value,
+				args.sourceIds,
+				args.selected,
+			)
+
+			localStore.setQuery(api.sources.listByNotebook, queryArgs, nextSources)
+			syncOptimisticChatBoundary(
+				localStore,
+				args.notebookId,
+				value,
+				nextSources,
 			)
 		}
 	})

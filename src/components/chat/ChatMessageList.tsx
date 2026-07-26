@@ -1,11 +1,13 @@
 import type { FunctionReturnType } from "convex/server"
-import { Layers } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
 import { memo } from "react"
 import { ChatAssistantMessage } from "src/components/chat/ChatAssistantMessage"
 import { ChatEmptyPrompt } from "src/components/chat/ChatEmptyPrompt"
+import { ChatSourceBoundary } from "src/components/chat/ChatSourceBoundary"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import type { api } from "src/convex/_generated/api"
 import type { StreamCitation } from "src/lib/chat_sse"
+import { fadeTransition } from "src/lib/motion"
 
 export type { ChatCiteArgs }
 
@@ -49,48 +51,49 @@ export const ChatMessageList = memo(function ChatMessageList({
 				/>
 			) : null}
 
-			{(entries ?? []).map((entry) => {
-				if (entry.kind === "sourceBoundary") {
+			<AnimatePresence initial={false}>
+				{(entries ?? []).map((entry) => {
+					if (entry.kind === "sourceBoundary") {
+						return (
+							<motion.div
+								key={entry.selectionHash ?? entry._id}
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								transition={fadeTransition}
+								className="flex items-center gap-3 py-2 text-muted-foreground"
+							>
+								<ChatSourceBoundary
+									activeSourceCount={entry.activeSourceCount ?? 0}
+								/>
+							</motion.div>
+						)
+					}
+
+					if (entry.role === "user") {
+						return (
+							<ChatUserMessage key={entry._id} content={entry.content ?? ""} />
+						)
+					}
+
 					return (
-						<div
+						<ChatAssistantMessage
 							key={entry._id}
-							className="flex items-center gap-3 py-2 text-muted-foreground"
-						>
-							<div className="h-px min-w-4 flex-1 bg-border" />
-							<p className="flex shrink-0 items-center gap-1.5 text-xs">
-								<Layers size={12} aria-hidden />
-								<span>
-									Sources changed · {entry.activeSourceCount ?? 0} active
-								</span>
-							</p>
-							<div className="h-px min-w-4 flex-1 bg-border" />
-						</div>
+							entry={entry}
+							entries={entries}
+							streamedContent={
+								entry.status === "pending" || entry.status === "streaming"
+									? streamedContent
+									: null
+							}
+							streamedCitations={streamedCitations}
+							canRetry={canRetry}
+							onCite={onCite}
+							onRetry={onRetry}
+						/>
 					)
-				}
-
-				if (entry.role === "user") {
-					return (
-						<ChatUserMessage key={entry._id} content={entry.content ?? ""} />
-					)
-				}
-
-				return (
-					<ChatAssistantMessage
-						key={entry._id}
-						entry={entry}
-						entries={entries}
-						streamedContent={
-							entry.status === "pending" || entry.status === "streaming"
-								? streamedContent
-								: null
-						}
-						streamedCitations={streamedCitations}
-						canRetry={canRetry}
-						onCite={onCite}
-						onRetry={onRetry}
-					/>
-				)
-			})}
+				})}
+			</AnimatePresence>
 
 			{optimisticUserPrompt ? (
 				<ChatUserMessage content={optimisticUserPrompt} />

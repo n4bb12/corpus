@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test"
 import { formatChatError } from "./chat_errors"
 import {
+	applySourceBoundaryPlan,
 	canRetryLatestAssistant,
 	getOptimisticUserPrompt,
 	hashSourceSelection,
 	planSourceBoundary,
+	planSourceBoundaryFromEntries,
+	readySelectedSourceIds,
 	shouldCreateSourceRevision,
 	successfulPairsAfterBoundary,
 } from "./chat_history"
@@ -461,6 +464,73 @@ describe("chat history", () => {
         "type": "remove",
       }
     `)
+
+		const boundaryEntries: Array<{
+			_id: string
+			kind: "message" | "sourceBoundary"
+			role?: "user" | "assistant"
+			status?: "pending" | "streaming" | "complete" | "failed" | "canceled"
+			selectionHash?: string
+			activeSourceCount?: number
+			createdAt: number
+		}> = [
+			{
+				_id: "m1",
+				kind: "message",
+				role: "assistant",
+				status: "complete",
+				createdAt: 1,
+			},
+		]
+		const insertPlan = planSourceBoundaryFromEntries(boundaryEntries, {
+			previousIds: ["a"],
+			nextIds: ["b"],
+			chatSelectionHash: hashSourceSelection(["a"]),
+		})
+		expect(insertPlan).toMatchInlineSnapshot(`
+			{
+			  "activeSourceCount": 1,
+			  "selectionHash": "b",
+			  "type": "insert",
+			}
+		`)
+		expect(
+			readySelectedSourceIds([
+				{
+					_id: "a",
+					selected: true,
+					processingState: "ready",
+				},
+				{
+					_id: "b",
+					selected: true,
+					processingState: "pending",
+				},
+				{
+					_id: "c",
+					selected: false,
+					processingState: "ready",
+				},
+			]),
+		).toMatchInlineSnapshot(`
+			[
+			  "a",
+			]
+		`)
+		expect(
+			applySourceBoundaryPlan(boundaryEntries, insertPlan, (plan) => ({
+				_id: "boundary",
+				kind: "sourceBoundary" as const,
+				selectionHash: plan.selectionHash,
+				activeSourceCount: plan.activeSourceCount,
+				createdAt: 2,
+			})).map((entry) => entry.kind),
+		).toMatchInlineSnapshot(`
+			[
+			  "message",
+			  "sourceBoundary",
+			]
+		`)
 	})
 })
 
