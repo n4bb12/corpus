@@ -17,18 +17,13 @@ export const convexClient = new ConvexReactClient(convexUrl, {
 
 export type AppConvexProviderProps = {
 	children: ReactNode
-	initialToken?: string | null
 }
 
-export function AppConvexProvider({
-	children,
-	initialToken,
-}: AppConvexProviderProps) {
+export function AppConvexProvider({ children }: AppConvexProviderProps) {
 	return (
 		<ConvexBetterAuthProvider
 			client={convexClient}
 			authClient={authClient as unknown as AuthClient}
-			initialToken={initialToken}
 		>
 			<ConvexQueryCacheProvider>{children}</ConvexQueryCacheProvider>
 		</ConvexBetterAuthProvider>

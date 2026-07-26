@@ -1,19 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
-import { getToken } from "src/lib/auth-server"
+import { createFileRoute } from "@tanstack/react-router"
+import { requireSignedOut } from "src/lib/auth-guard"
 import { SignInPage } from "src/pages/SignInPage"
 
-const getAuth = createServerFn({ method: "GET" }).handler(async () =>
-	getToken(),
-)
-
 export const Route = createFileRoute("/sign-in")({
-	beforeLoad: async () => {
-		const token = await getAuth()
-
-		if (token) {
-			throw redirect({ to: "/" })
-		}
-	},
+	beforeLoad: () => requireSignedOut(),
 	component: SignInPage,
 })

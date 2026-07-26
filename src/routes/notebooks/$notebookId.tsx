@@ -1,23 +1,12 @@
-import { createFileRoute, redirect } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
-import { getToken } from "src/lib/auth-server"
+import { createFileRoute } from "@tanstack/react-router"
+import { requireSignedIn } from "src/lib/auth-guard"
 import { NotebookPage } from "src/pages/notebooks/NotebookPage"
 import { z } from "zod"
-
-const getAuth = createServerFn({ method: "GET" }).handler(async () =>
-	getToken(),
-)
 
 export const Route = createFileRoute("/notebooks/$notebookId")({
 	validateSearch: z.object({
 		tab: z.enum(["sources", "chat"]).optional(),
 	}),
-	beforeLoad: async () => {
-		const token = await getAuth()
-
-		if (!token) {
-			throw redirect({ to: "/sign-in" })
-		}
-	},
+	beforeLoad: () => requireSignedIn(),
 	component: NotebookPage,
 })

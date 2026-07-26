@@ -4,21 +4,14 @@ import {
 	Link,
 	Outlet,
 	Scripts,
-	useRouteContext,
 } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
 import type { ReactNode } from "react"
 import { BrandLockup } from "src/components/layout/BrandLockup"
 import { ThemeScript } from "src/components/layout/ThemeScript"
 import { Button } from "src/components/ui/button"
 import { TooltipProvider } from "src/components/ui/tooltip"
 import { AppConvexProvider } from "src/integrations/convex/provider"
-import { getToken } from "src/lib/auth-server"
 import styles from "src/styles.css?url"
-
-const getAuth = createServerFn({ method: "GET" }).handler(async () => {
-	return await getToken()
-})
 
 export const Route = createRootRoute({
 	head: () => ({
@@ -69,14 +62,6 @@ export const Route = createRootRoute({
 			},
 		],
 	}),
-	beforeLoad: async () => {
-		const token = await getAuth()
-
-		return {
-			token,
-			isAuthenticated: !!token,
-		}
-	},
 	component: RootComponent,
 	shellComponent: RootDocument,
 	notFoundComponent: NotFoundPage,
@@ -102,10 +87,8 @@ function NotFoundPage() {
 }
 
 function RootComponent() {
-	const context = useRouteContext({ from: Route.id })
-
 	return (
-		<AppConvexProvider initialToken={context.token}>
+		<AppConvexProvider>
 			<TooltipProvider delayDuration={200}>
 				<Outlet />
 			</TooltipProvider>

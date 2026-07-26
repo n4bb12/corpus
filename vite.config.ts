@@ -24,6 +24,10 @@ const config = defineConfig({
 		}),
 		tailwindcss(),
 		tanstackStart({
+			spa: {
+				enabled: true,
+			},
+			pages: [{ path: "/sign-in" }],
 			prerender: {
 				enabled: true,
 				crawlLinks: true,

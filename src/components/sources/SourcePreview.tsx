@@ -168,7 +168,7 @@ export function SourcePreview({
 					onClick={onBack}
 				>
 					<ArrowLeft size={16} className="mr-1" />
-					Back to sources
+					Back
 				</Button>
 				<div className="min-w-0 flex-1 truncate font-medium">
 					{formatTitle(title)}

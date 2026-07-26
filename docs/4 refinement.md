@@ -2856,3 +2856,124 @@ Modal action buttons use `rounded-sm` — switching those to `rounded-full`.
 
 Modal action buttons (and the dialog close control) now use `rounded-full` instead of `rounded-sm`.
 
+# Notebook page rendering issue
+_Exported on 7/27/2026 at 01:08:52 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Notebook pages like https://corpus-n4bb12.vercel.app/notebooks/jn7efp86yfyesptjv68qcgz78d8b80k9?tab=chat render multiple times on page load. Also, it appears the page is not yet rendered statically.
+
+---
+
+**Cursor**
+
+I'll dig into why notebook pages re-render on load and whether they're statically rendered—starting with the notebook route and page components.
+
+Building a repro loop next: checking what HTML the notebook URL actually serves, then tracing remount/animation causes.
+
+Building a harness to capture SSR output and remount behavior—local notebook requests redirect without auth, so I'll measure that path directly.
+
+Feedback loop is red: Motion SSR paints notebook panes at `opacity: 0`, and no notebook HTML is in the static build. Ranked hypotheses:
+
+1. **Motion entrance `initial={{ opacity: 0 }}`** on the notebook shell — SSR HTML exists but is invisible until JS animates in (confirmed by `bun scripts/diag-notebook-ssr.ts`).
+2. **No route loader / Convex prefetch** — title/chat stay empty until client auth + queries resolve (second visible paint).
+3. **`useSignedInQueryArgs` skips until Convex auth is ready** — extra loading frame after hydration even with `initialToken`.
+4. **Notebook URLs aren’t prerendered** (only `/` and `/sign-in` in `.vercel/output/static`) — expected for auth-gated `$notebookId`, but compounds the blank first paint.
+5. **Default-tab `navigate` effect** — remount risk only when `tab` is missing (not for `?tab=chat`).
+
+Fixing #1 first (smallest, harness-proven), then checking whether data loading still causes a second paint.
+
+Implementing SSR-safe page entrance: Motion's `initial={{ opacity: 0 }}` is baking invisible HTML into SSR/prerender output.
+
+**Root cause:** route-shell Motion used `initial={{ opacity: 0, … }}`, so SSR/prerender HTML was painted invisible until JS hydrated and animated in. That reads as a blank/non-static first paint, then one or more “re-renders.”
+
+Confirmed with a harness: Motion SSR emits `style="opacity:0;filter:blur(...)"`. The same pattern was in the built `/` and `/sign-in` static HTML.
+
+**Fix:** `pageEnterInitial = false` for route shells (notebook, sign-in, `Reveal`). Client-only motion (tab swaps, list rows, dialogs) is unchanged.
+
+**Also true, by design:** `/notebooks/$id` is not in `.vercel/output/static` — only `/` and `/sign-in` are prerendered. Notebook URLs are auth-gated and parametric, so they SSR on request rather than bake as static files. Title/chat content still fills in after Convex auth + queries on the client; that second paint is separate from the invisible-Motion bug.
+
+Regression: `src/lib/motion.test.ts` asserts `pageEnterInitial` keeps SSR HTML visible.
+
+---
+
+**User**
+
+Even auth-gated pages can be static shells. Data loading is client-side anyway. Are we already using TanStack SPA mode?
+
+---
+
+**Cursor**
+
+Good question — I'll check how this app is configured for SSR vs SPA mode and whether auth-gated routes can still ship as static shells.
+
+**No — this app is not in TanStack SPA mode.** It’s full SSR (`ssr: true` in `routeTree.gen.ts`) plus link-crawled prerender:
+
+```26:31:vite.config.ts
+		tanstackStart({
+			prerender: {
+				enabled: true,
+				crawlLinks: true,
+			},
+		}),
+```
+
+That’s why only `/` and `/sign-in` land in `.vercel/output/static`. Notebook URLs never get a static shell because:
+
+1. `$notebookId` isn’t discovered without crawlable links to concrete IDs.
+2. Even if it were, `beforeLoad` runs on the server and redirects unauthenticated prerender to `/sign-in`.
+
+You’re right that auth-gated pages can still be static shells when data is client-only. Two TanStack options:
+
+1. **SPA mode** — `tanstackStart({ spa: { enabled: true } })` prerenders a root shell (`/_shell.html`), skips runtime SSR of `beforeLoad`/`loader`/components, client bootstraps everything. ([docs](https://tanstack.com/start/latest/docs/framework/react/guide/spa-mode))
+2. **Selective SSR** — keep Start’s SSR default, set `ssr: false` on `/`, `/notebooks/$notebookId`, etc. so those routes don’t run server `beforeLoad`/render; shell still SSRs via `shellComponent`. ([docs](https://tanstack.com/start/latest/docs/framework/react/guide/selective-ssr))
+
+Today’s server auth redirects in `beforeLoad` fight static shells; with either approach, gate auth on the client (or after shell load) instead.
+
+---
+
+**User**
+
+SPA mode. Skip unauthenticated queries.
+
+---
+
+**Cursor**
+
+Switching to TanStack SPA mode and ensuring queries stay skipped until auth is ready. Mapping the current auth/routing setup first.
+
+---
+
+**User**
+
+But pages should all be static either way.
+
+---
+
+**Cursor**
+
+Understood — every route should ship a static HTML shell; SPA mode is the vehicle, and auth/data stay client-side. Implementing that now.
+
+Implementing SPA mode with static shells for all routes, client-side auth redirects, and query skipping until signed in.
+
+SPA shell is emitting; next I'll make `/` and notebook URLs hit that static shell instead of the server.
+
+Done. The app is on TanStack SPA mode with static shells for every URL.
+
+**SPA / static**
+- `spa: { enabled: true }` + `defaultSsr: false`
+- Build emits `_shell.html`, `index.html`, and `sign-in/index.html`
+- Post-build rewrites non-API paths to `_shell.html` (notebooks included); `/api` and `/_serverFn` still hit the server
+
+**Auth**
+- Server `beforeLoad` + `getToken` removed from page routes
+- Client guards via `authClient.getSession()` in `src/lib/auth-guard.ts`
+- Convex provider no longer needs an SSR `initialToken`
+
+**Queries**
+- Unchanged: `useSignedInQueryArgs` skips until Convex auth is ready (`expectAuth: true` still backs that)
+
+Static HTML is the document shell + pending atmosphere — page content (and data) hydrate on the client, which matches “static shells, client data.”
+
