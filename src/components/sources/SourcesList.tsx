@@ -3,13 +3,16 @@ import { useMemo } from "react"
 import { AddSourceCard } from "src/components/sources/AddSourceCard"
 import { SourceListItem } from "src/components/sources/SourceListItem"
 import { SourcesSelectAll } from "src/components/sources/SourcesSelectAll"
+import { UploadingSourceListItem } from "src/components/sources/UploadingSourceListItem"
 import { ScrollArea } from "src/components/ui/scroll-area"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
+import type { UploadingSource } from "src/lib/uploading_sources"
 
 export type SourcesListProps = {
 	notebookId: Id<"notebooks">
 	listRef: RefObject<HTMLDivElement | null>
 	filtered: Doc<"sources">[]
+	uploading: UploadingSource[]
 	selectable: Doc<"sources">[]
 	selectedCount: number
 	allSelected: boolean
@@ -31,6 +34,7 @@ export function SourcesList({
 	notebookId,
 	listRef,
 	filtered,
+	uploading,
 	selectable,
 	selectedCount,
 	allSelected,
@@ -64,6 +68,9 @@ export function SourcesList({
 					someSelected={someSelected}
 					onSelectMany={onSelectMany}
 				/>
+				{uploading.map((source) => (
+					<UploadingSourceListItem key={source.localId} source={source} />
+				))}
 				{filtered.map((source) => (
 					<SourceListItem
 						key={source._id}

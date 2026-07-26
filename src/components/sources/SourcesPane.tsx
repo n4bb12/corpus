@@ -93,6 +93,7 @@ export function SourcesPane({
 				notebookId={notebookId}
 				listRef={pane.listRef}
 				filtered={pane.filtered}
+				uploading={pane.uploading}
 				selectable={pane.selectable}
 				selectedCount={pane.selectedCount}
 				allSelected={pane.allSelected}

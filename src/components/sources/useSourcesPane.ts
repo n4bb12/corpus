@@ -1,11 +1,17 @@
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { uploadSourceFiles } from "src/components/sources/uploadSourceFiles"
 import { useSourcePreviewMarkdown } from "src/components/sources/useSourcePreviewMarkdown"
 import { api } from "src/convex/_generated/api"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { startSourceIngest } from "src/lib/ingest-client"
+import {
+	markUploadingSourceCreated,
+	removeUploadingSource,
+	type UploadingSource,
+	visibleUploadingSources,
+} from "src/lib/uploading_sources"
 import { useEventCallback } from "src/lib/use-event-callback"
 import { useSignedInQueryArgs } from "src/lib/use-signed-in"
 
@@ -96,6 +102,9 @@ export function useSourcesPane({
 	const [renameDraft, setRenameDraft] = useState("")
 	const [deleteId, setDeleteId] = useState<Id<"sources"> | null>(null)
 	const [uploadNotice, setUploadNotice] = useState<string | null>(null)
+	const [uploadingSources, setUploadingSources] = useState<UploadingSource[]>(
+		[],
+	)
 	const listRef = useRef<HTMLDivElement>(null)
 	const scrollMemory = useRef(0)
 	const previewMarkdown = useSourcePreviewMarkdown(previewSourceId)
@@ -111,6 +120,29 @@ export function useSourcesPane({
 
 		return list.filter((source) => source.title.toLowerCase().includes(needle))
 	}, [query, sources])
+
+	const uploading = useMemo(
+		() =>
+			visibleUploadingSources(
+				uploadingSources,
+				(sources ?? []).map((source) => source._id),
+			),
+		[sources, uploadingSources],
+	)
+
+	useEffect(() => {
+		if (!sources) {
+			return
+		}
+
+		const sourceIds = new Set(sources.map((source) => source._id))
+
+		setUploadingSources((current) => {
+			const next = visibleUploadingSources(current, sourceIds)
+
+			return next.length === current.length ? current : next
+		})
+	}, [sources])
 
 	const selectable = useMemo(
 		() => filtered.filter((source) => source.processingState !== "failed"),
@@ -128,13 +160,32 @@ export function useSourcesPane({
 	)
 
 	async function uploadFiles(files: File[]) {
-		const notice = await uploadSourceFiles({
-			files,
-			notebookId,
-			sourceCount: sources?.length ?? 0,
-			generateUploadUrl: async () => generateUploadUrl({}),
-		})
-		setUploadNotice(notice)
+		try {
+			const notice = await uploadSourceFiles({
+				files,
+				notebookId,
+				sourceCount: (sources?.length ?? 0) + uploadingSources.length,
+				generateUploadUrl: async () => generateUploadUrl({}),
+				onPending: (pending) => {
+					setUploadingSources((current) => [...pending, ...current])
+				},
+				onCreated: (localId, sourceId) => {
+					setUploadingSources((current) =>
+						markUploadingSourceCreated(current, localId, sourceId),
+					)
+				},
+				onFailed: (localId) => {
+					setUploadingSources((current) =>
+						removeUploadingSource(current, localId),
+					)
+				},
+			})
+			setUploadNotice(notice)
+		} catch (error) {
+			setUploadNotice(
+				error instanceof Error ? error.message : "Could not upload file.",
+			)
+		}
 	}
 
 	const beginRename = useEventCallback((source: Doc<"sources">) => {
@@ -199,6 +250,7 @@ export function useSourcesPane({
 		deleteId,
 		setDeleteId,
 		uploadNotice,
+		uploading,
 		listRef,
 		scrollMemory,
 		previewMarkdown,
