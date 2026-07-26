@@ -221,12 +221,12 @@ export function LibraryPage() {
 									<span className="sr-only" role="status">
 										Loading notebooks
 									</span>
-								) : (
+								) : !search.q ? (
 									<AddNotebookCard
 										disabled={creating}
 										onClick={() => void onCreate()}
 									/>
-								)}
+								) : null}
 								{page.map((notebook: any) => (
 									<NotebookCard
 										key={notebook._id}
