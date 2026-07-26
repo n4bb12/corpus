@@ -45,13 +45,15 @@ export function LibraryPage() {
 						</IslandCta>
 					</Reveal>
 
-					<Reveal delay={0.03}>
-						<LibrarySearchField
-							value={library.draft}
-							onChange={library.setDraft}
-							onClear={library.clearSearch}
-						/>
-					</Reveal>
+					{library.showSearch ? (
+						<Reveal delay={0.03}>
+							<LibrarySearchField
+								value={library.draft}
+								onChange={library.setDraft}
+								onClear={library.clearSearch}
+							/>
+						</Reveal>
+					) : null}
 
 					{library.isEmpty ? (
 						<Reveal delay={0.05}>

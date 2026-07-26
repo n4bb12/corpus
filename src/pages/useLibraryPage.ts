@@ -100,6 +100,7 @@ export function useLibraryPage() {
 	const noMatches = !isLoading && !!search.q && !result.page.length
 	const showPagination =
 		!isLoading && (!!search.cursor || (result !== undefined && !result.isDone))
+	const showSearch = showPagination || !!search.q || !!search.cursor
 
 	async function onCreate() {
 		setCreating(true)
@@ -135,6 +136,7 @@ export function useLibraryPage() {
 		isEmpty,
 		noMatches,
 		showPagination,
+		showSearch,
 		navigate,
 		onCreate,
 		clearSearch,
