@@ -5,7 +5,11 @@ import { generateText } from "ai"
 import { v } from "convex/values"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
-import { normalizeTitle } from "src/lib/source_title"
+import {
+	looksLikeFilename,
+	normalizeTitle,
+	titleFromMarkdown,
+} from "src/lib/source_title"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
 
@@ -64,6 +68,8 @@ export const maybeGenerateNotebookTitle = internalAction({
 			})
 		}
 
+		let markdown = ""
+
 		try {
 			const blob = await ctx.storage.get(source.normalizedStorageId)
 
@@ -71,28 +77,35 @@ export const maybeGenerateNotebookTitle = internalAction({
 				throw new Error("Missing normalized source.")
 			}
 
-			const markdown = (await blob.text()).slice(0, 4000)
+			markdown = (await blob.text()).slice(0, 4000)
 			const openai = createOpenAI({
 				apiKey: requireEnv("OPENAI_API_KEY"),
 			})
 
 			const result = await generateText({
 				model: openai(MODELS.title),
-				prompt: `Create a short notebook title (max 8 words) for notes grounded in this source. Return only the title.\n\n${markdown}`,
+				prompt: `Summarize this source into a short notebook title (max 8 words). Prefer a topical phrase over a document filename. Return only the title.\n\n${markdown}`,
 			})
 
 			const title = cleanGeneratedTitle(result.text)
 
-			if (title) {
+			if (title && !looksLikeFilename(title)) {
 				await applyTitle(title)
 				return
 			}
 
-			throw new Error("Empty generated title.")
+			throw new Error("Empty or filename-like generated title.")
 		} catch {
+			const fromContent = titleFromMarkdown(markdown, "")
+
+			if (fromContent && !looksLikeFilename(fromContent)) {
+				await applyTitle(fromContent)
+				return
+			}
+
 			const fallback = normalizeTitle(source.title, "")
 
-			if (fallback) {
+			if (fallback && !looksLikeFilename(fallback)) {
 				await applyTitle(fallback)
 				return
 			}

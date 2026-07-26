@@ -1,3 +1,5 @@
+import { markdownToPlainText } from "src/lib/markdown_plain"
+
 const NAMED_ENTITIES: Record<string, string> = {
 	amp: "&",
 	apos: "'",
@@ -45,6 +47,16 @@ export function formatTitle(raw: string) {
 	return decodeHtmlEntities(raw).replace(/\s+/g, " ").trim()
 }
 
+export function looksLikeFilename(value: string) {
+	const trimmed = value.trim()
+
+	if (!trimmed || /\s/.test(trimmed)) {
+		return false
+	}
+
+	return /\.[a-z0-9]{1,8}$/i.test(trimmed)
+}
+
 export function titleFromPastedText(text: string) {
 	const line = text
 		.split(/\r?\n/)
@@ -70,4 +82,22 @@ export function titleFromUrl(url: string, htmlTitle?: string | null) {
 
 export function titleFromFilename(filename: string) {
 	return normalizeTitle(filename, "Uploaded file")
+}
+
+export function titleFromMarkdown(markdown: string, fallback = "") {
+	const lines = markdown
+		.split(/\r?\n/)
+		.map((line) => markdownToPlainText(line))
+		.filter(Boolean)
+
+	const line =
+		lines.find((entry) => entry.split(/\s+/).length >= 4) ?? lines[0] ?? ""
+
+	if (!line) {
+		return fallback
+	}
+
+	const sentence = line.split(/(?<=[.!?])\s+/)[0] ?? line
+
+	return normalizeTitle(sentence, fallback)
 }

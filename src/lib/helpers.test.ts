@@ -21,8 +21,10 @@ import {
 	selectEvidenceWithinBudget,
 } from "./retrieval"
 import {
+	looksLikeFilename,
 	normalizeTitle,
 	titleFromFilename,
+	titleFromMarkdown,
 	titleFromPastedText,
 	titleFromUrl,
 } from "./source_title"
@@ -56,6 +58,15 @@ describe("source titles", () => {
 			titleFromUrl("https://example.com/docs/guide"),
 		).toMatchInlineSnapshot(`"example.com/docs/guide"`)
 		expect(titleFromFilename("notes.pdf")).toMatchInlineSnapshot(`"notes.pdf"`)
+		expect(
+			titleFromMarkdown(
+				"## Elternbrief\n\nElternbrief zum Start des Infoportals mit wichtigen Hinweisen. Mehr Text folgt.",
+			),
+		).toMatchInlineSnapshot(
+			`"Elternbrief zum Start des Infoportals mit wichtigen Hinweisen."`,
+		)
+		expect(looksLikeFilename("Elternbrief_Start_Infoportal.pdf")).toBe(true)
+		expect(looksLikeFilename("Infoportal start letter")).toBe(false)
 	})
 })
 
