@@ -3,7 +3,11 @@ import { AuthShell } from "src/components/auth/AuthShell"
 import { SignInCard } from "src/components/auth/SignInCard"
 import { Bezel } from "src/components/ui/Bezel"
 import { Eyebrow } from "src/components/ui/Eyebrow"
-import { layoutTransition, respectReducedMotion } from "src/lib/motion"
+import {
+	layoutTransition,
+	pageEnterInitial,
+	respectReducedMotion,
+} from "src/lib/motion"
 
 export function SignInPage() {
 	const reduceMotion = useReducedMotion()
@@ -13,7 +17,7 @@ export function SignInPage() {
 			<div className="mx-auto grid w-full max-w-6xl items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:gap-20">
 				<motion.div
 					className="space-y-6 text-center lg:text-left"
-					initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+					initial={pageEnterInitial}
 					animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
 					transition={respectReducedMotion(reduceMotion, layoutTransition)}
 				>
@@ -29,7 +33,7 @@ export function SignInPage() {
 
 				<motion.div
 					className="mx-auto w-full max-w-[22rem] sm:max-w-[26rem] md:max-w-[30rem] lg:mx-0 lg:max-w-none"
-					initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
+					initial={pageEnterInitial}
 					animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
 					transition={respectReducedMotion(reduceMotion, {
 						...layoutTransition,

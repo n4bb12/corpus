@@ -31,6 +31,14 @@ export const revealTransition = {
 }
 
 /**
+ * Route-shell entrance: skip Motion `initial` so SSR/prerender HTML is visible.
+ * `initial={{ opacity: 0 }}` paints a blank first frame (and static HTML) until
+ * JS hydrates and animates — it reads as “not statically rendered” / multiple paints.
+ * Keep `initial` animations for client-only mounts (dialogs, list rows, tab swaps).
+ */
+export const pageEnterInitial = false
+
+/**
  * Keep Motion `initial` identical on server and client.
  * `useReducedMotion()` is null during SSR and may be true on the client —
  * branching `initial` on it causes React hydration mismatch #418.
