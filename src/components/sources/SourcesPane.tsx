@@ -1,6 +1,6 @@
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
-import { Plus, Search } from "lucide-react"
+import { Search } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { AddSourceCard } from "src/components/sources/AddSourceCard"
 import { AddSourceDialog } from "src/components/sources/AddSourceDialog"
@@ -8,7 +8,6 @@ import { SourceDeleteDialog } from "src/components/sources/SourceDeleteDialog"
 import { SourceListItem } from "src/components/sources/SourceListItem"
 import { SourcePreview } from "src/components/sources/SourcePreview"
 import { SourceRenameDialog } from "src/components/sources/SourceRenameDialog"
-import { Button } from "src/components/ui/button"
 import { Checkbox } from "src/components/ui/checkbox"
 import { Input } from "src/components/ui/input"
 import { api } from "src/convex/_generated/api"
@@ -207,14 +206,9 @@ export function SourcesPane({
 					<h2 className="text-sm font-semibold tracking-wide uppercase">
 						Sources
 					</h2>
-					<Button
-						size="sm"
-						className="rounded-sm"
-						onClick={() => setAddOpen(true)}
-					>
-						<Plus size={14} className="mr-1" />
-						Add
-					</Button>
+					<p className="text-sm tabular-nums text-muted-foreground">
+						{sources?.length ?? 0} sources
+					</p>
 				</div>
 
 				{uploadNotice ? (
