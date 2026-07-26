@@ -40,28 +40,37 @@ export function SourceRenameDialog({
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="rounded-2xl sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle>Rename source</DialogTitle>
-				</DialogHeader>
-				<Input
-					value={title}
-					onChange={(event) => onTitleChange(event.target.value)}
-					className="rounded-xl"
-					autoFocus
-					disabled={pending}
-					onFocus={(event) => event.currentTarget.select()}
-				/>
-				<DialogFooter>
-					<Button
-						className="rounded-sm"
+				<form
+					className="grid gap-6"
+					onSubmit={(event) => {
+						event.preventDefault()
+
+						if (pending) {
+							return
+						}
+
+						void save()
+					}}
+				>
+					<DialogHeader>
+						<DialogTitle>Rename source</DialogTitle>
+					</DialogHeader>
+					<Input
+						value={title}
+						onChange={(event) => onTitleChange(event.target.value)}
+						className="rounded-xl"
+						autoFocus
 						disabled={pending}
-						onClick={() => void save()}
-					>
-						<PendingLabel pending={pending} pendingLabel="Saving">
-							Save
-						</PendingLabel>
-					</Button>
-				</DialogFooter>
+						onFocus={(event) => event.currentTarget.select()}
+					/>
+					<DialogFooter>
+						<Button type="submit" className="rounded-sm" disabled={pending}>
+							<PendingLabel pending={pending} pendingLabel="Saving">
+								Save
+							</PendingLabel>
+						</Button>
+					</DialogFooter>
+				</form>
 			</DialogContent>
 		</Dialog>
 	)
