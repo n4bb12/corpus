@@ -11,6 +11,7 @@ import {
 } from "src/components/ui/dropdown-menu"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 import { authClient } from "src/lib/auth-client"
+import { beginSignOut } from "src/lib/use-signed-in"
 
 export type AccountMenuProps = {
 	email?: string | null
@@ -22,11 +23,13 @@ export function AccountMenu({ email, name }: AccountMenuProps) {
 
 	async function onSignOut() {
 		setPending(true)
+		// Drop query subscriptions before Better Auth clears the Convex token.
+		beginSignOut()
 
 		await authClient.signOut({
 			fetchOptions: {
 				onSuccess: () => {
-					location.reload()
+					window.location.assign("/sign-in")
 				},
 				onError: () => {
 					setPending(false)
