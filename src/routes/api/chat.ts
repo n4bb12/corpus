@@ -1,6 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { createFileRoute } from "@tanstack/react-router"
-import { generateText, streamText } from "ai"
+import { generateText, smoothStream, streamText } from "ai"
 import { api } from "src/convex/_generated/api"
 import {
 	fetchAuthAction,
