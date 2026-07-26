@@ -19,7 +19,7 @@ export function AuthShell({ children, className }: AuthShellProps) {
 						<BrandLockup />
 					</div>
 					<div className="pointer-events-auto rounded-full bg-card/50 p-1 shadow-(--shadow-pine) ring-1 ring-foreground/5 backdrop-blur-xl">
-						<ThemeMenu />
+						<ThemeMenu className="rounded-full" />
 					</div>
 				</header>
 				<main className="flex flex-1 items-center justify-center px-4 py-28 md:px-8 md:py-32">

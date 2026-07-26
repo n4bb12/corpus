@@ -2442,3 +2442,44 @@ My custom `.shimmer` overrode shadcn’s utility. Restoring the original.
 
 Fixed — my custom `.shimmer` was overriding shadcn’s utility. Removed it and restored `text-primary` on the progress label.
 
+# Theme switcher icon shape
+_Exported on 7/27/2026 at 00:04:36 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+The theme switcher icon is both square and rounded. It shows on hover.
+
+---
+
+**Cursor**
+
+I'll find the theme switcher and its hover styles so we can fix the square + rounded background overlap.
+
+The button uses `rounded-4xl` while ThemeMenu forces `rounded-sm` — that mismatch likely causes the double shape. Checking how those classes merge and what the trigger adds on hover.
+
+Two layered shapes suggest two elements or a ring conflicting with the button radius. Checking the header and global button styles.
+
+Checking shadcn styles and whether a focus/hover ring uses a different radius than the button.
+
+The auth shell wraps the theme button in a `rounded-full` chip while the button uses `rounded-sm`, so hover shows both shapes. Aligning the wrapper with the button.
+
+The theme control sat in a `rounded-full` frosted chip on the auth shell, while the button itself used `rounded-sm` — so hover drew a square fill inside a circle.
+
+The chip now uses `rounded-sm` and no extra padding, so it matches the button and hover fills one shape.
+
+---
+
+**User**
+
+I liked the rounded shape though.
+
+---
+
+**Cursor**
+
+Keeping the circular chip and making the theme button `rounded-full` so hover matches.
+
+Restored the circular chip and made the theme button `rounded-full` inside it, so hover stays round without the square clash.
+
