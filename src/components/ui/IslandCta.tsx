@@ -22,7 +22,7 @@ export function IslandCta({
 			)}
 			{...props}
 		>
-			<span className="pl-1">{children}</span>
+			<span className="inline-flex items-center pl-1">{children}</span>
 			{showArrow ? (
 				<span className="flex size-8 items-center justify-center rounded-full bg-primary-foreground/15 transition-transform duration-(--duration-hover) ease-spring group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105 dark:bg-primary-foreground/20">
 					<ArrowUpRight size={16} aria-hidden />

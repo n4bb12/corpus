@@ -16,7 +16,7 @@ export function PendingLabel({
 	pendingLabel = "Loading",
 }: PendingLabelProps) {
 	return (
-		<span className={cn("inline-flex items-center gap-2", className)}>
+		<span className={cn("inline-flex items-center gap-2 leading-none", className)}>
 			{pending ? (
 				<Spinner aria-label={pendingLabel} className="size-4 shrink-0" />
 			) : null}
