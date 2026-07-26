@@ -1,5 +1,5 @@
 import { getRouteApi, useNavigate } from "@tanstack/react-router"
-import { useConvexAuth, useMutation } from "convex/react"
+import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useState } from "react"
@@ -14,6 +14,7 @@ import { authClient } from "src/lib/auth-client"
 import { UNTITLED_NOTEBOOK } from "src/lib/limits"
 import { layoutTransition } from "src/lib/motion"
 import { normalizeTitle } from "src/lib/source_title"
+import { useIsSignedIn, useSignedInQueryArgs } from "src/lib/use-signed-in"
 import { cn } from "src/lib/utils"
 
 const routeApi = getRouteApi("/notebooks/$notebookId")
@@ -22,16 +23,13 @@ export function NotebookPage() {
 	const { notebookId } = routeApi.useParams()
 	const search = routeApi.useSearch()
 	const navigate = useNavigate()
-	const { isAuthenticated } = useConvexAuth()
+	const isSignedIn = useIsSignedIn()
 	const session = authClient.useSession()
-	const notebook = useQuery(
-		api.notebooks.get,
-		isAuthenticated ? { notebookId: notebookId as Id<"notebooks"> } : "skip",
-	)
-	const sources = useQuery(
-		api.sources.listByNotebook,
-		isAuthenticated ? { notebookId: notebookId as Id<"notebooks"> } : "skip",
-	)
+	const notebookArgs = useSignedInQueryArgs({
+		notebookId: notebookId as Id<"notebooks">,
+	})
+	const notebook = useQuery(api.notebooks.get, notebookArgs)
+	const sources = useQuery(api.sources.listByNotebook, notebookArgs)
 	const rename = useMutation(api.notebooks.rename).withOptimisticUpdate(
 		(localStore, args) => {
 			const title = normalizeTitle(args.title, UNTITLED_NOTEBOOK)
@@ -75,8 +73,12 @@ export function NotebookPage() {
 	const [addSourceOpen, setAddSourceOpen] = useState(false)
 
 	useEffect(() => {
+		if (!isSignedIn) {
+			return
+		}
+
 		void touch({ notebookId: notebookId as Id<"notebooks"> })
-	}, [notebookId, touch])
+	}, [isSignedIn, notebookId, touch])
 
 	useEffect(() => {
 		if (search.tab) {

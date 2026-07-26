@@ -1,5 +1,5 @@
 import { getRouteApi, useNavigate } from "@tanstack/react-router"
-import { useConvexAuth, useMutation } from "convex/react"
+import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { formatDistanceToNow } from "date-fns"
 import { BookOpen, Plus, Search } from "lucide-react"
@@ -14,13 +14,13 @@ import type { Id } from "src/convex/_generated/dataModel"
 import { authClient } from "src/lib/auth-client"
 import { LIMITS, UNTITLED_NOTEBOOK } from "src/lib/limits"
 import { normalizeTitle } from "src/lib/source_title"
+import { useSignedInQueryArgs } from "src/lib/use-signed-in"
 
 const routeApi = getRouteApi("/")
 
 export function LibraryPage() {
 	const navigate = useNavigate()
 	const search = routeApi.useSearch()
-	const { isAuthenticated } = useConvexAuth()
 	const [draft, setDraft] = useState(search.q ?? "")
 	const createNotebook = useMutation(api.notebooks.create)
 	const removeNotebook = useMutation(api.notebooks.remove)
@@ -80,16 +80,12 @@ export function LibraryPage() {
 		return () => window.clearTimeout(handle)
 	}, [draft, navigate, search.q])
 
-	const result = useQuery(
-		api.notebooks.list,
-		isAuthenticated
-			? {
-					search: search.q || undefined,
-					cursor: search.cursor,
-					limit: LIMITS.libraryPageSize,
-				}
-			: "skip",
-	)
+	const listArgs = useSignedInQueryArgs({
+		search: search.q || undefined,
+		cursor: search.cursor,
+		limit: LIMITS.libraryPageSize,
+	})
+	const result = useQuery(api.notebooks.list, listArgs)
 
 	const placeholders = useMemo(
 		() =>

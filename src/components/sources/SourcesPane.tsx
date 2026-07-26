@@ -1,4 +1,4 @@
-import { useConvexAuth, useMutation } from "convex/react"
+import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { Plus, Search } from "lucide-react"
 import { AnimatePresence } from "motion/react"
@@ -16,6 +16,7 @@ import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { describeRejectedFile, isAcceptedUpload } from "src/lib/file_types"
 import { startSourceIngest } from "src/lib/ingest-client"
+import { useSignedInQueryArgs } from "src/lib/use-signed-in"
 
 export type SourcesPaneProps = {
 	notebookId: Id<"notebooks">
@@ -35,10 +36,9 @@ export function SourcesPane({
 	addOpen: addOpenControlled,
 	onAddOpenChange,
 }: SourcesPaneProps) {
-	const { isAuthenticated } = useConvexAuth()
 	const sources = useQuery(
 		api.sources.listByNotebook,
-		isAuthenticated ? { notebookId } : "skip",
+		useSignedInQueryArgs({ notebookId }),
 	)
 	const setSelected = useMutation(api.sources.setSelected)
 	const setSelectedMany = useMutation(api.sources.setSelectedMany)
@@ -81,9 +81,9 @@ export function SourcesPane({
 	)
 	const previewUrl = useQuery(
 		api.sources.getNormalizedContent,
-		isAuthenticated && previewSourceId
-			? { sourceId: previewSourceId as Id<"sources"> }
-			: "skip",
+		useSignedInQueryArgs(
+			previewSourceId ? { sourceId: previewSourceId as Id<"sources"> } : "skip",
+		),
 	)
 	const [previewMarkdown, setPreviewMarkdown] = useState<string | null>(null)
 

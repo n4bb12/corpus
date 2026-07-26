@@ -1,4 +1,4 @@
-import { useConvexAuth, useMutation } from "convex/react"
+import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useRef, useState } from "react"
 import { ChatComposer } from "src/components/chat/ChatComposer"
@@ -11,6 +11,7 @@ import { Button } from "src/components/ui/button"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { canRetryLatestAssistant } from "src/lib/chat_history"
+import { useSignedInQueryArgs } from "src/lib/use-signed-in"
 
 export type ChatPaneProps = {
 	notebookId: Id<"notebooks">
@@ -25,15 +26,9 @@ export function ChatPane({
 	onAddSource,
 	onCite,
 }: ChatPaneProps) {
-	const { isAuthenticated } = useConvexAuth()
-	const entries = useQuery(
-		api.chat.list,
-		isAuthenticated ? { notebookId } : "skip",
-	)
-	const sources = useQuery(
-		api.sources.listByNotebook,
-		isAuthenticated ? { notebookId } : "skip",
-	)
+	const notebookArgs = useSignedInQueryArgs({ notebookId })
+	const entries = useQuery(api.chat.list, notebookArgs)
+	const sources = useQuery(api.sources.listByNotebook, notebookArgs)
 	const clearChat = useMutation(api.notebooks.clearChat)
 	const cancelGeneration = useMutation(api.chat.cancelGeneration)
 	const [prompt, setPrompt] = useState("")

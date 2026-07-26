@@ -10,7 +10,10 @@ import { requireViteEnv } from "src/lib/env"
 
 const convexUrl = requireViteEnv("VITE_CONVEX_URL")
 
-export const convexClient = new ConvexReactClient(convexUrl)
+export const convexClient = new ConvexReactClient(convexUrl, {
+	// Pause queries/mutations until Better Auth has handed Convex a validated token.
+	expectAuth: true,
+})
 
 export type AppConvexProviderProps = {
 	children: ReactNode
