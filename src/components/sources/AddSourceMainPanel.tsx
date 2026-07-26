@@ -62,7 +62,11 @@ export function AddSourceMainPanel({
 					placeholder="https://example.com/article"
 					className="rounded-xl"
 				/>
-				<Button type="submit" className="rounded-sm" disabled={pending}>
+				<Button
+					type="submit"
+					className="rounded-sm"
+					disabled={pending || !url.trim()}
+				>
 					<PendingLabel pending={pending} pendingLabel="Adding source">
 						Add
 					</PendingLabel>

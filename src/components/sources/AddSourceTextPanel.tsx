@@ -49,7 +49,7 @@ export function AddSourceTextPanel({
 				</Button>
 				<Button
 					className="rounded-sm"
-					disabled={pending}
+					disabled={pending || !text.trim()}
 					onClick={() => void onSubmit()}
 				>
 					<PendingLabel pending={pending} pendingLabel="Adding text">
