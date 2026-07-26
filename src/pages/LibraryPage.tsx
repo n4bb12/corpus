@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns"
 import { BookOpen, Plus, Search } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { AppHeader } from "src/components/layout/AppHeader"
+import { AddNotebookCard } from "src/components/library/AddNotebookCard"
 import { NotebookCard } from "src/components/library/NotebookCard"
 import { Button } from "src/components/ui/button"
 import { Input } from "src/components/ui/input"
@@ -220,7 +221,12 @@ export function LibraryPage() {
 									<span className="sr-only" role="status">
 										Loading notebooks
 									</span>
-								) : null}
+								) : (
+									<AddNotebookCard
+										disabled={creating}
+										onClick={() => void onCreate()}
+									/>
+								)}
 								{page.map((notebook: any) => (
 									<NotebookCard
 										key={notebook._id}
