@@ -31,18 +31,19 @@ export function AddSourceTextPanel({
 			animate={{ opacity: 1, y: 0 }}
 			exit={{ opacity: 0, y: -4 }}
 			transition={layoutTransition}
-			layout
-			className="space-y-4"
+			className="flex h-full min-h-0 flex-col gap-4"
 		>
 			<Textarea
 				ref={textRef}
 				value={text}
 				onChange={(event) => onTextChange(event.target.value)}
-				className="min-h-40 rounded-xl"
+				className="min-h-0 flex-1 rounded-xl"
 				placeholder="Paste source text"
 			/>
-			{error ? <p className="text-sm text-destructive">{error}</p> : null}
-			<div className="flex justify-between gap-2">
+			{error ? (
+				<p className="shrink-0 text-sm text-destructive">{error}</p>
+			) : null}
+			<div className="flex shrink-0 justify-between gap-2">
 				<Button variant="outline" className="rounded-sm" onClick={onBack}>
 					Back
 				</Button>

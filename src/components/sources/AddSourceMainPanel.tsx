@@ -19,6 +19,16 @@ export type AddSourceMainPanelProps = {
 	onPasteText: () => void
 }
 
+function OrSeparator() {
+	return (
+		<div className="flex shrink-0 items-center gap-3 text-xs tracking-wide text-muted-foreground uppercase">
+			<div className="h-px flex-1 bg-border" />
+			or
+			<div className="h-px flex-1 bg-border" />
+		</div>
+	)
+}
+
 export function AddSourceMainPanel({
 	url,
 	error,
@@ -38,11 +48,10 @@ export function AddSourceMainPanel({
 			animate={{ opacity: 1, y: 0 }}
 			exit={{ opacity: 0, y: -4 }}
 			transition={layoutTransition}
-			layout
-			className="space-y-4"
+			className="flex h-full min-h-0 flex-col gap-4"
 		>
 			<form
-				className="flex gap-2"
+				className="flex shrink-0 gap-2"
 				onSubmit={async (event) => {
 					event.preventDefault()
 					await onSubmitUrl()
@@ -62,15 +71,11 @@ export function AddSourceMainPanel({
 				</Button>
 			</form>
 
-			<div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
-				<div className="h-px flex-1 bg-border" />
-				or
-				<div className="h-px flex-1 bg-border" />
-			</div>
+			<OrSeparator />
 
 			<button
 				type="button"
-				className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-10 text-sm text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5"
+				className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-sm text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5"
 				onClick={() => fileRef.current?.click()}
 				onDragOver={(event) => event.preventDefault()}
 				onDrop={async (event) => {
@@ -105,18 +110,19 @@ export function AddSourceMainPanel({
 				}}
 			/>
 
+			<OrSeparator />
+
 			<Button
 				type="button"
 				variant="ghost"
-				className="w-full rounded-sm"
+				className="w-full shrink-0 rounded-sm"
 				onClick={onPasteText}
 			>
 				Add pasted text
 			</Button>
 			{error ? (
 				<motion.p
-					layout
-					className="text-sm text-destructive"
+					className="shrink-0 text-sm text-destructive"
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 				>

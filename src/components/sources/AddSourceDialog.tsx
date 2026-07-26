@@ -94,35 +94,37 @@ export function AddSourceDialog({
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="flex aspect-3/2 w-full max-w-[min(48rem,calc(100%-2rem))] flex-col overflow-hidden rounded-2xl sm:max-w-3xl">
-				<DialogHeader>
+				<DialogHeader className="shrink-0">
 					<DialogTitle>Add source</DialogTitle>
 				</DialogHeader>
-				<AnimatePresence mode="wait" initial={false}>
-					{mode === "main" ? (
-						<AddSourceMainPanel
-							url={url}
-							error={error}
-							pending={pending}
-							urlRef={urlRef}
-							fileRef={fileRef}
-							onUrlChange={setUrl}
-							onSubmitUrl={submitUrl}
-							onFiles={onFiles}
-							onDone={() => onOpenChange(false)}
-							onPasteText={() => setMode("text")}
-						/>
-					) : (
-						<AddSourceTextPanel
-							text={text}
-							error={error}
-							pending={pending}
-							textRef={textRef}
-							onTextChange={setText}
-							onBack={() => setMode("main")}
-							onSubmit={submitText}
-						/>
-					)}
-				</AnimatePresence>
+				<div className="min-h-0 flex-1">
+					<AnimatePresence mode="wait" initial={false}>
+						{mode === "main" ? (
+							<AddSourceMainPanel
+								url={url}
+								error={error}
+								pending={pending}
+								urlRef={urlRef}
+								fileRef={fileRef}
+								onUrlChange={setUrl}
+								onSubmitUrl={submitUrl}
+								onFiles={onFiles}
+								onDone={() => onOpenChange(false)}
+								onPasteText={() => setMode("text")}
+							/>
+						) : (
+							<AddSourceTextPanel
+								text={text}
+								error={error}
+								pending={pending}
+								textRef={textRef}
+								onTextChange={setText}
+								onBack={() => setMode("main")}
+								onSubmit={submitText}
+							/>
+						)}
+					</AnimatePresence>
+				</div>
 			</DialogContent>
 		</Dialog>
 	)
