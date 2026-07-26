@@ -169,7 +169,7 @@ export function ChatMessageList({
 							<button
 								key={suggestion}
 								type="button"
-								className="block w-full rounded-xl px-3 py-3 text-left text-sm hover:bg-muted/70"
+								className="block w-full rounded-xl bg-muted/40 px-3 py-3 text-left text-sm transition-colors hover:bg-muted/70"
 								onClick={() => onSendSuggestion(suggestion)}
 							>
 								{suggestion}
