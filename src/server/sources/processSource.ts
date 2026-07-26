@@ -1,13 +1,14 @@
 import { voyage } from "@ai-sdk/voyage"
 import { embed, embedMany } from "ai"
+import type { ConvexHttpClient } from "convex/browser"
 import semantic from "semantic-chunker"
 import { api } from "src/convex/_generated/api"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
-import { fetchAuthMutation, fetchAuthQuery } from "src/lib/auth-server"
 import { deriveChunkLocators } from "src/lib/chunk_locators"
 import { requireEnv } from "src/lib/env"
 import { LIMITS, MODELS } from "src/lib/limits"
 import { titleFromUrl } from "src/lib/source_title"
+import { createAuthedConvexClient } from "src/server/convexClient"
 import {
 	assertSafeUrl,
 	extractReadableHtml,
@@ -18,8 +19,8 @@ import {
 	normalizeHtmlToMarkdown,
 } from "src/server/sources/normalize"
 
-async function uploadMarkdown(markdown: string) {
-	const uploadUrl = await fetchAuthMutation(api.sources.generateUploadUrl, {})
+async function uploadMarkdown(client: ConvexHttpClient, markdown: string) {
+	const uploadUrl = await client.mutation(api.sources.generateUploadUrl, {})
 	const response = await fetch(uploadUrl, {
 		method: "POST",
 		headers: { "Content-Type": "text/markdown" },
@@ -37,7 +38,10 @@ async function uploadMarkdown(markdown: string) {
 	return storageId
 }
 
-async function extractMarkdown(source: Doc<"sources">) {
+async function extractMarkdown(
+	client: ConvexHttpClient,
+	source: Doc<"sources">,
+) {
 	let markdown = ""
 	let nextTitle = source.title
 
@@ -52,7 +56,7 @@ async function extractMarkdown(source: Doc<"sources">) {
 	} else if (source.textContent) {
 		markdown = source.textContent.trim()
 	} else if (source.originalStorageId) {
-		const originalUrl = await fetchAuthQuery(api.sources.getOriginalContent, {
+		const originalUrl = await client.query(api.sources.getOriginalContent, {
 			sourceId: source._id,
 		})
 
@@ -90,8 +94,12 @@ async function extractMarkdown(source: Doc<"sources">) {
 	return { markdown, nextTitle }
 }
 
-export async function processSourcePipeline(sourceId: Id<"sources">) {
-	const source = (await fetchAuthQuery(api.sources.get, {
+export async function processSourcePipeline(
+	sourceId: Id<"sources">,
+	token: string,
+) {
+	const client = createAuthedConvexClient(token)
+	const source = (await client.query(api.sources.get, {
 		sourceId,
 	})) as Doc<"sources"> | null
 
@@ -102,22 +110,22 @@ export async function processSourcePipeline(sourceId: Id<"sources">) {
 	try {
 		requireEnv("VOYAGE_API_KEY")
 
-		await fetchAuthMutation(api.ingestion.setProcessingState, {
+		await client.mutation(api.ingestion.setProcessingState, {
 			sourceId,
 			processingState: "extracting",
 		})
 
-		const { markdown, nextTitle } = await extractMarkdown(source)
-		const normalizedStorageId = await uploadMarkdown(markdown)
+		const { markdown, nextTitle } = await extractMarkdown(client, source)
+		const normalizedStorageId = await uploadMarkdown(client, markdown)
 
-		await fetchAuthMutation(api.ingestion.setExtracted, {
+		await client.mutation(api.ingestion.setExtracted, {
 			sourceId,
 			title: nextTitle,
 			normalizedStorageId,
 			characterCount: markdown.length,
 		})
 
-		await fetchAuthMutation(api.ingestion.setProcessingState, {
+		await client.mutation(api.ingestion.setProcessingState, {
 			sourceId,
 			processingState: "chunking",
 		})
@@ -158,7 +166,7 @@ export async function processSourcePipeline(sourceId: Id<"sources">) {
 
 		const locators = deriveChunkLocators(texts, markdown)
 
-		await fetchAuthMutation(api.ingestion.setProcessingState, {
+		await client.mutation(api.ingestion.setProcessingState, {
 			sourceId,
 			processingState: "embedding",
 		})
@@ -173,7 +181,7 @@ export async function processSourcePipeline(sourceId: Id<"sources">) {
 			},
 		})
 
-		await fetchAuthMutation(api.ingestion.replaceChunks, {
+		await client.mutation(api.ingestion.replaceChunks, {
 			sourceId,
 			chunks: texts.map((text, index) => ({
 				text,
@@ -184,14 +192,14 @@ export async function processSourcePipeline(sourceId: Id<"sources">) {
 			})),
 		})
 
-		await fetchAuthMutation(api.ingestion.markReady, {
+		await client.mutation(api.ingestion.markReady, {
 			sourceId,
 		})
 	} catch (error) {
 		const message =
 			error instanceof Error ? error.message : "Source processing failed."
 
-		await fetchAuthMutation(api.ingestion.markFailed, {
+		await client.mutation(api.ingestion.markFailed, {
 			sourceId,
 			errorCode: message.slice(0, 200),
 		})

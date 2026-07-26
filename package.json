@@ -34,6 +34,7 @@
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
     "@tanstack/react-start": "latest",
+    "@vercel/functions": "^3.7.6",
     "ai": "^7.0.37",
     "better-auth": "^1.6.25",
     "class-variance-authority": "^0.7.1",

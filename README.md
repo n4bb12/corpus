@@ -146,7 +146,7 @@ Set the same Convex env vars for production, with `SITE_URL` equal to your Verce
 4. Keep Google OAuth redirect URIs for both `http://localhost:3000` and `https://corpus-n4bb12.vercel.app`. Set Convex `SITE_URL` to the production origin as the fallback.
 5. Deploy.
 
-Chat streaming and source ingestion run on Vercel (`/api/chat`, `/api/sources/ingest`) and persist through authenticated Convex mutations. UI status comes from Convex queries.
+Chat streaming and source ingestion run on Vercel (`/api/chat`, `/api/sources/ingest`) and persist through authenticated Convex mutations. Ingest returns `202` after create/retry and continues processing via `waitUntil`; the UI follows Convex query updates.
 
 ## Verification
 

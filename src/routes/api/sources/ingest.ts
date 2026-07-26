@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { fetchAuthMutation, getToken } from "src/lib/auth-server"
+import { scheduleBackground } from "src/server/scheduleBackground"
 import { processSourcePipeline } from "src/server/sources/processSource"
 import { z } from "zod"
 
@@ -33,17 +34,11 @@ const retrySchema = z.object({
 	sourceId: z.string(),
 })
 
-const processSchema = z.object({
-	action: z.literal("process"),
-	sourceId: z.string(),
-})
-
 const bodySchema = z.union([
 	createUrlSchema,
 	createTextSchema,
 	createFileSchema,
 	retrySchema,
-	processSchema,
 ])
 
 export const Route = createFileRoute("/api/sources/ingest")({
@@ -65,11 +60,6 @@ export const Route = createFileRoute("/api/sources/ingest")({
 				}
 
 				try {
-					if (body.action === "process") {
-						await processSourcePipeline(body.sourceId as Id<"sources">)
-						return Response.json({ ok: true })
-					}
-
 					let sourceId: Id<"sources">
 
 					if (body.action === "retry") {
@@ -93,6 +83,8 @@ export const Route = createFileRoute("/api/sources/ingest")({
 							mimeType: body.mimeType,
 						})) as Id<"sources">
 					}
+
+					scheduleBackground(processSourcePipeline(sourceId, token))
 
 					return Response.json({ sourceId }, { status: 202 })
 				} catch (error) {

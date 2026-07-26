@@ -34,45 +34,31 @@ export type IngestStartInput =
 	| IngestCreateFileInput
 	| IngestRetryInput
 
-async function postIngest(body: unknown) {
+/**
+ * Starts ingestion. Resolves once the source row exists (HTTP 202);
+ * processing continues in the background via `waitUntil`.
+ */
+export async function startSourceIngest(input: IngestStartInput) {
 	const response = await fetch("/api/sources/ingest", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
+		body: JSON.stringify(input),
 	})
 
 	const payload = (await response.json().catch(() => null)) as {
 		sourceId?: string
 		error?: string
-		ok?: boolean
 	} | null
 
 	if (!response.ok) {
 		throw new Error(payload?.error || "Could not start source ingestion.")
 	}
 
-	return payload
-}
-
-function kickProcess(sourceId: string) {
-	void fetch("/api/sources/ingest", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ action: "process", sourceId }),
-	}).catch(() => {
-		// Processing failures are persisted via Convex `processingState`.
-	})
-}
-
-/** Awaits source creation/retry only; processing continues in the background. */
-export async function startSourceIngest(input: IngestStartInput) {
-	const payload = await postIngest(input)
 	const sourceId = input.action === "retry" ? input.sourceId : payload?.sourceId
 
 	if (!sourceId) {
 		throw new Error("Source ingestion did not return an id.")
 	}
 
-	kickProcess(sourceId)
 	return sourceId as Id<"sources">
 }
