@@ -6,6 +6,7 @@ import {
 import { ClearChatDialog } from "src/components/chat/ClearChatDialog"
 import { useChatPane } from "src/components/chat/useChatPane"
 import { Button } from "src/components/ui/button"
+import { ScrollArea } from "src/components/ui/scroll-area"
 import type { Id } from "src/convex/_generated/dataModel"
 
 export type ChatPaneProps = {
@@ -36,10 +37,10 @@ export function ChatPane({
 				</Button>
 			</div>
 
-			<div
-				ref={chat.scrollerRef}
-				className="min-h-0 flex-1 overflow-auto px-4 pb-56"
-				onScroll={(event) => {
+			<ScrollArea
+				viewportRef={chat.scrollerRef}
+				className="min-h-0 flex-1 px-4 pb-56"
+				onViewportScroll={(event) => {
 					const node = event.currentTarget
 					chat.stickToBottom.current =
 						node.scrollHeight - node.scrollTop - node.clientHeight < 80
@@ -56,7 +57,7 @@ export function ChatPane({
 						void chat.send(nextPrompt, assistantId)
 					}
 				/>
-			</div>
+			</ScrollArea>
 
 			<div className="absolute inset-x-0 bottom-0 z-10">
 				<ChatComposer

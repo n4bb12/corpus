@@ -2,6 +2,7 @@ import type { RefObject } from "react"
 import { AddSourceCard } from "src/components/sources/AddSourceCard"
 import { SourceListItem } from "src/components/sources/SourceListItem"
 import { SourcesSelectAll } from "src/components/sources/SourcesSelectAll"
+import { ScrollArea } from "src/components/ui/scroll-area"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { startSourceIngest } from "src/lib/ingest-client"
 
@@ -41,7 +42,10 @@ export function SourcesList({
 	onSelect,
 }: SourcesListProps) {
 	return (
-		<div ref={listRef} className="relative mt-3 flex-1 overflow-auto px-4 pb-4">
+		<ScrollArea
+			viewportRef={listRef}
+			className="relative mt-3 min-h-0 flex-1 px-4 pb-4"
+		>
 			<div className="flex flex-col gap-1">
 				<AddSourceCard onClick={onAdd} />
 				<SourcesSelectAll
@@ -69,6 +73,6 @@ export function SourcesList({
 					/>
 				))}
 			</div>
-		</div>
+		</ScrollArea>
 	)
 }

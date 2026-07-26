@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react"
 import { useEffect, useRef } from "react"
 import { Button } from "src/components/ui/button"
+import { ScrollArea } from "src/components/ui/scroll-area"
 import { formatTitle } from "src/lib/source_title"
 import { cn } from "src/lib/utils"
 
@@ -67,7 +68,7 @@ export function SourcePreview({
 					{formatTitle(title)}
 				</div>
 			</div>
-			<div className="flex-1 overflow-auto px-4 py-4">
+			<ScrollArea className="min-h-0 flex-1 px-4 py-4">
 				<article className="prose prose-sm dark:prose-invert max-w-none space-y-3">
 					{paragraphs.map(({ text, start }) => {
 						const end = start + text.length
@@ -92,7 +93,7 @@ export function SourcePreview({
 						)
 					})}
 				</article>
-			</div>
+			</ScrollArea>
 		</div>
 	)
 }
