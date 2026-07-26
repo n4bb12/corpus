@@ -12,6 +12,7 @@ import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { authClient } from "src/lib/auth-client"
 import { layoutTransition } from "src/lib/motion"
+import { markdownToPlainText } from "src/lib/markdown_plain"
 import { normalizeTitle } from "src/lib/source_title"
 import { useIsSignedIn, useSignedInQueryArgs } from "src/lib/use-signed-in"
 import { cn } from "src/lib/utils"
@@ -220,7 +221,9 @@ export function NotebookPage() {
 				onOpenChange={(open) => !open && setExcerptOnly(null)}
 			>
 				<PopoverContent className="fixed right-4 bottom-4 z-50 max-w-sm rounded-xl">
-					<p className="text-sm text-muted-foreground">{excerptOnly}</p>
+					<p className="text-sm text-muted-foreground">
+						{excerptOnly ? markdownToPlainText(excerptOnly) : null}
+					</p>
 				</PopoverContent>
 			</Popover>
 		</div>

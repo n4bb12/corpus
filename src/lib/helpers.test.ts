@@ -8,6 +8,7 @@ import {
 import { parseSseChunk } from "./chat_sse"
 import { deriveChunkLocators } from "./chunk_locators"
 import { parseCitationMarkers, validateCitations } from "./citations"
+import { markdownToPlainText } from "./markdown_plain"
 import { describeRejectedFile, isAcceptedUpload } from "./file_types"
 import { remainingQuota, utcDateKey } from "./quotas"
 import {
@@ -153,6 +154,18 @@ describe("citations", () => {
         },
       ]
     `)
+	})
+})
+
+describe("markdown plain text", () => {
+	test("strips common markdown for citation excerpts", () => {
+		expect(
+			markdownToPlainText(
+				"## Heading\n\nA **bold** claim with a [link](https://example.com) and `code`.",
+			),
+		).toMatchInlineSnapshot(
+			`"Heading A bold claim with a link and code."`,
+		)
 	})
 })
 

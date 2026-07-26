@@ -3,6 +3,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "src/components/ui/popover"
+import { markdownToPlainText } from "src/lib/markdown_plain"
 import { formatTitle } from "src/lib/source_title"
 
 export type CitationPillProps = {
@@ -21,6 +22,7 @@ export function CitationPill({
 	onOpen,
 }: CitationPillProps) {
 	const displayTitle = formatTitle(title)
+	const plainExcerpt = markdownToPlainText(excerpt)
 
 	return (
 		<Popover>
@@ -40,7 +42,7 @@ export function CitationPill({
 			</PopoverTrigger>
 			<PopoverContent className="max-w-sm rounded-xl text-sm">
 				<p className="mb-2 font-medium">{displayTitle}</p>
-				<p className="text-muted-foreground">{excerpt}</p>
+				<p className="text-muted-foreground">{plainExcerpt}</p>
 				{!canNavigate ? (
 					<p className="mt-2 text-xs text-muted-foreground">
 						Source deleted. Excerpt retained.
