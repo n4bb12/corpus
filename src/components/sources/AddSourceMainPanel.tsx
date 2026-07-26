@@ -15,7 +15,6 @@ export type AddSourceMainPanelProps = {
 	onUrlChange: (value: string) => void
 	onSubmitUrl: () => Promise<void>
 	onFiles: (files: File[]) => Promise<void>
-	onDone: () => void
 	onPasteText: () => void
 }
 
@@ -38,7 +37,6 @@ export function AddSourceMainPanel({
 	onUrlChange,
 	onSubmitUrl,
 	onFiles,
-	onDone,
 	onPasteText,
 }: AddSourceMainPanelProps) {
 	return (
@@ -87,7 +85,6 @@ export function AddSourceMainPanel({
 					}
 
 					await onFiles(files)
-					onDone()
 				}}
 			>
 				<Upload size={22} />
@@ -106,7 +103,7 @@ export function AddSourceMainPanel({
 					}
 
 					await onFiles(files)
-					onDone()
+					event.target.value = ""
 				}}
 			/>
 

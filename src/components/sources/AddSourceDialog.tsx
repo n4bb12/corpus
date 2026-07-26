@@ -35,10 +35,13 @@ export function AddSourceDialog({
 
 	useEffect(() => {
 		if (!open) {
-			setMode("main")
-			setUrl("")
-			setText("")
-			setError(null)
+			if (!pending) {
+				setMode("main")
+				setUrl("")
+				setText("")
+				setError(null)
+			}
+
 			return
 		}
 
@@ -51,22 +54,27 @@ export function AddSourceDialog({
 		}, 10)
 
 		return () => window.clearTimeout(handle)
-	}, [open, mode])
+	}, [open, mode, pending])
 
 	async function submitUrl() {
 		setPending(true)
 		setError(null)
+		const submittedUrl = url
+
+		onOpenChange(false)
 
 		try {
 			await startSourceIngest({
 				action: "create",
 				kind: "url",
 				notebookId,
-				url,
+				url: submittedUrl,
 			})
-			onOpenChange(false)
 		} catch (err) {
+			setUrl(submittedUrl)
+			setMode("main")
 			setError(err instanceof Error ? err.message : "Could not add URL.")
+			onOpenChange(true)
 		} finally {
 			setPending(false)
 		}
@@ -75,20 +83,30 @@ export function AddSourceDialog({
 	async function submitText() {
 		setPending(true)
 		setError(null)
+		const submittedText = text
+
+		onOpenChange(false)
 
 		try {
 			await startSourceIngest({
 				action: "create",
 				kind: "text",
 				notebookId,
-				text,
+				text: submittedText,
 			})
-			onOpenChange(false)
 		} catch (err) {
+			setText(submittedText)
+			setMode("text")
 			setError(err instanceof Error ? err.message : "Could not add text.")
+			onOpenChange(true)
 		} finally {
 			setPending(false)
 		}
+	}
+
+	async function submitFiles(files: File[]) {
+		onOpenChange(false)
+		await onFiles(files)
 	}
 
 	return (
@@ -108,8 +126,7 @@ export function AddSourceDialog({
 								fileRef={fileRef}
 								onUrlChange={setUrl}
 								onSubmitUrl={submitUrl}
-								onFiles={onFiles}
-								onDone={() => onOpenChange(false)}
+								onFiles={submitFiles}
 								onPasteText={() => setMode("text")}
 							/>
 						) : (
