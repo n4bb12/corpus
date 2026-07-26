@@ -2564,3 +2564,132 @@ While the list is unresolved, the page shouldn't assume a grid exists — I'll h
 
 Removed the fake 8-card placeholder grid. While notebooks are still loading, the library keeps the real page chrome and waits — empty state and notebook cards only appear once we know what exists.
 
+# Notebook card animation
+_Exported on 7/27/2026 at 00:28:33 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+I like the zoom-ish animation on the "+ New notebook" card but not the vertical movement on notebook cards. On the + card, the vertical movement is on the inner content, not on the outer card. Use the same animations on notebook cards as the plus card has.
+
+---
+
+**Cursor**
+
+I'll compare the "+ New notebook" and notebook card animations and align the notebook cards to match the plus card.
+
+Checking how `Bezel` is structured — that may explain why the plus card feels different.
+
+Checking design notes and whether recent changes moved the plus-card animation.
+
+Removing the outer card lift on notebook cards and adding the icon scale hover from the plus card.
+
+Moving the plus card’s lift onto the icon so both cards share the same inner-content animation.
+
+Notebook cards now match the plus card: the outer shell stays put, and the icon gets the hover lift + scale (`-translate-y-0.5` / `scale-105`).
+
+---
+
+**User**
+
+Edit modals should be confirmable with enter.
+
+---
+
+**Cursor**
+
+I'll find the edit/rename modals and wire Enter to confirm.
+
+Wrapping both rename dialogs in forms so Enter submits.
+
+Preserving dialog spacing by giving the form the same grid gap.
+
+Rename notebook and rename source dialogs are now forms, so Enter saves.
+
+---
+
+**User**
+
+Save notebook modal should have a loading button state.
+
+---
+
+**Cursor**
+
+I'll mirror the source rename dialog’s pending save state on the notebook rename modal.
+
+Notebook rename now shows a Saving spinner and disables the field and buttons while the save runs.
+
+---
+
+**User**
+
+The new notebook spinner is not vertically centered.
+
+---
+
+**Cursor**
+
+I'll find the New notebook CTA and fix the spinner’s vertical alignment.
+
+Likely a line-height / flex alignment issue in `PendingLabel` inside `IslandCta`. Fixing both.
+
+Tightened the spinner alignment: `PendingLabel` now uses `leading-none`, and the Island CTA label wrapper is `inline-flex items-center`.
+
+---
+
+**User**
+
+Delete notebook also needs loading feedback. Check all async actions.
+
+---
+
+**Cursor**
+
+I'll audit async actions for missing loading feedback, starting with delete notebook and then the rest.
+
+Delete notebook now shows a spinner and disables the buttons while deleting, same as delete source / clear chat.
+
+Audit of other async actions: rename dialogs, create notebook, add source, send chat, clear chat, delete source, and sign-in/out already had loading feedback. Delete notebook was the gap.
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll inspect the full change set and recent commit style, then split it into atomic commits.
+
+Grouping into four commits: card hover, spinner alignment, rename dialogs, delete loading.
+
+5 commits on `main` (working tree clean):
+
+1. `95fad73` — fix(library): animate notebook card icons on hover instead of lifting cards
+2. `d2b18a6` — fix(ui): vertically center PendingLabel spinner in CTAs
+3. `cc9f38e` — fix(sources): confirm rename source dialog with Enter
+4. `089a6e5` — fix(library): confirm rename notebook with Enter and show save loading
+5. `d5f4a52` — fix(library): show loading state while deleting a notebook
+
+---
+
+**User**
+
+Opening a menu should close an already opened menu (e.g. on notebook cards).
+
+---
+
+**Cursor**
+
+I'll check how notebook card menus are opened and make opening one close any other.
+
+Checking how client stores are set up in this repo so exclusive menus can follow the same pattern.
+
+I'll wire exclusive open state into the shared `DropdownMenu` so opening one closes any other.
+
+Dropdown menus now share one open id, so opening any menu closes the previous one — including notebook cards, source rows, and header menus.
+
