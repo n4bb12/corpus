@@ -3,6 +3,7 @@ import { useQuery } from "convex-helpers/react/cache"
 import { Plus, Search } from "lucide-react"
 import { AnimatePresence } from "motion/react"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { AddSourceCard } from "src/components/sources/AddSourceCard"
 import { AddSourceDialog } from "src/components/sources/AddSourceDialog"
 import { SourceDeleteDialog } from "src/components/sources/SourceDeleteDialog"
 import { SourceListItem } from "src/components/sources/SourceListItem"
@@ -249,17 +250,8 @@ export function SourcesPane({
 			) : null}
 
 			<div ref={listRef} className="relative flex-1 overflow-auto px-2 pb-4">
+				<AddSourceCard onClick={() => setAddOpen(true)} />
 				<AnimatePresence initial={false}>
-					<button
-						type="button"
-						className="mb-1 flex w-full items-center gap-2 rounded-xl border border-dashed border-border px-2 py-3 text-left text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted/60 hover:text-foreground"
-						onClick={() => setAddOpen(true)}
-					>
-						<span className="flex size-8 items-center justify-center rounded-sm bg-primary/10 text-primary">
-							<Plus size={16} />
-						</span>
-						Add source
-					</button>
 					{filtered.map((source) => (
 						<SourceListItem
 							key={source._id}
