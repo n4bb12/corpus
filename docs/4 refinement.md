@@ -2977,3 +2977,37 @@ Done. The app is on TanStack SPA mode with static shells for every URL.
 
 Static HTML is the document shell + pending atmosphere — page content (and data) hydrate on the client, which matches “static shells, client data.”
 
+# Instant page transitions
+_Exported on 7/27/2026 at 01:42:30 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make page transitions effectively instant.
+Use only prerendering, not runtime SSR.
+Generate all pages statically. Notebook detail pages may use a static template.
+Remove async auth checks from beforeLoad. Check authentication on the client.
+Redirect to sign-in if not authenticated.
+Preload routes on the client for instant navigation.
+
+---
+
+**Cursor**
+
+Client auth now runs only after hydration, and route modules preload as soon as their links render. I’m verifying the production output actually contains separate prerendered pages plus the static fallback, since that is what guarantees page requests never reach runtime SSR.
+
+The production build exposed one framework constraint: the SPA mask must match a real route. I’m switching it to a reserved notebook-detail URL, which also makes the generated shell an explicit static notebook template while keeping `/` independently prerendered.
+
+Implemented:
+
+- Fully static prerendering for `/` and `/sign-in`.
+- Static SPA template for notebook detail routes.
+- Page requests bypass runtime SSR; only APIs reach Nitro.
+- Client-side auth redirects using `ClientAuthBoundary`.
+- Removed asynchronous `beforeLoad` auth guards.
+- Routes preload on render for instant navigation.
+- Removed obsolete `auth-guard.ts`.
+
+Verified with `bun types`, `bun run test`, and production build. All pass; three static pages/templates are generated.
+

@@ -1,17 +1,11 @@
 /**
- * After TanStack SPA prerender: ensure every app URL can be served as static HTML.
- * - `/` gets `index.html` (SPA shell; mask path `/` writes `_shell.html` only)
- * - unknown paths rewrite to `_shell.html` instead of the Nitro server
+ * Keep page requests on prerendered HTML or the static SPA template.
+ * Nitro remains reachable only for API and server-function requests.
  */
-import { copyFile, readFile, writeFile } from "node:fs/promises"
+import { readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
-const staticDir = join(".vercel/output/static")
-const shellPath = join(staticDir, "_shell.html")
-const indexPath = join(staticDir, "index.html")
 const configPath = join(".vercel/output/config.json")
-
-await copyFile(shellPath, indexPath)
 
 const config = JSON.parse(await readFile(configPath, "utf8")) as {
 	routes?: Array<Record<string, unknown>>
@@ -32,4 +26,4 @@ config.routes = [
 
 await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`)
 
-console.log("SPA static routes: index.html + _shell.html fallback")
+console.log("Static pages: prerendered HTML + _shell.html fallback")

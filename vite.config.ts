@@ -26,11 +26,13 @@ const config = defineConfig({
 		tanstackStart({
 			spa: {
 				enabled: true,
+				maskPath: "/notebooks/__spa-shell",
 			},
-			pages: [{ path: "/sign-in" }],
+			pages: [{ path: "/" }, { path: "/sign-in" }],
 			prerender: {
 				enabled: true,
-				crawlLinks: true,
+				autoStaticPathsDiscovery: false,
+				crawlLinks: false,
 			},
 		}),
 		viteReact(),
