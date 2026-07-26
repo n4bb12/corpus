@@ -1,5 +1,5 @@
 import type { FormEvent } from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { GoogleSignInButton } from "src/components/auth/GoogleSignInButton"
 import { SignInEmailForm } from "src/components/auth/SignInEmailForm"
 import { Separator } from "src/components/ui/separator"
@@ -16,6 +16,24 @@ export function SignInCard() {
 	const [sent, setSent] = useState(false)
 	const [pendingEmail, setPendingEmail] = useState(false)
 	const [pendingGoogle, setPendingGoogle] = useState(false)
+
+	// OAuth navigates away with pending=true; bfcache restores that state on Back.
+	useEffect(() => {
+		function onPageShow(event: PageTransitionEvent) {
+			if (!event.persisted) {
+				return
+			}
+
+			setPendingGoogle(false)
+			setPendingEmail(false)
+		}
+
+		window.addEventListener("pageshow", onPageShow)
+
+		return () => {
+			window.removeEventListener("pageshow", onPageShow)
+		}
+	}, [])
 
 	async function onSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()

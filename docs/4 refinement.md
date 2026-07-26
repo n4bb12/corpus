@@ -2281,3 +2281,36 @@ Tests pass. Next useful pass: `/impeccable polish` for a final ship check.
 
 `PRODUCT.md` is on an older schema — run `/impeccable init` when you want that record brought up to date.
 
+# Sign-in page loading state
+_Exported on 7/26/2026 at 23:48:57 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+When navigating back to the sign-in page from google, the button should no longer be in loading state (probably related to backward-forward cache).
+
+---
+
+**Cursor**
+
+I'll look at how the sign-in button loading state is handled and how it interacts with back-forward cache when returning from Google.
+
+Classic bfcache issue: Google OAuth leaves `pendingGoogle` true, and the restored page keeps that React state. Resetting it on `pageshow` when the page was restored from cache.
+
+Fixed in `SignInCard`. Clicking Google sets `pendingGoogle` and navigates away; bfcache restores that React state when you hit Back, so the button stayed loading.
+
+A `pageshow` listener now clears both pending flags when `event.persisted` is true (page restored from bfcache).
+
+---
+
+**User**
+
+add a code comment
+
+---
+
+**Cursor**
+
+Added a short comment above the `pageshow` effect explaining the bfcache restore case.
+
