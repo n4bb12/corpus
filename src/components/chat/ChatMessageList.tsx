@@ -131,7 +131,10 @@ export function ChatMessageList({
 				return (
 					<div key={entry._id} className="space-y-3">
 						{showProgress ? (
-							<p className="status-shimmer text-sm font-medium" role="status">
+							<p
+								className="shimmer text-sm font-medium text-primary"
+								role="status"
+							>
 								{entry.progressLabel}
 							</p>
 						) : null}
