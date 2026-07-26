@@ -187,8 +187,11 @@
 }
 
 .citation-highlight {
+	margin-block: -0.35rem;
 	margin-inline: -1rem;
+	padding-block: 0.35rem;
 	padding-inline: 1rem;
+	border-radius: 0.5rem;
 	background: rgb(36 88 68 / 10%);
 }
 
