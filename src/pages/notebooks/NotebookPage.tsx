@@ -11,7 +11,9 @@ import { Popover, PopoverContent } from "src/components/ui/popover"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { authClient } from "src/lib/auth-client"
+import { UNTITLED_NOTEBOOK } from "src/lib/limits"
 import { layoutTransition } from "src/lib/motion"
+import { normalizeTitle } from "src/lib/source_title"
 import { cn } from "src/lib/utils"
 
 const routeApi = getRouteApi("/notebooks/$notebookId")
@@ -27,7 +29,39 @@ export function NotebookPage() {
 	const sources = useQuery(api.sources.listByNotebook, {
 		notebookId: notebookId as Id<"notebooks">,
 	})
-	const rename = useMutation(api.notebooks.rename)
+	const rename = useMutation(api.notebooks.rename).withOptimisticUpdate(
+		(localStore, args) => {
+			const title = normalizeTitle(args.title, UNTITLED_NOTEBOOK)
+			const current = localStore.getQuery(api.notebooks.get, {
+				notebookId: args.notebookId,
+			})
+
+			if (current) {
+				localStore.setQuery(
+					api.notebooks.get,
+					{ notebookId: args.notebookId },
+					{ ...current, title },
+				)
+			}
+
+			for (const { args: queryArgs, value } of localStore.getAllQueries(
+				api.notebooks.list,
+			)) {
+				if (!value) {
+					continue
+				}
+
+				localStore.setQuery(api.notebooks.list, queryArgs, {
+					...value,
+					page: value.page.map((notebook) =>
+						notebook._id === args.notebookId
+							? { ...notebook, title }
+							: notebook,
+					),
+				})
+			}
+		},
+	)
 	const touch = useMutation(api.notebooks.touch)
 	const [previewSourceId, setPreviewSourceId] = useState<string | null>(null)
 	const [highlight, setHighlight] = useState<{
@@ -67,7 +101,6 @@ export function NotebookPage() {
 	return (
 		<div className="flex h-dvh flex-col overflow-hidden">
 			<AppHeader
-				workspace
 				email={session.data?.user.email}
 				name={session.data?.user.name}
 				notebookTitle={
