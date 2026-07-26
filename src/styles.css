@@ -188,7 +188,7 @@
 	);
 	background-size: 200% 100%;
 	border-radius: 0.5rem;
-	animation: shimmer 1.4s var(--ease-spring) infinite;
+	animation: shimmer 2.8s var(--ease-spring) infinite;
 }
 
 .dark .placeholder-shimmer {
