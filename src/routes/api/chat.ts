@@ -5,6 +5,7 @@ import { api } from "src/convex/_generated/api"
 import {
 	fetchAuthAction,
 	fetchAuthMutation,
+	fetchAuthQuery,
 	getToken,
 } from "src/lib/auth-server"
 import { formatChatError } from "src/lib/chat_errors"
@@ -212,6 +213,50 @@ Never cite chunk IDs that were not supplied.`
 								return
 							}
 
+							const sourceIds = [
+								...new Set(
+									evidencePack.evidence.map(
+										(item: (typeof evidencePack.evidence)[number]) =>
+											item.sourceId,
+									),
+								),
+							]
+							const sources = await Promise.all(
+								sourceIds.map(async (sourceId) => {
+									const source = await fetchAuthQuery(api.sources.get, {
+										sourceId: sourceId as never,
+									}).catch(() => null)
+
+									return { sourceId, source }
+								}),
+							)
+							const sourcesById = new Map(
+								sources.map(({ sourceId, source }) => [sourceId, source]),
+							)
+							const citationCatalog = evidencePack.evidence.map(
+								(item: (typeof evidencePack.evidence)[number]) => {
+									const source = sourcesById.get(item.sourceId)
+
+									return {
+										_id: String(item.chunkId),
+										chunkId: String(item.chunkId),
+										sourceId: item.sourceId,
+										liveTitle:
+											source?.title || item.text.slice(0, 48) || "Source",
+										excerpt: item.text.slice(0, 400),
+										canNavigate: !!source && !source.deletedAt,
+										locator: {
+											startOffset: item.startOffset,
+											endOffset: item.endOffset,
+											ordinal: item.ordinal,
+										},
+									}
+								},
+							)
+
+							streamController.enqueue(
+								encodeSse("citations", { citations: citationCatalog }),
+							)
 							await emitStatus(CHAT_PROGRESS.writing)
 
 							const result = streamText({
@@ -315,9 +360,10 @@ Never cite chunk IDs that were not supplied.`
 
 							const titled = citations.map((citation) => ({
 								...citation,
-								sourceTitleSnapshot: citation.excerpt
-									? citation.excerpt.slice(0, 48)
-									: "Source",
+								sourceTitleSnapshot:
+									sourcesById.get(String(citation.sourceId))?.title ||
+									citation.excerpt.slice(0, 48) ||
+									"Source",
 							}))
 
 							const content = remapCitationMarkers(

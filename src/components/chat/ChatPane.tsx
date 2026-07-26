@@ -49,6 +49,7 @@ export function ChatPane({
 				<ChatMessageList
 					entries={chat.entries}
 					streamedContent={chat.streamedContent}
+					streamedCitations={chat.streamedCitations}
 					optimisticUserPrompt={chat.optimisticUserPrompt}
 					hasReadySources={chat.readySelected.length > 0}
 					canRetry={chat.canRetry}

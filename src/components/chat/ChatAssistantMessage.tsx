@@ -3,6 +3,10 @@ import { AssistantContent } from "src/components/chat/AssistantContent"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import { Button } from "src/components/ui/button"
 import type { api } from "src/convex/_generated/api"
+import {
+	resolveStreamedAssistantContent,
+	type StreamCitation,
+} from "src/lib/chat_sse"
 
 type ChatListEntry = FunctionReturnType<typeof api.chat.list>[number]
 
@@ -10,6 +14,7 @@ export type ChatAssistantMessageProps = {
 	entry: ChatListEntry
 	entries: ChatListEntry[] | undefined
 	streamedContent: string | null
+	streamedCitations: StreamCitation[]
 	canRetry: boolean
 	onCite: (args: ChatCiteArgs) => void
 	onRetry: (prompt: string, assistantId: string) => void
@@ -19,12 +24,16 @@ export function ChatAssistantMessage({
 	entry,
 	entries,
 	streamedContent,
+	streamedCitations,
 	canRetry,
 	onCite,
 	onRetry,
 }: ChatAssistantMessageProps) {
-	const content = streamedContent ?? entry.content
-	const citations = streamedContent ? [] : (entry.citations ?? [])
+	const streamed = streamedContent
+		? resolveStreamedAssistantContent(streamedContent, streamedCitations)
+		: null
+	const content = streamed?.content ?? entry.content
+	const citations = streamed?.citations ?? entry.citations ?? []
 	const latestFailed =
 		canRetry &&
 		(entry.status === "failed" ||

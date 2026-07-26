@@ -1,7 +1,73 @@
+import {
+	parseCitationMarkers,
+	remapCitationMarkers,
+	validateCitations,
+} from "src/lib/citations"
+
 export type ChatSseResult = {
 	done: boolean
 	error: string | null
 	text: string
+}
+
+export type StreamCitation = {
+	_id: string
+	chunkId: string
+	sourceId?: string
+	liveTitle: string
+	excerpt: string
+	canNavigate: boolean
+	locator?: { startOffset?: number; endOffset?: number } | null
+}
+
+export type ChatSseHandlers = {
+	onText?: (text: string) => void
+	onCitations?: (citations: StreamCitation[]) => void
+}
+
+function isStreamCitation(value: unknown): value is StreamCitation {
+	return (
+		!!value &&
+		typeof value === "object" &&
+		"_id" in value &&
+		typeof value._id === "string" &&
+		"chunkId" in value &&
+		typeof value.chunkId === "string" &&
+		"liveTitle" in value &&
+		typeof value.liveTitle === "string" &&
+		"excerpt" in value &&
+		typeof value.excerpt === "string" &&
+		"canNavigate" in value &&
+		typeof value.canNavigate === "boolean"
+	)
+}
+
+export function resolveStreamedAssistantContent(
+	text: string,
+	catalog: StreamCitation[],
+) {
+	const parsed = parseCitationMarkers(text)
+	const byChunkId = new Map(
+		catalog.map((citation) => [citation.chunkId, citation]),
+	)
+	const validation = validateCitations(
+		parsed.citations,
+		new Set(byChunkId.keys()),
+	)
+	const citations = validation.valid.flatMap((reference) => {
+		const citation = byChunkId.get(reference.chunkId)
+
+		return citation ? [citation] : []
+	})
+
+	return {
+		content: remapCitationMarkers(
+			parsed.text,
+			parsed.citations,
+			validation.valid,
+		),
+		citations,
+	}
 }
 
 export function parseSseChunk(
@@ -44,7 +110,7 @@ export function parseSseChunk(
 
 export async function consumeChatSse(
 	response: Response,
-	onText?: (text: string) => void,
+	handlers: ChatSseHandlers = {},
 ): Promise<ChatSseResult> {
 	const reader = response.body?.getReader()
 
@@ -90,6 +156,17 @@ export async function consumeChatSse(
 				}
 
 				if (
+					event === "citations" &&
+					data &&
+					typeof data === "object" &&
+					"citations" in data &&
+					Array.isArray(data.citations)
+				) {
+					handlers.onCitations?.(data.citations.filter(isStreamCitation))
+					return
+				}
+
+				if (
 					event === "text" &&
 					data &&
 					typeof data === "object" &&
@@ -97,7 +174,7 @@ export async function consumeChatSse(
 					typeof data.delta === "string"
 				) {
 					text += data.delta
-					onText?.(text)
+					handlers.onText?.(text)
 				}
 			},
 		)

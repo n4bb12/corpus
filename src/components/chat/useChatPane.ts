@@ -9,7 +9,7 @@ import {
 	getOptimisticUserPrompt,
 	type OptimisticChatSubmission,
 } from "src/lib/chat_history"
-import { consumeChatSse } from "src/lib/chat_sse"
+import { consumeChatSse, type StreamCitation } from "src/lib/chat_sse"
 import { useSignedInQueryArgs } from "src/lib/use-signed-in"
 
 export function useChatPane(notebookId: Id<"notebooks">) {
@@ -26,6 +26,9 @@ export function useChatPane(notebookId: Id<"notebooks">) {
 	const [clearOpen, setClearOpen] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [streamedContent, setStreamedContent] = useState<string | null>(null)
+	const [streamedCitations, setStreamedCitations] = useState<StreamCitation[]>(
+		[],
+	)
 	const scrollerRef = useRef<HTMLDivElement>(null)
 	const stickToBottom = useRef(true)
 	const abortRef = useRef<AbortController | null>(null)
@@ -81,6 +84,7 @@ export function useChatPane(notebookId: Id<"notebooks">) {
 		setSending(true)
 		setError(null)
 		setStreamedContent(null)
+		setStreamedCitations([])
 
 		if (!retryAssistantId) {
 			setOptimisticSubmission({
@@ -113,7 +117,10 @@ export function useChatPane(notebookId: Id<"notebooks">) {
 			}
 
 			setPrompt("")
-			const result = await consumeChatSse(response, setStreamedContent)
+			const result = await consumeChatSse(response, {
+				onText: setStreamedContent,
+				onCitations: setStreamedCitations,
+			})
 
 			if (result.error) {
 				await markFailed(formatChatError(result.error))
@@ -156,6 +163,7 @@ export function useChatPane(notebookId: Id<"notebooks">) {
 		readySelected,
 		streaming,
 		streamedContent,
+		streamedCitations,
 		canRetry,
 		optimisticUserPrompt,
 		send,

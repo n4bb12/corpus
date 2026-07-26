@@ -5,6 +5,7 @@ import { ChatAssistantMessage } from "src/components/chat/ChatAssistantMessage"
 import { ChatEmptyPrompt } from "src/components/chat/ChatEmptyPrompt"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import type { api } from "src/convex/_generated/api"
+import type { StreamCitation } from "src/lib/chat_sse"
 
 export type { ChatCiteArgs }
 
@@ -13,6 +14,7 @@ type ChatListEntry = FunctionReturnType<typeof api.chat.list>[number]
 export type ChatMessageListProps = {
 	entries: ChatListEntry[] | undefined
 	streamedContent: string | null
+	streamedCitations: StreamCitation[]
 	optimisticUserPrompt: string | null
 	hasReadySources: boolean
 	canRetry: boolean
@@ -25,6 +27,7 @@ export type ChatMessageListProps = {
 export const ChatMessageList = memo(function ChatMessageList({
 	entries,
 	streamedContent,
+	streamedCitations,
 	optimisticUserPrompt,
 	hasReadySources,
 	canRetry,
@@ -81,6 +84,7 @@ export const ChatMessageList = memo(function ChatMessageList({
 								? streamedContent
 								: null
 						}
+						streamedCitations={streamedCitations}
 						canRetry={canRetry}
 						onCite={onCite}
 						onRetry={onRetry}
