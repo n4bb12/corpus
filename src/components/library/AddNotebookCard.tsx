@@ -18,7 +18,7 @@ export function AddNotebookCard({
 			type="button"
 			disabled={disabled}
 			className={cn(
-				"group h-full w-full text-left transition-transform duration-(--duration-hover) ease-spring hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-60",
+				"group h-full w-full text-left disabled:pointer-events-none disabled:opacity-60",
 				tall && "lg:min-h-full",
 			)}
 			onClick={onClick}
@@ -31,7 +31,7 @@ export function AddNotebookCard({
 					tall ? "min-h-[16rem] lg:min-h-[22rem]" : "min-h-[10.5rem]",
 				)}
 			>
-				<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-(--duration-hover) ease-spring group-hover:scale-105">
+				<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-(--duration-hover) ease-spring group-hover:-translate-y-0.5 group-hover:scale-105">
 					<Plus size={22} aria-hidden strokeWidth={1.5} />
 				</span>
 				<span className="min-w-0 leading-tight">

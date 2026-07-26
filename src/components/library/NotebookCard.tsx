@@ -39,7 +39,7 @@ export function NotebookCard({
 			<motion.div
 				layout
 				transition={layoutTransition}
-				className="group relative h-full transition-transform duration-(--duration-hover) ease-spring hover:-translate-y-0.5"
+				className="group relative h-full"
 			>
 				<Bezel
 					className="h-full shadow-(--shadow-pine)"

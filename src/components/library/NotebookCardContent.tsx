@@ -18,7 +18,7 @@ export function NotebookCardContent({
 		<>
 			<div
 				className={cn(
-					"pointer-events-none relative z-10 flex shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10",
+					"pointer-events-none relative z-10 flex shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-(--duration-hover) ease-spring group-hover:-translate-y-0.5 group-hover:scale-105",
 					featured ? "size-12" : "size-11",
 				)}
 				aria-hidden
