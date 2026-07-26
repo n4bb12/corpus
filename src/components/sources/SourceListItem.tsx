@@ -55,7 +55,7 @@ export function SourceListItem({
 		<motion.div
 			layout
 			transition={layoutTransition}
-			className="group mb-1 flex items-start gap-2 rounded-xl px-2 py-2 hover:bg-muted/60"
+			className="group flex items-start gap-2 rounded-xl px-2 py-2 hover:bg-muted/60"
 		>
 			<button
 				type="button"

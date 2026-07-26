@@ -203,92 +203,99 @@ export function SourcesPane({
 				}
 			}}
 		>
-			<div className="flex items-center justify-between gap-3 px-4 pt-4">
-				<h2 className="text-sm font-semibold tracking-wide uppercase">
-					Sources
-				</h2>
-				<Button
-					size="sm"
-					className="rounded-sm"
-					onClick={() => setAddOpen(true)}
-				>
-					<Plus size={14} className="mr-1" />
-					Add
-				</Button>
-			</div>
-
-			{uploadNotice ? (
-				<p className="px-4 pt-2 text-sm text-destructive" role="status">
-					{uploadNotice}
-				</p>
-			) : null}
-
-			<div className="relative px-4 pt-3">
-				<Search
-					size={14}
-					className="pointer-events-none absolute top-1/2 left-7 -translate-y-1/2 text-muted-foreground"
-				/>
-				<Input
-					value={query}
-					onChange={(event) => setQuery(event.target.value)}
-					placeholder="Search sources"
-					className="rounded-xl pl-8"
-					aria-label="Search sources"
-				/>
-			</div>
-
-			{selectable.length ? (
-				<div className="flex items-center justify-end gap-2 px-4 py-3 text-sm">
-					<label
-						htmlFor="select-all-sources"
-						className="cursor-pointer tabular-nums text-muted-foreground"
+			<div className="flex flex-col gap-3 px-4 pt-4">
+				<div className="flex h-10 items-center justify-between gap-3">
+					<h2 className="text-sm font-semibold tracking-wide uppercase">
+						Sources
+					</h2>
+					<Button
+						size="sm"
+						className="rounded-sm"
+						onClick={() => setAddOpen(true)}
 					>
-						{selectedCount}/{selectable.length} selected
-					</label>
-					<Checkbox
-						id="select-all-sources"
-						checked={
-							allSelected ? true : someSelected ? "indeterminate" : false
-						}
-						onCheckedChange={(checked) =>
-							void setSelectedMany({
-								notebookId,
-								sourceIds: selectable.map((source) => source._id),
-								selected: checked === true,
-							})
-						}
+						<Plus size={14} className="mr-1" />
+						Add
+					</Button>
+				</div>
+
+				{uploadNotice ? (
+					<p className="text-sm text-destructive" role="status">
+						{uploadNotice}
+					</p>
+				) : null}
+
+				<div className="relative">
+					<Search
+						size={14}
+						className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+					/>
+					<Input
+						value={query}
+						onChange={(event) => setQuery(event.target.value)}
+						placeholder="Search sources"
+						className="rounded-xl pl-9"
+						aria-label="Search sources"
 					/>
 				</div>
-			) : null}
 
-			<div ref={listRef} className="relative flex-1 overflow-auto px-2 pb-4">
-				<AddSourceCard onClick={() => setAddOpen(true)} />
-				<AnimatePresence initial={false}>
-					{filtered.map((source) => (
-						<SourceListItem
-							key={source._id}
-							source={source}
-							onPreview={() => {
-								scrollMemory.current = listRef.current?.scrollTop ?? 0
-								onPreviewSource(source._id)
-							}}
-							onRename={() => {
-								setRenameId(source._id)
-								setRenameDraft(source.title)
-							}}
-							onRetry={() =>
-								void startSourceIngest({
-									action: "retry",
-									sourceId: source._id,
+				{selectable.length ? (
+					<div className="flex items-center justify-end gap-2 text-sm">
+						<label
+							htmlFor="select-all-sources"
+							className="cursor-pointer tabular-nums text-muted-foreground"
+						>
+							{selectedCount}/{selectable.length} selected
+						</label>
+						<Checkbox
+							id="select-all-sources"
+							checked={
+								allSelected ? true : someSelected ? "indeterminate" : false
+							}
+							onCheckedChange={(checked) =>
+								void setSelectedMany({
+									notebookId,
+									sourceIds: selectable.map((source) => source._id),
+									selected: checked === true,
 								})
 							}
-							onDelete={() => setDeleteId(source._id)}
-							onSelect={(selected) =>
-								void setSelected({ sourceId: source._id, selected })
-							}
 						/>
-					))}
-				</AnimatePresence>
+					</div>
+				) : null}
+			</div>
+
+			<div
+				ref={listRef}
+				className="relative mt-3 flex-1 overflow-auto px-4 pb-4"
+			>
+				<div className="flex flex-col gap-1">
+					<AddSourceCard onClick={() => setAddOpen(true)} />
+					<AnimatePresence initial={false}>
+						{filtered.map((source) => (
+							<SourceListItem
+								key={source._id}
+								source={source}
+								onPreview={() => {
+									scrollMemory.current = listRef.current?.scrollTop ?? 0
+									onPreviewSource(source._id)
+								}}
+								onRename={() => {
+									setRenameId(source._id)
+									setRenameDraft(source.title)
+								}}
+								onRetry={() =>
+									void startSourceIngest({
+										action: "retry",
+										sourceId: source._id,
+									})
+								}
+								onDelete={() => setDeleteId(source._id)}
+								onSelect={(selected) =>
+									void setSelected({ sourceId: source._id, selected })
+								}
+							/>
+						))}
+					</AnimatePresence>
+				</div>
 			</div>
 
 			{dragging ? (
