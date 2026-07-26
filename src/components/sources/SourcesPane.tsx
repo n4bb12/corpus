@@ -83,16 +83,15 @@ export function SourcesPane({
 				allSelected={pane.allSelected}
 				someSelected={pane.someSelected}
 				onAdd={() => pane.setAddOpen(true)}
-				onSelectMany={(args) => void pane.setSelectedMany(args)}
+				onSelectMany={pane.handleSelectMany}
 				onPreview={(sourceId) => {
 					pane.scrollMemory.current = pane.listRef.current?.scrollTop ?? 0
 					onPreviewSource(sourceId)
 				}}
 				onRename={pane.beginRename}
-				onDelete={pane.setDeleteId}
-				onSelect={(sourceId, selected) =>
-					void pane.setSelected({ sourceId, selected })
-				}
+				onRetry={pane.handleRetry}
+				onDelete={pane.handleDelete}
+				onSelect={pane.handleSelect}
 			/>
 
 			{pane.dragging ? (

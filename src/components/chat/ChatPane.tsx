@@ -48,7 +48,7 @@ export function ChatPane({
 			>
 				<ChatMessageList
 					entries={chat.entries}
-					readySelectedCount={chat.readySelected.length}
+					hasReadySources={chat.readySelected.length > 0}
 					canRetry={chat.canRetry}
 					onAddSource={onAddSource}
 					onCite={onCite}

@@ -5,6 +5,7 @@ import {
 	MoreHorizontal,
 	Type,
 } from "lucide-react"
+import { memo } from "react"
 import { Button } from "src/components/ui/button"
 import { Checkbox } from "src/components/ui/checkbox"
 import {
@@ -14,7 +15,7 @@ import {
 	DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu"
 import { Label } from "src/components/ui/label"
-import type { Doc } from "src/convex/_generated/dataModel"
+import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { formatTitle } from "src/lib/source_title"
 
 const STATUS_LABEL: Record<string, string> = {
@@ -28,14 +29,14 @@ const STATUS_LABEL: Record<string, string> = {
 
 export type SourceListItemProps = {
 	source: Doc<"sources">
-	onPreview: () => void
-	onRename: () => void
-	onRetry: () => void
-	onDelete: () => void
-	onSelect: (selected: boolean) => void
+	onPreview: (sourceId: Id<"sources">) => void
+	onRename: (source: Doc<"sources">) => void
+	onRetry: (sourceId: Id<"sources">) => void
+	onDelete: (sourceId: Id<"sources">) => void
+	onSelect: (sourceId: Id<"sources">, selected: boolean) => void
 }
 
-export function SourceListItem({
+export const SourceListItem = memo(function SourceListItem({
 	source,
 	onPreview,
 	onRename,
@@ -56,7 +57,7 @@ export function SourceListItem({
 				type="button"
 				className="absolute inset-0 z-0 rounded-xl"
 				aria-label={`Open ${label}`}
-				onClick={onPreview}
+				onClick={() => onPreview(source._id)}
 			/>
 			<span className="pointer-events-none relative z-10 mt-0.5 text-primary">
 				{busy ? (
@@ -86,11 +87,18 @@ export function SourceListItem({
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="rounded-xl">
-						<DropdownMenuItem onClick={onRename}>Rename</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => onRename(source)}>
+							Rename
+						</DropdownMenuItem>
 						{source.processingState === "failed" ? (
-							<DropdownMenuItem onClick={onRetry}>Retry</DropdownMenuItem>
+							<DropdownMenuItem onClick={() => onRetry(source._id)}>
+								Retry
+							</DropdownMenuItem>
 						) : null}
-						<DropdownMenuItem variant="destructive" onClick={onDelete}>
+						<DropdownMenuItem
+							variant="destructive"
+							onClick={() => onDelete(source._id)}
+						>
 							Delete
 						</DropdownMenuItem>
 					</DropdownMenuContent>
@@ -104,10 +112,12 @@ export function SourceListItem({
 						id={checkboxId}
 						checked={source.selected}
 						disabled={source.processingState === "failed"}
-						onCheckedChange={(checked) => onSelect(checked === true)}
+						onCheckedChange={(checked) =>
+							onSelect(source._id, checked === true)
+						}
 					/>
 				</Label>
 			</div>
 		</div>
 	)
-}
+})

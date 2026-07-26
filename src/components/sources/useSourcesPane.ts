@@ -5,7 +5,35 @@ import { uploadSourceFiles } from "src/components/sources/uploadSourceFiles"
 import { useSourcePreviewMarkdown } from "src/components/sources/useSourcePreviewMarkdown"
 import { api } from "src/convex/_generated/api"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
+import { startSourceIngest } from "src/lib/ingest-client"
+import { useEventCallback } from "src/lib/use-event-callback"
 import { useSignedInQueryArgs } from "src/lib/use-signed-in"
+
+function patchSourceSelected(
+	sources: Doc<"sources">[],
+	sourceId: Id<"sources">,
+	selected: boolean,
+) {
+	return sources.map((source) =>
+		source._id === sourceId ? { ...source, selected } : source,
+	)
+}
+
+function patchSourcesSelectedMany(
+	sources: Doc<"sources">[],
+	sourceIds: Id<"sources">[],
+	selected: boolean,
+) {
+	const idSet = new Set(sourceIds)
+
+	return sources.map((source) => {
+		if (!idSet.has(source._id) || source.processingState === "failed") {
+			return source
+		}
+
+		return source.selected === selected ? source : { ...source, selected }
+	})
+}
 
 export function useSourcesPane({
 	notebookId,
@@ -22,8 +50,40 @@ export function useSourcesPane({
 		api.sources.listByNotebook,
 		useSignedInQueryArgs({ notebookId }),
 	)
-	const setSelected = useMutation(api.sources.setSelected)
-	const setSelectedMany = useMutation(api.sources.setSelectedMany)
+	const setSelected = useMutation(api.sources.setSelected).withOptimisticUpdate(
+		(localStore, args) => {
+			for (const { args: queryArgs, value } of localStore.getAllQueries(
+				api.sources.listByNotebook,
+			)) {
+				if (!value) {
+					continue
+				}
+
+				localStore.setQuery(
+					api.sources.listByNotebook,
+					queryArgs,
+					patchSourceSelected(value, args.sourceId, args.selected),
+				)
+			}
+		},
+	)
+	const setSelectedMany = useMutation(
+		api.sources.setSelectedMany,
+	).withOptimisticUpdate((localStore, args) => {
+		for (const { args: queryArgs, value } of localStore.getAllQueries(
+			api.sources.listByNotebook,
+		)) {
+			if (!value) {
+				continue
+			}
+
+			localStore.setQuery(
+				api.sources.listByNotebook,
+				queryArgs,
+				patchSourcesSelectedMany(value, args.sourceIds, args.selected),
+			)
+		}
+	})
 	const renameSource = useMutation(api.sources.rename)
 	const removeSource = useMutation(api.sources.remove)
 	const generateUploadUrl = useMutation(api.sources.generateUploadUrl)
@@ -52,10 +112,14 @@ export function useSourcesPane({
 		return list.filter((source) => source.title.toLowerCase().includes(needle))
 	}, [query, sources])
 
-	const selectable = filtered.filter(
-		(source) => source.processingState !== "failed",
+	const selectable = useMemo(
+		() => filtered.filter((source) => source.processingState !== "failed"),
+		[filtered],
 	)
-	const selectedCount = selectable.filter((source) => source.selected).length
+	const selectedCount = useMemo(
+		() => selectable.filter((source) => source.selected).length,
+		[selectable],
+	)
 	const allSelected =
 		selectable.length > 0 && selectedCount === selectable.length
 	const someSelected = selectedCount > 0 && !allSelected
@@ -73,10 +137,10 @@ export function useSourcesPane({
 		setUploadNotice(notice)
 	}
 
-	function beginRename(source: Doc<"sources">) {
+	const beginRename = useEventCallback((source: Doc<"sources">) => {
 		setRenameId(source._id)
 		setRenameDraft(source.title)
-	}
+	})
 
 	async function saveRename() {
 		if (!renameId) {
@@ -95,6 +159,30 @@ export function useSourcesPane({
 		await removeSource({ sourceId: deleteId })
 		setDeleteId(null)
 	}
+
+	const handleSelect = useEventCallback(
+		(sourceId: Id<"sources">, selected: boolean) => {
+			void setSelected({ sourceId, selected })
+		},
+	)
+	const handleSelectMany = useEventCallback(
+		(args: {
+			notebookId: Id<"notebooks">
+			sourceIds: Id<"sources">[]
+			selected: boolean
+		}) => {
+			void setSelectedMany(args)
+		},
+	)
+	const handleRetry = useEventCallback((sourceId: Id<"sources">) => {
+		void startSourceIngest({
+			action: "retry",
+			sourceId,
+		})
+	})
+	const handleDelete = useEventCallback((sourceId: Id<"sources">) => {
+		setDeleteId(sourceId)
+	})
 
 	return {
 		sources,
@@ -124,7 +212,9 @@ export function useSourcesPane({
 		beginRename,
 		saveRename,
 		confirmDelete,
-		setSelected,
-		setSelectedMany,
+		handleSelect,
+		handleSelectMany,
+		handleRetry,
+		handleDelete,
 	}
 }

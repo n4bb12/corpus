@@ -1,4 +1,5 @@
 import type { FunctionReturnType } from "convex/server"
+import { memo } from "react"
 import { ChatAssistantMessage } from "src/components/chat/ChatAssistantMessage"
 import { ChatEmptyPrompt } from "src/components/chat/ChatEmptyPrompt"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
@@ -10,7 +11,7 @@ type ChatListEntry = FunctionReturnType<typeof api.chat.list>[number]
 
 export type ChatMessageListProps = {
 	entries: ChatListEntry[] | undefined
-	readySelectedCount: number
+	hasReadySources: boolean
 	canRetry: boolean
 	onAddSource: () => void
 	onCite: (args: ChatCiteArgs) => void
@@ -18,9 +19,9 @@ export type ChatMessageListProps = {
 	onRetry: (prompt: string, assistantId: string) => void
 }
 
-export function ChatMessageList({
+export const ChatMessageList = memo(function ChatMessageList({
 	entries,
-	readySelectedCount,
+	hasReadySources,
 	canRetry,
 	onAddSource,
 	onCite,
@@ -33,7 +34,7 @@ export function ChatMessageList({
 		<div className="mx-auto flex min-h-full w-full max-w-[50rem] flex-col gap-6 py-4">
 			{empty ? (
 				<ChatEmptyPrompt
-					readySelectedCount={readySelectedCount}
+					readySelectedCount={hasReadySources ? 1 : 0}
 					onAddSource={onAddSource}
 					onSendSuggestion={onSendSuggestion}
 				/>
@@ -80,4 +81,4 @@ export function ChatMessageList({
 			})}
 		</div>
 	)
-}
+})

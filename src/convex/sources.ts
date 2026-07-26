@@ -440,11 +440,6 @@ export const setSelected = mutation({
 				updatedAt: Date.now(),
 				lastUsedAt: Date.now(),
 			})
-		} else {
-			await ctx.db.patch(notebook._id, {
-				updatedAt: Date.now(),
-				lastUsedAt: Date.now(),
-			})
 		}
 	},
 })

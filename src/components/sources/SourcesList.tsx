@@ -1,10 +1,10 @@
 import type { RefObject } from "react"
+import { useMemo } from "react"
 import { AddSourceCard } from "src/components/sources/AddSourceCard"
 import { SourceListItem } from "src/components/sources/SourceListItem"
 import { SourcesSelectAll } from "src/components/sources/SourcesSelectAll"
 import { ScrollArea } from "src/components/ui/scroll-area"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
-import { startSourceIngest } from "src/lib/ingest-client"
 
 export type SourcesListProps = {
 	notebookId: Id<"notebooks">
@@ -22,6 +22,7 @@ export type SourcesListProps = {
 	}) => void
 	onPreview: (sourceId: Id<"sources">) => void
 	onRename: (source: Doc<"sources">) => void
+	onRetry: (sourceId: Id<"sources">) => void
 	onDelete: (sourceId: Id<"sources">) => void
 	onSelect: (sourceId: Id<"sources">, selected: boolean) => void
 }
@@ -38,9 +39,15 @@ export function SourcesList({
 	onSelectMany,
 	onPreview,
 	onRename,
+	onRetry,
 	onDelete,
 	onSelect,
 }: SourcesListProps) {
+	const selectableIds = useMemo(
+		() => selectable.map((source) => source._id),
+		[selectable],
+	)
+
 	return (
 		<ScrollArea
 			viewportRef={listRef}
@@ -50,7 +57,7 @@ export function SourcesList({
 				<AddSourceCard onClick={onAdd} />
 				<SourcesSelectAll
 					notebookId={notebookId}
-					sourceIds={selectable.map((source) => source._id)}
+					sourceIds={selectableIds}
 					selectedCount={selectedCount}
 					allSelected={allSelected}
 					someSelected={someSelected}
@@ -60,16 +67,11 @@ export function SourcesList({
 					<SourceListItem
 						key={source._id}
 						source={source}
-						onPreview={() => onPreview(source._id)}
-						onRename={() => onRename(source)}
-						onRetry={() =>
-							void startSourceIngest({
-								action: "retry",
-								sourceId: source._id,
-							})
-						}
-						onDelete={() => onDelete(source._id)}
-						onSelect={(selected) => onSelect(source._id, selected)}
+						onPreview={onPreview}
+						onRename={onRename}
+						onRetry={onRetry}
+						onDelete={onDelete}
+						onSelect={onSelect}
 					/>
 				))}
 			</div>
