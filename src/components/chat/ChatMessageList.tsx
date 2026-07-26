@@ -78,7 +78,7 @@ export function ChatMessageList({
 						Chat needs at least one ready, selected source before it can answer.
 					</p>
 					<Button className="rounded-sm" onClick={onOpenSources}>
-						Go to Sources
+						Add first source
 					</Button>
 				</div>
 			) : null}
