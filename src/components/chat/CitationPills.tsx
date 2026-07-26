@@ -1,5 +1,5 @@
-import { useState } from "react"
 import { CitationPill } from "src/components/chat/CitationPill"
+import { TooltipProvider } from "src/components/ui/tooltip"
 
 export type ChatCiteArgs = {
 	sourceId?: string
@@ -30,40 +30,37 @@ export function CitationPills({
 	onCite,
 }: CitationPillsProps) {
 	const uniqueIndexes = [...new Set(indexes)]
-	const [openIndex, setOpenIndex] = useState<number | null>(null)
 
 	return (
-		<div className="flex flex-wrap gap-2">
-			{uniqueIndexes.map((index) => {
-				const citation = citations[index - 1]
+		<TooltipProvider delayDuration={150} skipDelayDuration={0}>
+			<div className="flex flex-wrap gap-2">
+				{uniqueIndexes.map((index) => {
+					const citation = citations[index - 1]
 
-				if (!citation) {
-					return null
-				}
+					if (!citation) {
+						return null
+					}
 
-				return (
-					<CitationPill
-						key={`${citation._id}-${index}`}
-						index={index}
-						title={citation.liveTitle}
-						excerpt={citation.excerpt}
-						canNavigate={citation.canNavigate}
-						open={openIndex === index}
-						onOpenChange={(nextOpen) => {
-							setOpenIndex(nextOpen ? index : null)
-						}}
-						onOpen={() =>
-							onCite({
-								sourceId: citation.sourceId,
-								startOffset: citation.locator?.startOffset,
-								endOffset: citation.locator?.endOffset,
-								excerpt: citation.excerpt,
-								canNavigate: citation.canNavigate,
-							})
-						}
-					/>
-				)
-			})}
-		</div>
+					return (
+						<CitationPill
+							key={`${citation._id}-${index}`}
+							index={index}
+							title={citation.liveTitle}
+							excerpt={citation.excerpt}
+							canNavigate={citation.canNavigate}
+							onOpen={() =>
+								onCite({
+									sourceId: citation.sourceId,
+									startOffset: citation.locator?.startOffset,
+									endOffset: citation.locator?.endOffset,
+									excerpt: citation.excerpt,
+									canNavigate: citation.canNavigate,
+								})
+							}
+						/>
+					)
+				})}
+			</div>
+		</TooltipProvider>
 	)
 }

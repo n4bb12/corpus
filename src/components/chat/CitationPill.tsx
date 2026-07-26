@@ -1,9 +1,8 @@
-import { useRef } from "react"
 import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "src/components/ui/popover"
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "src/components/ui/tooltip"
 import { markdownToPlainText } from "src/lib/markdown_plain"
 import { formatTitle } from "src/lib/source_title"
 
@@ -12,8 +11,6 @@ export type CitationPillProps = {
 	title: string
 	excerpt: string
 	canNavigate: boolean
-	open: boolean
-	onOpenChange: (open: boolean) => void
 	onOpen: () => void
 }
 
@@ -22,55 +19,19 @@ export function CitationPill({
 	title,
 	excerpt,
 	canNavigate,
-	open,
-	onOpenChange,
 	onOpen,
 }: CitationPillProps) {
 	const displayTitle = formatTitle(title)
 	const plainExcerpt = markdownToPlainText(excerpt)
-	const closeTimer = useRef<number | null>(null)
-
-	function clearCloseTimer() {
-		if (closeTimer.current !== null) {
-			window.clearTimeout(closeTimer.current)
-			closeTimer.current = null
-		}
-	}
-
-	function openPopover() {
-		clearCloseTimer()
-		onOpenChange(true)
-	}
-
-	function scheduleClose() {
-		clearCloseTimer()
-		closeTimer.current = window.setTimeout(() => {
-			onOpenChange(false)
-			closeTimer.current = null
-		}, 80)
-	}
 
 	return (
-		<Popover
-			open={open}
-			onOpenChange={(nextOpen) => {
-				clearCloseTimer()
-				onOpenChange(nextOpen)
-			}}
-		>
-			<PopoverTrigger asChild>
+		<Tooltip>
+			<TooltipTrigger asChild>
 				<button
 					type="button"
 					className="relative inline-flex min-h-6 min-w-6 items-center justify-center rounded-full bg-primary/15 px-2 text-xs font-medium text-primary before:absolute before:-inset-2"
 					aria-label={`Citation ${index}: ${displayTitle}`}
-					onMouseEnter={openPopover}
-					onMouseLeave={scheduleClose}
-					onFocus={openPopover}
-					onBlur={scheduleClose}
 					onClick={() => {
-						clearCloseTimer()
-						onOpenChange(false)
-
 						if (canNavigate) {
 							onOpen()
 						}
@@ -78,21 +39,20 @@ export function CitationPill({
 				>
 					{index}
 				</button>
-			</PopoverTrigger>
-			<PopoverContent
-				className="max-w-sm rounded-xl text-sm"
-				onMouseEnter={openPopover}
-				onMouseLeave={scheduleClose}
-				onOpenAutoFocus={(event) => event.preventDefault()}
+			</TooltipTrigger>
+			<TooltipContent
+				side="top"
+				sideOffset={8}
+				className="max-w-sm flex-col items-start gap-1.5 rounded-xl bg-popover px-3 py-2.5 text-left text-sm text-popover-foreground shadow-2xl ring-1 ring-foreground/5 [&_svg]:hidden"
 			>
-				<p className="mb-2 font-medium">{displayTitle}</p>
+				<p className="font-medium">{displayTitle}</p>
 				<p className="text-muted-foreground">{plainExcerpt}</p>
 				{!canNavigate ? (
-					<p className="mt-2 text-xs text-muted-foreground">
+					<p className="text-xs text-muted-foreground">
 						Source deleted. Excerpt retained.
 					</p>
 				) : null}
-			</PopoverContent>
-		</Popover>
+			</TooltipContent>
+		</Tooltip>
 	)
 }
