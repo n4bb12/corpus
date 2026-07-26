@@ -57,7 +57,8 @@ export function SourcesPane({
 
 	const filtered = useMemo(() => {
 		const list = sources ?? []
-		const needle = query.trim().toLowerCase()
+		const showSearch = list.length >= 6
+		const needle = showSearch ? query.trim().toLowerCase() : ""
 
 		if (!needle) {
 			return list
@@ -217,29 +218,31 @@ export function SourcesPane({
 					</p>
 				) : null}
 
-				<div className="relative">
-					<Search
-						size={14}
-						className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
-					/>
-					<Input
-						value={query}
-						onChange={(event) => setQuery(event.target.value)}
-						placeholder="Search sources"
-						className={query ? "rounded-xl pr-9 pl-9" : "rounded-xl pl-9"}
-						aria-label="Search sources"
-					/>
-					{query ? (
-						<button
-							type="button"
-							className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-							aria-label="Clear search"
-							onClick={() => setQuery("")}
-						>
-							<X size={16} />
-						</button>
-					) : null}
-				</div>
+				{(sources?.length ?? 0) >= 6 ? (
+					<div className="relative">
+						<Search
+							size={14}
+							className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+						/>
+						<Input
+							value={query}
+							onChange={(event) => setQuery(event.target.value)}
+							placeholder="Search sources"
+							className={query ? "rounded-xl pr-9 pl-9" : "rounded-xl pl-9"}
+							aria-label="Search sources"
+						/>
+						{query ? (
+							<button
+								type="button"
+								className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+								aria-label="Clear search"
+								onClick={() => setQuery("")}
+							>
+								<X size={16} />
+							</button>
+						) : null}
+					</div>
+				) : null}
 			</div>
 
 			<div
