@@ -11,7 +11,6 @@ import { Popover, PopoverContent } from "src/components/ui/popover"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { authClient } from "src/lib/auth-client"
-import { UNTITLED_NOTEBOOK } from "src/lib/limits"
 import { layoutTransition } from "src/lib/motion"
 import { normalizeTitle } from "src/lib/source_title"
 import { useIsSignedIn, useSignedInQueryArgs } from "src/lib/use-signed-in"
@@ -32,7 +31,7 @@ export function NotebookPage() {
 	const sources = useQuery(api.sources.listByNotebook, notebookArgs)
 	const rename = useMutation(api.notebooks.rename).withOptimisticUpdate(
 		(localStore, args) => {
-			const title = normalizeTitle(args.title, UNTITLED_NOTEBOOK)
+			const title = normalizeTitle(args.title, "")
 			const current = localStore.getQuery(api.notebooks.get, {
 				notebookId: args.notebookId,
 			})

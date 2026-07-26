@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { UNTITLED_NOTEBOOK } from "src/lib/limits"
+import { displayNotebookTitle } from "src/lib/limits"
 import { cn } from "src/lib/utils"
 
 export type InlineNotebookTitleProps = {
@@ -32,7 +32,7 @@ export function InlineNotebookTitle({
 
 	async function commit() {
 		setEditing(false)
-		const next = draft.trim() || UNTITLED_NOTEBOOK
+		const next = draft.trim()
 		setDraft(next)
 
 		if (next !== title) {
@@ -43,9 +43,12 @@ export function InlineNotebookTitle({
 	return (
 		<input
 			ref={inputRef}
-			value={draft}
+			value={editing ? draft : displayNotebookTitle(title)}
 			readOnly={!editing}
-			onFocus={() => setEditing(true)}
+			onFocus={() => {
+				setEditing(true)
+				setDraft(title)
+			}}
 			onChange={(event) => setDraft(event.target.value)}
 			onBlur={() => void commit()}
 			onKeyDown={(event) => {
@@ -62,6 +65,7 @@ export function InlineNotebookTitle({
 			}}
 			maxLength={100}
 			aria-label="Notebook title"
+			placeholder={displayNotebookTitle("")}
 			className={cn(
 				"h-9 w-full min-w-0 truncate rounded-sm border border-transparent bg-transparent px-2 text-lg font-semibold tracking-tight outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30",
 				className,

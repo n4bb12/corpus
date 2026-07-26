@@ -4,7 +4,7 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { generateText } from "ai"
 import { v } from "convex/values"
 import { requireEnv } from "src/lib/env"
-import { MODELS, UNTITLED_NOTEBOOK } from "src/lib/limits"
+import { MODELS } from "src/lib/limits"
 import { normalizeTitle } from "src/lib/source_title"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
@@ -57,7 +57,11 @@ export const maybeGenerateNotebookTitle = internalAction({
 				prompt: `Create a short notebook title (max 8 words) for notes grounded in this source. Return only the title.\n\n${markdown}`,
 			})
 
-			const title = normalizeTitle(result.text, UNTITLED_NOTEBOOK)
+			const title = normalizeTitle(result.text, "")
+
+			if (!title) {
+				throw new Error("Empty generated title.")
+			}
 
 			await ctx.runMutation(internal.titlesHelpers.applyGeneratedTitle, {
 				notebookId: args.notebookId,

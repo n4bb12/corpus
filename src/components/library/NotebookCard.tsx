@@ -18,6 +18,7 @@ import {
 	DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu"
 import { Input } from "src/components/ui/input"
+import { displayNotebookTitle } from "src/lib/limits"
 import { layoutTransition } from "src/lib/motion"
 import { cn } from "src/lib/utils"
 
@@ -43,6 +44,7 @@ export function NotebookCard({
 	const [renameOpen, setRenameOpen] = useState(false)
 	const [deleteOpen, setDeleteOpen] = useState(false)
 	const [draft, setDraft] = useState(title)
+	const label = displayNotebookTitle(title)
 
 	return (
 		<>
@@ -62,7 +64,7 @@ export function NotebookCard({
 						params={{ notebookId }}
 						search={{ tab: "chat" }}
 						className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-						aria-label={`Open ${title}`}
+						aria-label={`Open ${label}`}
 					/>
 				)}
 				<div
@@ -82,7 +84,7 @@ export function NotebookCard({
 						)}
 						aria-hidden={loading}
 					>
-						{title}
+						{label}
 					</h2>
 					<p
 						className={cn(
@@ -110,7 +112,7 @@ export function NotebookCard({
 								variant="ghost"
 								size="icon"
 								className="pointer-events-auto rounded-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-								aria-label={`Notebook menu for ${title}`}
+								aria-label={`Notebook menu for ${label}`}
 								disabled={loading}
 								onClick={(event) => event.preventDefault()}
 							>
@@ -154,6 +156,7 @@ export function NotebookCard({
 						onChange={(event) => setDraft(event.target.value)}
 						className="rounded-xl"
 						maxLength={100}
+						placeholder={displayNotebookTitle("")}
 						autoFocus
 					/>
 					<DialogFooter>
@@ -182,7 +185,7 @@ export function NotebookCard({
 					<DialogHeader>
 						<DialogTitle>Delete notebook</DialogTitle>
 						<DialogDescription>
-							Permanently delete “{title}”? Messages, citations, sources, and
+							Permanently delete “{label}”? Messages, citations, sources, and
 							files will be removed. This cannot be undone.
 						</DialogDescription>
 					</DialogHeader>

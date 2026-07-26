@@ -1,5 +1,5 @@
 import { v } from "convex/values"
-import { LIMITS, UNTITLED_NOTEBOOK } from "src/lib/limits"
+import { LIMITS } from "src/lib/limits"
 import { normalizeTitle } from "src/lib/source_title"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
@@ -127,7 +127,7 @@ export const create = mutation({
 
 		return await ctx.db.insert("notebooks", {
 			ownerId: user._id,
-			title: UNTITLED_NOTEBOOK,
+			title: "",
 			titleOrigin: "placeholder",
 			titleGenerationState: "idle",
 			chatEpoch: 0,
@@ -146,7 +146,7 @@ export const rename = mutation({
 	},
 	handler: async (ctx, args) => {
 		const { notebook } = await requireNotebookOwner(ctx, args.notebookId)
-		const title = normalizeTitle(args.title, UNTITLED_NOTEBOOK)
+		const title = normalizeTitle(args.title, "")
 		const now = Date.now()
 
 		await ctx.db.patch(notebook._id, {

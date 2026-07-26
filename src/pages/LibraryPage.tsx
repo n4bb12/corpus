@@ -12,7 +12,7 @@ import { PendingLabel } from "src/components/ui/PendingLabel"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { authClient } from "src/lib/auth-client"
-import { LIMITS, UNTITLED_NOTEBOOK } from "src/lib/limits"
+import { LIMITS } from "src/lib/limits"
 import { normalizeTitle } from "src/lib/source_title"
 import { useSignedInQueryArgs } from "src/lib/use-signed-in"
 
@@ -26,7 +26,7 @@ export function LibraryPage() {
 	const removeNotebook = useMutation(api.notebooks.remove)
 	const renameNotebook = useMutation(api.notebooks.rename).withOptimisticUpdate(
 		(localStore, args) => {
-			const title = normalizeTitle(args.title, UNTITLED_NOTEBOOK)
+			const title = normalizeTitle(args.title, "")
 
 			for (const { args: queryArgs, value } of localStore.getAllQueries(
 				api.notebooks.list,

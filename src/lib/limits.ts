@@ -22,3 +22,7 @@ export const MODELS = {
 } as const
 
 export const UNTITLED_NOTEBOOK = "Untitled notebook"
+
+export function displayNotebookTitle(title: string) {
+	return title.trim() || UNTITLED_NOTEBOOK
+}
