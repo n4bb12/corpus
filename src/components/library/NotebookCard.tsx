@@ -51,7 +51,6 @@ export function NotebookCard({
 			<motion.div
 				layout
 				transition={layoutTransition}
-				whileHover={loading ? undefined : { y: -2 }}
 				className={cn(
 					"group relative rounded-2xl border border-border bg-card p-4 shadow-(--shadow-pine) transition-shadow duration-120",
 					"max-sm:flex max-sm:items-center max-sm:gap-3",
