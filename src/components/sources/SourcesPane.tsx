@@ -23,6 +23,8 @@ export type SourcesPaneProps = {
 	highlightOffsets?: { start: number; end: number } | null
 	onPreviewSource: (sourceId: string | null) => void
 	onHighlightHandled?: () => void
+	addOpen?: boolean
+	onAddOpenChange?: (open: boolean) => void
 }
 
 export function SourcesPane({
@@ -30,6 +32,8 @@ export function SourcesPane({
 	previewSourceId,
 	highlightOffsets,
 	onPreviewSource,
+	addOpen: addOpenControlled,
+	onAddOpenChange,
 }: SourcesPaneProps) {
 	const { isAuthenticated } = useConvexAuth()
 	const sources = useQuery(
@@ -42,7 +46,9 @@ export function SourcesPane({
 	const removeSource = useMutation(api.sources.remove)
 	const generateUploadUrl = useMutation(api.sources.generateUploadUrl)
 	const [query, setQuery] = useState("")
-	const [addOpen, setAddOpen] = useState(false)
+	const [addOpenUncontrolled, setAddOpenUncontrolled] = useState(false)
+	const addOpen = addOpenControlled ?? addOpenUncontrolled
+	const setAddOpen = onAddOpenChange ?? setAddOpenUncontrolled
 	const [dragging, setDragging] = useState(false)
 	const [renameId, setRenameId] = useState<Id<"sources"> | null>(null)
 	const [renameDraft, setRenameDraft] = useState("")

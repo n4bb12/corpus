@@ -18,7 +18,7 @@ export type ChatMessageListProps = {
 	entries: ChatListEntry[] | undefined
 	readySelectedCount: number
 	canRetry: boolean
-	onOpenSources: () => void
+	onAddSource: () => void
 	onCite: (args: ChatCiteArgs) => void
 	onSendSuggestion: (suggestion: string) => void
 	onRetry: (prompt: string, assistantId: string) => void
@@ -34,7 +34,7 @@ export function ChatMessageList({
 	entries,
 	readySelectedCount,
 	canRetry,
-	onOpenSources,
+	onAddSource,
 	onCite,
 	onSendSuggestion,
 	onRetry,
@@ -77,7 +77,7 @@ export function ChatMessageList({
 					<p className="max-w-xl text-sm text-muted-foreground">
 						Chat needs at least one ready, selected source before it can answer.
 					</p>
-					<Button className="rounded-sm" onClick={onOpenSources}>
+					<Button className="rounded-sm" onClick={onAddSource}>
 						Add first source
 					</Button>
 				</div>

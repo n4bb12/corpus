@@ -15,10 +15,16 @@ import { canRetryLatestAssistant } from "src/lib/chat_history"
 export type ChatPaneProps = {
 	notebookId: Id<"notebooks">
 	onOpenSources: () => void
+	onAddSource: () => void
 	onCite: (args: ChatCiteArgs) => void
 }
 
-export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
+export function ChatPane({
+	notebookId,
+	onOpenSources,
+	onAddSource,
+	onCite,
+}: ChatPaneProps) {
 	const { isAuthenticated } = useConvexAuth()
 	const entries = useQuery(
 		api.chat.list,
@@ -142,7 +148,7 @@ export function ChatPane({ notebookId, onOpenSources, onCite }: ChatPaneProps) {
 					entries={entries}
 					readySelectedCount={readySelected.length}
 					canRetry={canRetry}
-					onOpenSources={onOpenSources}
+					onAddSource={onAddSource}
 					onCite={onCite}
 					onSendSuggestion={(suggestion) => void send(suggestion)}
 					onRetry={(nextPrompt, assistantId) =>

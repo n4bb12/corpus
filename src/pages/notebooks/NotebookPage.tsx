@@ -72,6 +72,7 @@ export function NotebookPage() {
 		end: number
 	} | null>(null)
 	const [excerptOnly, setExcerptOnly] = useState<string | null>(null)
+	const [addSourceOpen, setAddSourceOpen] = useState(false)
 
 	useEffect(() => {
 		void touch({ notebookId: notebookId as Id<"notebooks"> })
@@ -155,6 +156,8 @@ export function NotebookPage() {
 						previewSourceId={previewSourceId}
 						highlightOffsets={highlight}
 						onPreviewSource={setPreviewSourceId}
+						addOpen={addSourceOpen}
+						onAddOpenChange={setAddSourceOpen}
 					/>
 				</aside>
 
@@ -178,6 +181,11 @@ export function NotebookPage() {
 								onOpenSources={() => {
 									setPreviewSourceId(null)
 									setTab("sources")
+								}}
+								onAddSource={() => {
+									setPreviewSourceId(null)
+									setTab("sources")
+									setAddSourceOpen(true)
 								}}
 								onCite={({
 									sourceId,
