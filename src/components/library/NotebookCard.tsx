@@ -67,14 +67,14 @@ export function NotebookCard({
 				)}
 				<div
 					className={cn(
-						"relative z-10 flex size-11 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary",
+						"pointer-events-none relative z-10 flex size-11 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary",
 						loading && "placeholder-shimmer",
 					)}
 					aria-hidden={loading}
 				>
 					<Notebook size={22} />
 				</div>
-				<div className="relative z-10 mt-4 min-w-0 flex-1 max-sm:mt-0 max-sm:pr-10">
+				<div className="pointer-events-none relative z-10 mt-4 min-w-0 flex-1 max-sm:mt-0 max-sm:pr-10">
 					<h2
 						className={cn(
 							"line-clamp-2 text-base font-semibold tracking-tight",
@@ -109,7 +109,7 @@ export function NotebookCard({
 							<Button
 								variant="ghost"
 								size="icon"
-								className="rounded-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+								className="pointer-events-auto rounded-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
 								aria-label={`Notebook menu for ${title}`}
 								disabled={loading}
 								onClick={(event) => event.preventDefault()}
