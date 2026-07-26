@@ -33,7 +33,7 @@ export function CitationPills({
 	const [openIndex, setOpenIndex] = useState<number | null>(null)
 
 	return (
-		<div className="flex flex-wrap gap-2">
+		<div className="flex flex-wrap gap-2 pt-1">
 			{uniqueIndexes.map((index) => {
 				const citation = citations[index - 1]
 

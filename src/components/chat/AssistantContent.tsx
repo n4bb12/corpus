@@ -60,7 +60,7 @@ export function AssistantContent({
 				const key = `${paragraph.text}:${paragraph.citationIndexes.join(",")}`
 
 				return (
-					<div key={key} className="space-y-2">
+					<div key={key} className="space-y-3">
 						{html ? (
 							<div
 								className="prose prose-sm dark:prose-invert max-w-none"

@@ -61,7 +61,7 @@ export function CitationPill({
 			<PopoverTrigger asChild>
 				<button
 					type="button"
-					className="relative inline-flex min-h-6 min-w-6 items-center justify-center rounded-full bg-primary/15 px-2 text-xs font-medium text-primary before:absolute before:-inset-2"
+					className="relative mt-1 inline-flex size-7 items-center justify-center rounded-full bg-primary/15 text-sm font-medium text-primary before:absolute before:-inset-2"
 					aria-label={`Citation ${index}: ${displayTitle}`}
 					onMouseEnter={openPopover}
 					onMouseLeave={scheduleClose}
