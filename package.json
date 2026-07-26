@@ -8,7 +8,7 @@
   "scripts": {
     "build": "bun --bun vite build",
     "check": "biome check",
-    "dev": "concurrently -n vite,convex -c cyan,magenta \"bun run dev:vite\" \"bun run dev:convex\"",
+    "dev": "concurrently -n vite,convex -c cyan,yellow \"bun run dev:vite\" \"bun run dev:convex\"",
     "dev:vite": "bun --bun vite dev --port 3000",
     "dev:convex": "bunx convex dev",
     "fix": "bun format && bun types",
