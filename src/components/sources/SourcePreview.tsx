@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react"
 import { Button } from "src/components/ui/button"
+import { formatTitle } from "src/lib/source_title"
 import { cn } from "src/lib/utils"
 
 export type SourcePreviewProps = {
@@ -9,16 +10,19 @@ export type SourcePreviewProps = {
 	onBack: () => void
 }
 
-function linesWithOffsets(content: string) {
-	return content
-		.split("\n")
-		.reduce<Array<{ line: string; start: number }>>((lines, line) => {
-			const previous = lines.at(-1)
-			const start = previous ? previous.start + previous.line.length + 1 : 0
+function paragraphsWithOffsets(content: string) {
+	const paragraphs: Array<{ text: string; start: number }> = []
+	let offset = 0
 
-			lines.push({ line, start })
-			return lines
-		}, [])
+	for (const line of content.split("\n")) {
+		if (line.trim()) {
+			paragraphs.push({ text: line, start: offset })
+		}
+
+		offset += line.length + 1
+	}
+
+	return paragraphs
 }
 
 export function SourcePreview({
@@ -28,7 +32,7 @@ export function SourcePreview({
 	onBack,
 }: SourcePreviewProps) {
 	const content = markdown ?? "Loading preview…"
-	const lines = linesWithOffsets(content)
+	const paragraphs = paragraphsWithOffsets(content)
 
 	return (
 		<div className="flex h-full flex-col">
@@ -42,12 +46,14 @@ export function SourcePreview({
 					<ArrowLeft size={16} className="mr-1" />
 					Back
 				</Button>
-				<div className="min-w-0 flex-1 truncate font-medium">{title}</div>
+				<div className="min-w-0 flex-1 truncate font-medium">
+					{formatTitle(title)}
+				</div>
 			</div>
 			<div className="flex-1 overflow-auto px-4 py-4">
-				<article className="prose prose-sm dark:prose-invert max-w-none">
-					{lines.map(({ line, start }) => {
-						const end = start + line.length
+				<article className="prose prose-sm dark:prose-invert max-w-none space-y-3">
+					{paragraphs.map(({ text, start }) => {
+						const end = start + text.length
 						const highlighted =
 							highlightOffsets &&
 							start <= highlightOffsets.start &&
@@ -56,9 +62,9 @@ export function SourcePreview({
 						return (
 							<p
 								key={start}
-								className={cn(highlighted && "citation-highlight")}
+								className={cn("my-0", highlighted && "citation-highlight")}
 							>
-								{line || "\u00A0"}
+								{text}
 							</p>
 						)
 					})}
