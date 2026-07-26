@@ -2693,3 +2693,52 @@ I'll wire exclusive open state into the shared `DropdownMenu` so opening one clo
 
 Dropdown menus now share one open id, so opening any menu closes the previous one — including notebook cards, source rows, and header menus.
 
+# Vercel PDF loading issue
+_Exported on 7/27/2026 at 00:37:25 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+On vercel, PDFs cannot be read: Failed to load native binding
+
+---
+
+**Cursor**
+
+I'll dig into how PDFs are loaded in this project and what's pulling in the native binding that's failing on Vercel.
+
+I'll build a tight repro that isolates the Vercel function package so we can hit the same native-binding failure locally.
+
+The Vercel function only has `@napi-rs/canvas` JS — no Linux native packages. Next I'll isolate that tree and reproduce the exact failure.
+
+Reproduced the exact error. Next I'll see whether `pdf-parse` still pulls in the full canvas package after the DOMMatrix polyfill.
+
+Feedback loop is red on the vision/`getScreenshot` path. Restoring the hidden natives, then I'll rank hypotheses and fix.
+
+Confirmed: text PDFs work without natives; the vision/`getScreenshot` path throws `Failed to load native binding`. Sending the PDF straight to OpenAI instead of rendering pages.
+
+**Cause:** Vercel ships `@napi-rs/canvas` JS but not the Linux native packages. Text-layer PDFs were fine; when text was thin/empty, OCR used `pdf-parse`’s `getScreenshot`, which needs those natives and threw `Failed to load native binding`.
+
+**Fix:** Vision fallback now sends the PDF bytes straight to OpenAI as `application/pdf` — no canvas/screenshots. Dropped unused `maxPdfOcrPages`.
+
+Redeploy and re-add the PDF (or retry ingest) to pick this up.
+
+---
+
+**User**
+
+Could we use pdfjs-dist instead?
+
+---
+
+**Cursor**
+
+Using `pdfjs-dist` directly for text extraction would let us drop `pdf-parse` and its canvas dependency. I'll check how it's wired today and what a direct path looks like.
+
+Yes — `pdf-parse` is only a wrapper, and we no longer need screenshots. Switching text extraction to `pdfjs-dist` and dropping the direct `pdf-parse` dependency.
+
+Done. Text extraction now uses `pdfjs-dist` directly (`getDocument` → `getTextContent`), and the direct `pdf-parse` dependency is gone. Scanned PDFs still go through the OpenAI PDF fallback.
+
+`pdf-parse` remains only as a transitive dep of `markitdown-ts` (unused for our `.pdf` path).
+

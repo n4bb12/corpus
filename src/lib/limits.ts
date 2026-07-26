@@ -7,7 +7,6 @@ export const LIMITS = {
 	maxUrlResponseBytes: 2 * 1024 * 1024,
 	maxPastedCharacters: 200_000,
 	maxExtractedCharacters: 500_000,
-	maxPdfOcrPages: 12,
 	maxPromptCharacters: 4_000,
 	maxTitleCharacters: 100,
 	libraryPageSize: 12,
