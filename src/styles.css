@@ -187,9 +187,10 @@
 }
 
 .citation-highlight {
+	padding: 0.35rem 0.65rem 0.35rem 0.85rem;
 	background: rgb(36 88 68 / 10%);
-	box-shadow: inset 3px 0 0 var(--pine);
-	border-radius: 0.25rem;
+	box-shadow: inset 5px 0 0 var(--pine);
+	border-radius: 0.35rem;
 }
 
 .dark .citation-highlight {
