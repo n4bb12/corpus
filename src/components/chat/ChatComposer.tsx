@@ -52,7 +52,7 @@ export function ChatComposer({
 						placeholder={
 							readySourceCount
 								? "Ask your sources"
-								: "Select ready sources to start chatting"
+								: "Select sources to start chatting"
 						}
 						disabled={!readySourceCount || sending}
 						className="min-h-24 max-h-60 resize-none border-0 bg-transparent p-1 text-base shadow-none focus-visible:ring-0 md:text-base"
@@ -67,7 +67,7 @@ export function ChatComposer({
 								variant="ghost"
 								size="sm"
 								className="rounded-full"
-								aria-label={`${readySourceCount} active sources`}
+								aria-label={`${readySourceCount} selected sources`}
 								onClick={onOpenSources}
 							>
 								<Layers size={16} strokeWidth={1.5} className="mr-1" />

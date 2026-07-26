@@ -28,7 +28,7 @@ async function uploadMarkdown(client: ConvexHttpClient, markdown: string) {
 	})
 
 	if (!response.ok) {
-		throw new Error("Could not store normalized source content.")
+		throw new Error("Couldn't save the processed source.")
 	}
 
 	const { storageId } = (await response.json()) as {
@@ -61,13 +61,13 @@ async function extractMarkdown(
 		})
 
 		if (!originalUrl) {
-			throw new Error("Original upload is missing.")
+			throw new Error("The uploaded file is missing. Try uploading again.")
 		}
 
 		const response = await fetch(originalUrl)
 
 		if (!response.ok) {
-			throw new Error("Original upload could not be downloaded.")
+			throw new Error("Couldn't download the uploaded file. Try again.")
 		}
 
 		const buffer = Buffer.from(await response.arrayBuffer())
@@ -86,16 +86,16 @@ async function extractMarkdown(
 			nextTitle = converted.title
 		}
 	} else {
-		throw new Error("Source content is missing.")
+		throw new Error("This source has no content to process.")
 	}
 
 	if (!markdown) {
-		throw new Error("No useful text could be extracted.")
+		throw new Error("Couldn't find readable text in this source.")
 	}
 
 	if (markdown.length > LIMITS.maxExtractedCharacters) {
 		throw new Error(
-			`Extracted text can be at most ${LIMITS.maxExtractedCharacters.toLocaleString()} characters.`,
+			`Source text can be at most ${LIMITS.maxExtractedCharacters.toLocaleString()} characters.`,
 		)
 	}
 
@@ -169,7 +169,7 @@ export async function processSourcePipeline(
 		}
 
 		if (!texts.length) {
-			throw new Error("No useful chunks could be created.")
+			throw new Error("Couldn't prepare this source for chat. Try again.")
 		}
 
 		const locators = deriveChunkLocators(texts, markdown)
@@ -205,7 +205,7 @@ export async function processSourcePipeline(
 		})
 	} catch (error) {
 		const message =
-			error instanceof Error ? error.message : "Source processing failed."
+			error instanceof Error ? error.message : "Couldn't process this source."
 
 		await client.mutation(api.ingestion.markFailed, {
 			sourceId,

@@ -30,12 +30,12 @@ export async function uploadSourceFiles({
 
 	for (const file of files) {
 		if (accepted.length >= remaining) {
-			rejected.push(`${file.name} exceeds the 20-source limit.`)
+			rejected.push(`${file.name} (notebook already has 20 sources)`)
 			continue
 		}
 
 		if (file.size > 20 * 1024 * 1024) {
-			rejected.push(`${file.name} exceeds the 20MB upload limit.`)
+			rejected.push(`${file.name} (over 20 MB)`)
 			continue
 		}
 
@@ -71,7 +71,7 @@ export async function uploadSourceFiles({
 			})
 
 			if (!response.ok) {
-				throw new Error(`Upload failed for ${file.name}.`)
+				throw new Error(`Couldn't upload ${file.name}.`)
 			}
 
 			const { storageId } = (await response.json()) as {
@@ -98,6 +98,6 @@ export async function uploadSourceFiles({
 	}
 
 	return rejected.length
-		? `Some files were skipped: ${rejected.slice(0, 3).join(" ")}`
+		? `Some files were skipped: ${rejected.slice(0, 3).join("; ")}`
 		: null
 }

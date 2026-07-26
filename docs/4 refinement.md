@@ -2210,3 +2210,74 @@ Treating uploads as already selected so the row and select-all match the final c
 
 Uploading files now appear already selected: checked checkbox on the row, and **1/1 selected** with the select-all box checked—same as after the upload finishes.
 
+# Impeccable clarification
+_Exported on 7/26/2026 at 23:47:44 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+/impeccable clarify
+
+---
+
+**Cursor**
+
+I'll follow the Impeccable skill and run its clarify flow.
+
+Running context setup and loading the clarify playbook.
+
+No target was specified — checking how Impeccable probes for scope, then auditing the Sources UI you've been working in.
+
+Clarify needs a surface. Checking recent Sources work and a few high-traffic copy paths so I can ask a sharp scoping question.
+
+**Clarify** rewrites unclear UX copy so users know what happened, what matters, and what to do next.
+
+You didn’t name a target. You’ve been in the Sources pane; a quick scan already shows a few copy smells there (processing labels like “Chunking” / “Embedding”, raw `errorCode` in the list, and a delete dialog that talks about chunks and embeddings).
+
+Which surface should I clarify?
+
+1. **Sources** — list, statuses, add/upload, preview, rename/delete
+2. **Chat** — empty states, composer, errors, citations, clear chat
+3. **Library + auth** — notebooks, search, sign-in
+4. **Whole app** — pass over all user-facing strings
+5. Something else (name the screen or flow)
+
+Also: for this product, treat users as **researchers who know “sources” and “citations,” but not ingest pipeline jargon** — unless you want a different audience assumption.
+
+---
+
+**User**
+
+4
+
+---
+
+**Cursor**
+
+Clarifying copy across the whole app for researchers who know sources and citations, not ingest jargon. Auditing every user-facing string next.
+
+Implementing copy rewrites: plain language for statuses and errors, clearer destructive dialogs, and consistent product terms.
+
+Whole-app clarify is done. Copy now speaks to researchers: **sources / citations / chat** stay; ingest jargon is gone.
+
+### What changed
+- **Sources statuses:** Waiting → Reading → Preparing → Indexing → Ready (was Queued / Extracting / Chunking / Embedding)
+- **Failures & processing errors:** plain recovery language instead of chunks/embeddings/normalized content
+- **Destructive dialogs:** name the object and consequence; cite chat retention without pipeline terms
+- **Chat:** selected (not “active”), clearer empty/composer/error/stop copy; quota and provider errors are human
+- **Auth:** “sign-in link” instead of “magic link”; clearer welcome line
+- **Library:** clearer empty/header/delete/rename helper text
+
+### Glossary kept consistent
+| Prefer | Avoid in UI |
+| --- | --- |
+| source, notebook, citation, chat, answer | ingestion, chunks, embeddings, normalized |
+| selected | active |
+| sign-in link | magic link |
+| finished processing / Ready | ready as unexplained jargon |
+
+Tests pass. Next useful pass: `/impeccable polish` for a final ship check.
+
+`PRODUCT.md` is on an older schema — run `/impeccable init` when you want that record brought up to date.
+

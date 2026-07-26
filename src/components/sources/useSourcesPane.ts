@@ -236,7 +236,7 @@ export function useSourcesPane({
 			setUploadNotice(notice)
 		} catch (error) {
 			setUploadNotice(
-				error instanceof Error ? error.message : "Could not upload file.",
+				error instanceof Error ? error.message : "Couldn't upload that file.",
 			)
 		}
 	}

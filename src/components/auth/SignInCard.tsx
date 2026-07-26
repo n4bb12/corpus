@@ -31,7 +31,7 @@ export function SignInCard() {
 		setPendingEmail(false)
 
 		if (result.error) {
-			setError(result.error.message || "Could not send magic link.")
+			setError(result.error.message || "Couldn't send a sign-in link.")
 			return
 		}
 
@@ -58,7 +58,7 @@ export function SignInCard() {
 					Welcome back
 				</h2>
 				<p className="text-sm leading-relaxed text-muted-foreground md:text-base">
-					Continue your research workspace.
+					Sign in to open your notebooks.
 				</p>
 			</div>
 

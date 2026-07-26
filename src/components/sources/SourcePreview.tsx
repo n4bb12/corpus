@@ -84,7 +84,7 @@ function SourcePreviewSkeleton() {
 				/>
 			))}
 			<span className="sr-only" role="status">
-				Loading preview
+				Loading source
 			</span>
 		</div>
 	)
@@ -193,7 +193,7 @@ export function SourcePreview({
 					onClick={onBack}
 				>
 					<ArrowLeft size={16} className="mr-1" />
-					Back
+					Back to sources
 				</Button>
 				<div className="min-w-0 flex-1 truncate font-medium">
 					{formatTitle(title)}

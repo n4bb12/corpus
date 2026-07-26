@@ -28,7 +28,8 @@ export function LibraryPage() {
 								Your notebooks
 							</h1>
 							<p className="max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
-								Open a notebook to gather sources and ask grounded questions.
+								Open a notebook to gather sources and ask questions grounded in
+								them.
 							</p>
 						</div>
 						<IslandCta

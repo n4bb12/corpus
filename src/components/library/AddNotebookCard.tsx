@@ -39,7 +39,7 @@ export function AddNotebookCard({
 						New notebook
 					</span>
 					<span className="mt-1.5 block text-sm text-muted-foreground">
-						Start from sources
+						Gather sources and ask questions
 					</span>
 				</span>
 			</Bezel>

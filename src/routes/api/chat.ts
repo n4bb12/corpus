@@ -31,7 +31,10 @@ export const Route = createFileRoute("/api/chat")({
 				const token = await getToken()
 
 				if (!token) {
-					return Response.json({ error: "Unauthorized" }, { status: 401 })
+					return Response.json(
+						{ error: "You need to sign in to continue." },
+						{ status: 401 },
+					)
 				}
 
 				const body = (await request.json()) as {
@@ -144,7 +147,7 @@ export const Route = createFileRoute("/api/chat")({
 								})
 							} catch {
 								settled = false
-								throw new Error("Could not save the chat response.")
+								throw new Error("Couldn't save the answer.")
 							}
 						}
 
@@ -294,7 +297,7 @@ Never cite chunk IDs that were not supplied.`
 							}
 
 							if (!fullText.trim()) {
-								throw new Error("The model returned an empty answer.")
+								throw new Error("No answer came back. Try again.")
 							}
 
 							let parsed = parseCitationMarkers(fullText)
@@ -321,11 +324,13 @@ Never cite chunk IDs that were not supplied.`
 								await finalize({
 									content: parsed.text || fullText,
 									status: "failed",
-									errorMessage: "Citation validation failed.",
+									errorMessage:
+										"The answer couldn't be verified against your sources. Try again.",
 								})
 								streamController.enqueue(
 									encodeSse("error", {
-										message: "Citation validation failed.",
+										message:
+											"The answer couldn't be verified against your sources. Try again.",
 									}),
 								)
 								streamController.close()

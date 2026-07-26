@@ -24,7 +24,7 @@ export function ChatSourceBoundary({
 							transition={fadeTransition}
 							className="col-start-1 row-start-1"
 						>
-							Sources changed · {activeSourceCount} active
+							Sources changed · {activeSourceCount} selected
 						</motion.span>
 					</AnimatePresence>
 				</span>

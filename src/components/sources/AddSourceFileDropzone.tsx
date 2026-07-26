@@ -29,7 +29,7 @@ export function AddSourceFileDropzone({
 				}}
 			>
 				<Upload size={22} />
-				Drop files here or browse
+				Drop files here or choose files
 			</button>
 			<input
 				ref={fileRef}

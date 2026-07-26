@@ -62,7 +62,7 @@ export function useAddSourceDialog({
 		} catch (err) {
 			setUrl(submittedUrl)
 			setMode("main")
-			setError(err instanceof Error ? err.message : "Could not add URL.")
+			setError(err instanceof Error ? err.message : "Couldn't add this URL.")
 			onOpenChange(true)
 		} finally {
 			setPending(false)
@@ -86,7 +86,7 @@ export function useAddSourceDialog({
 		} catch (err) {
 			setText(submittedText)
 			setMode("text")
-			setError(err instanceof Error ? err.message : "Could not add text.")
+			setError(err instanceof Error ? err.message : "Couldn't add this text.")
 			onOpenChange(true)
 		} finally {
 			setPending(false)

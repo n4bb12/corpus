@@ -39,9 +39,9 @@ export function SourceDeleteDialog({
 				<DialogHeader>
 					<DialogTitle>Delete source</DialogTitle>
 					<DialogDescription>
-						This removes the upload, normalized content, chunks, and embeddings.
-						Citation excerpts already saved in chat remain until chat or
-						notebook deletion.
+						This permanently removes the source from this notebook. Citations
+						already shown in chat stay until you clear the chat or delete the
+						notebook.
 					</DialogDescription>
 				</DialogHeader>
 				<DialogFooter>
@@ -60,7 +60,7 @@ export function SourceDeleteDialog({
 						onClick={() => void confirm()}
 					>
 						<PendingLabel pending={pending} pendingLabel="Deleting source">
-							Delete
+							Delete source
 						</PendingLabel>
 					</Button>
 				</DialogFooter>

@@ -39,8 +39,8 @@ export function ClearChatDialog({
 				<DialogHeader>
 					<DialogTitle>Clear chat</DialogTitle>
 					<DialogDescription>
-						This permanently removes all messages and citation snapshots for
-						this notebook. Sources stay as they are.
+						This permanently deletes every message in this notebook. Your
+						sources are not affected.
 					</DialogDescription>
 				</DialogHeader>
 				<DialogFooter>

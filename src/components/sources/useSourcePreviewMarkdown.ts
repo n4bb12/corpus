@@ -30,7 +30,7 @@ export function useSourcePreviewMarkdown(previewSourceId?: string | null) {
 			})
 			.catch(() => {
 				if (!cancelled) {
-					setPreviewMarkdown("Could not load source preview.")
+					setPreviewMarkdown("Couldn't load this source.")
 				}
 			})
 

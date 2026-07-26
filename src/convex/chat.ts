@@ -110,7 +110,7 @@ export const prepareGeneration = mutation({
 		)
 
 		if (active) {
-			throw new Error("Wait for the current response to finish.")
+			throw new Error("Wait for the current answer to finish.")
 		}
 
 		const sources = await ctx.db
@@ -128,7 +128,9 @@ export const prepareGeneration = mutation({
 		)
 
 		if (!selectedReady.length) {
-			throw new Error("Select at least one ready source before chatting.")
+			throw new Error(
+				"Select at least one source that has finished processing.",
+			)
 		}
 
 		const now = Date.now()
@@ -140,7 +142,7 @@ export const prepareGeneration = mutation({
 		if (args.retryAssistantId) {
 			if (!canRetryLatestAssistant(entries)) {
 				throw new Error(
-					"Only the latest failed or canceled response can be retried.",
+					"You can only retry the latest failed or stopped answer.",
 				)
 			}
 
@@ -151,7 +153,7 @@ export const prepareGeneration = mutation({
 				assistant.notebookId !== notebook._id ||
 				assistant.role !== "assistant"
 			) {
-				throw new Error("Retry target not found.")
+				throw new Error("That answer can't be retried anymore.")
 			}
 
 			exchangeId = assistant.exchangeId ?? exchangeId
@@ -163,7 +165,7 @@ export const prepareGeneration = mutation({
 			)
 
 			if (!user) {
-				throw new Error("Original prompt not found for retry.")
+				throw new Error("That answer can't be retried anymore.")
 			}
 
 			userMessageId = user._id
@@ -461,7 +463,7 @@ export const failActiveGeneration = mutation({
 		await ctx.db.patch(active._id, {
 			status: "failed",
 			errorMessage:
-				args.errorMessage ?? "The response was interrupted. You can try again.",
+				args.errorMessage ?? "The answer stopped before it finished. Try again.",
 			progressLabel: undefined,
 		})
 

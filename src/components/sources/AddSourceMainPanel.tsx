@@ -85,7 +85,7 @@ export function AddSourceMainPanel({
 				className="w-full shrink-0 rounded-sm"
 				onClick={onPasteText}
 			>
-				Add pasted text
+				Paste text
 			</Button>
 			{error ? (
 				<motion.p

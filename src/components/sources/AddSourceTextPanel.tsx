@@ -38,7 +38,7 @@ export function AddSourceTextPanel({
 				value={text}
 				onChange={(event) => onTextChange(event.target.value)}
 				className="min-h-0 flex-1 rounded-xl"
-				placeholder="Paste source text"
+				placeholder="Paste the text you want to add as a source"
 			/>
 			{error ? (
 				<p className="shrink-0 text-sm text-destructive">{error}</p>
@@ -52,8 +52,8 @@ export function AddSourceTextPanel({
 					disabled={pending || !text.trim()}
 					onClick={() => void onSubmit()}
 				>
-					<PendingLabel pending={pending} pendingLabel="Adding text">
-						Add text
+					<PendingLabel pending={pending} pendingLabel="Adding source">
+						Add source
 					</PendingLabel>
 				</Button>
 			</div>

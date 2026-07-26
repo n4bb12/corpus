@@ -16,7 +16,7 @@ export async function assertSafeUrl(raw: string) {
 
 	for (const record of records) {
 		if (isBlockedResolvedAddress(record.address)) {
-			throw new Error("That host resolves to a blocked address.")
+			throw new Error("That address isn't allowed.")
 		}
 	}
 
@@ -46,7 +46,7 @@ export async function fetchPublicHtml(url: URL) {
 				const location = response.headers.get("location")
 
 				if (!location) {
-					throw new Error("The URL redirected without a location.")
+					throw new Error("The URL redirected in a way we couldn't follow.")
 				}
 
 				current = new URL(location, current)
@@ -57,7 +57,7 @@ export async function fetchPublicHtml(url: URL) {
 		}
 
 		if (!response?.ok) {
-			throw new Error("The URL could not be fetched.")
+			throw new Error("Couldn't fetch that URL.")
 		}
 
 		const contentType = response.headers.get("content-type") ?? ""
@@ -66,13 +66,13 @@ export async function fetchPublicHtml(url: URL) {
 			!contentType.includes("text/html") &&
 			!contentType.includes("application/xhtml")
 		) {
-			throw new Error("Only HTML pages can be imported from a URL.")
+			throw new Error("Only web pages (HTML) can be added from a URL.")
 		}
 
 		const reader = response.body?.getReader()
 
 		if (!reader) {
-			throw new Error("The URL returned an empty body.")
+			throw new Error("That URL returned no content.")
 		}
 
 		const chunks: Uint8Array[] = []
@@ -93,7 +93,7 @@ export async function fetchPublicHtml(url: URL) {
 
 			if (total > LIMITS.maxUrlResponseBytes) {
 				throw new Error(
-					`Fetched pages can be at most ${LIMITS.maxUrlResponseBytes / (1024 * 1024)}MB.`,
+					`Pages can be at most ${LIMITS.maxUrlResponseBytes / (1024 * 1024)} MB.`,
 				)
 			}
 

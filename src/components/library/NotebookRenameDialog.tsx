@@ -31,7 +31,7 @@ export function NotebookRenameDialog({
 				<DialogHeader>
 					<DialogTitle>Rename notebook</DialogTitle>
 					<DialogDescription>
-						Titles can be 1–100 characters. Duplicates are allowed.
+						Use 1–100 characters. Another notebook can share the same title.
 					</DialogDescription>
 				</DialogHeader>
 				<Input

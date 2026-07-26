@@ -56,8 +56,8 @@ export function SignInEmailForm({
 				className="w-full justify-between"
 				disabled={pendingEmail || pendingGoogle}
 			>
-				<PendingLabel pending={pendingEmail} pendingLabel="Sending magic link">
-					Email me a magic link
+				<PendingLabel pending={pendingEmail} pendingLabel="Sending sign-in link">
+					Email me a sign-in link
 				</PendingLabel>
 			</IslandCta>
 		</form>

@@ -27,8 +27,8 @@ export function NotebookDeleteDialog({
 				<DialogHeader>
 					<DialogTitle>Delete notebook</DialogTitle>
 					<DialogDescription>
-						Permanently delete “{label}”? Messages, citations, sources, and
-						files will be removed. This cannot be undone.
+						Permanently delete “{label}”? All sources, files, messages, and
+						citations in it will be removed. This cannot be undone.
 					</DialogDescription>
 				</DialogHeader>
 				<DialogFooter>
@@ -44,7 +44,7 @@ export function NotebookDeleteDialog({
 						className="rounded-sm"
 						onClick={() => void onConfirm()}
 					>
-						Delete
+						Delete notebook
 					</Button>
 				</DialogFooter>
 			</DialogContent>

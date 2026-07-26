@@ -12,19 +12,24 @@ export function NotebookMobileTabs({
 	return (
 		<div className="sticky top-16 z-20 border-b border-border/40 bg-background/80 px-4 py-2 backdrop-blur-xl md:hidden">
 			<div className="grid grid-cols-2 rounded-xl bg-muted/70 p-1 ring-1 ring-foreground/5">
-				{(["sources", "chat"] as const).map((value) => (
+				{(
+					[
+						{ value: "sources", label: "Sources" },
+						{ value: "chat", label: "Chat" },
+					] as const
+				).map(({ value, label }) => (
 					<button
 						key={value}
 						type="button"
 						className={cn(
-							"rounded-lg px-3 py-2 text-sm font-medium capitalize transition-all duration-150 ease-[cubic-bezier(0.32,0.72,0,1)]",
+							"rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 ease-[cubic-bezier(0.32,0.72,0,1)]",
 							tab === value
 								? "bg-card text-foreground shadow-(--shadow-pine)"
 								: "text-muted-foreground hover:text-foreground",
 						)}
 						onClick={() => onTabChange(value)}
 					>
-						{value}
+						{label}
 					</button>
 				))}
 			</div>

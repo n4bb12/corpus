@@ -9,14 +9,14 @@ export function formatChatError(error: unknown) {
 						"message" in error &&
 						typeof error.message === "string"
 					? error.message
-					: "Generation failed."
+					: "Couldn't generate an answer."
 
 	if (/insufficient_quota/i.test(raw)) {
-		return "The AI provider is out of quota. Try again later."
+		return "Chat is temporarily unavailable. Try again later."
 	}
 
 	if (/rate[_ ]?limit/i.test(raw)) {
-		return "The AI provider is rate-limiting requests. Try again in a moment."
+		return "Too many requests right now. Try again in a moment."
 	}
 
 	if (/context[_ ]?length|maximum context/i.test(raw)) {
@@ -24,11 +24,11 @@ export function formatChatError(error: unknown) {
 	}
 
 	if (!raw.trim()) {
-		return "Generation failed. Please try again."
+		return "Couldn't generate an answer. Try again."
 	}
 
 	if (raw.length > 220) {
-		return "Generation failed. Please try again."
+		return "Couldn't generate an answer. Try again."
 	}
 
 	return raw

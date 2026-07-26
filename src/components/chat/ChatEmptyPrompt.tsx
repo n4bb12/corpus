@@ -22,7 +22,7 @@ export function ChatEmptyPrompt({
 			<div className="space-y-6 pt-10">
 				<div className="space-y-3">
 					<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-medium tracking-[0.2em] text-primary uppercase">
-						Grounded chat
+						Grounded answers
 					</span>
 					<h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
 						Ask your sources
@@ -57,7 +57,7 @@ export function ChatEmptyPrompt({
 				Add and select sources
 			</h2>
 			<p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-				Chat needs at least one ready, selected source before it can answer.
+				Chat needs at least one selected source that has finished processing.
 			</p>
 			<IslandCta onClick={onAddSource}>Add first source</IslandCta>
 		</div>

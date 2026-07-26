@@ -23,8 +23,8 @@ export function LibraryEmptyState({
 						Create your first notebook
 					</h2>
 					<p className="max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
-						Add sources, ask grounded questions, and keep citations next to
-						every answer.
+						Add sources, ask questions grounded in them, and open citations next
+						to every answer.
 					</p>
 				</div>
 				<IslandCta disabled={creating} onClick={onCreate}>

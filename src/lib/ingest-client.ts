@@ -51,13 +51,13 @@ export async function startSourceIngest(input: IngestStartInput) {
 	} | null
 
 	if (!response.ok) {
-		throw new Error(payload?.error || "Could not start source ingestion.")
+		throw new Error(payload?.error || "Couldn't add this source.")
 	}
 
 	const sourceId = input.action === "retry" ? input.sourceId : payload?.sourceId
 
 	if (!sourceId) {
-		throw new Error("Source ingestion did not return an id.")
+		throw new Error("Couldn't add this source.")
 	}
 
 	return sourceId as Id<"sources">

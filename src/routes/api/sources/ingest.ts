@@ -93,7 +93,7 @@ export const Route = createFileRoute("/api/sources/ingest")({
 							error:
 								error instanceof Error
 									? error.message
-									: "Could not start source ingestion.",
+									: "Couldn't add this source.",
 						},
 						{ status: 400 },
 					)

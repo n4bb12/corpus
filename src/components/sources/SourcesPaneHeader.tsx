@@ -20,6 +20,7 @@ export function SourcesPaneHeader({
 					Sources
 				</h2>
 				<p className="rounded-full bg-muted/70 px-3 py-1 text-xs tabular-nums text-muted-foreground">
+					<span className="sr-only">Source count: </span>
 					{sourceCount}
 				</p>
 			</div>

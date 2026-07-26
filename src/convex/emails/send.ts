@@ -66,7 +66,7 @@ export async function sendMagicLinkEmail(
 		const payload = (await response.json().catch(() => null)) as {
 			message?: string
 		} | null
-		const message = payload?.message || "Could not send magic link email."
+		const message = payload?.message || "Couldn't send the sign-in email."
 
 		if (response.status === 401) {
 			throw new Error(

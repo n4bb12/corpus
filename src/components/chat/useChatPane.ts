@@ -113,7 +113,7 @@ export function useChatPane(notebookId: Id<"notebooks">) {
 				const payload = (await response.json().catch(() => null)) as {
 					error?: string
 				} | null
-				throw new Error(payload?.error || "Chat request failed.")
+				throw new Error(payload?.error || "Couldn't start the answer. Try again.")
 			}
 
 			setPrompt("")
@@ -129,7 +129,7 @@ export function useChatPane(notebookId: Id<"notebooks">) {
 
 			if (!result.done) {
 				await markFailed(
-					"The response was interrupted before it finished. You can try again.",
+					"The answer stopped before it finished. Try again.",
 				)
 			}
 		} catch (err) {

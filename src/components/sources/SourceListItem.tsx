@@ -19,12 +19,12 @@ import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { formatTitle } from "src/lib/source_title"
 
 const STATUS_LABEL: Record<string, string> = {
-	pending: "Queued",
-	extracting: "Extracting",
-	chunking: "Chunking",
-	embedding: "Embedding",
+	pending: "Waiting",
+	extracting: "Reading",
+	chunking: "Preparing",
+	embedding: "Indexing",
 	ready: "Ready",
-	failed: "Failed",
+	failed: "Couldn't process",
 }
 
 export type SourceListItemProps = {
@@ -70,7 +70,7 @@ export const SourceListItem = memo(function SourceListItem({
 				<span className="line-clamp-2 text-sm font-medium">{label}</span>
 				<span className="mt-0.5 block text-xs text-muted-foreground">
 					{source.processingState === "failed"
-						? source.errorCode || "Failed"
+						? source.errorCode || STATUS_LABEL.failed
 						: STATUS_LABEL[source.processingState]}
 				</span>
 			</span>

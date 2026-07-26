@@ -86,8 +86,8 @@ export function describeRejectedFile(filename: string) {
 			extension as (typeof REJECTED_EXTENSIONS)[number],
 		)
 	) {
-		return `${filename} uses an unsupported type.`
+		return `${filename} (unsupported file type)`
 	}
 
-	return `${filename} is not an accepted source format.`
+	return `${filename} (not a supported source format)`
 }

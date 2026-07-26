@@ -68,15 +68,15 @@ export function ChatAssistantMessage({
 						<div className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-3">
 							<p className="text-sm text-destructive">
 								{entry.status === "canceled"
-									? "Response canceled."
-									: entry.errorMessage || "Generation failed."}
+									? "You stopped this answer."
+									: entry.errorMessage || "Couldn't generate an answer."}
 							</p>
 						</div>
 					) : (
 						<p className="text-xs text-muted-foreground">
 							{entry.status === "canceled"
-								? "Canceled"
-								: entry.errorMessage || "Failed"}
+								? "Stopped"
+								: entry.errorMessage || "Couldn't finish"}
 						</p>
 					)}
 					{latestFailed ? (

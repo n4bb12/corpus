@@ -539,12 +539,12 @@ describe("chat errors", () => {
 		expect(
 			formatChatError("openai insufficient_quota billing"),
 		).toMatchInlineSnapshot(
-			`"The AI provider is out of quota. Try again later."`,
+			`"Chat is temporarily unavailable. Try again later."`,
 		)
 		expect(
 			formatChatError(new Error("rate_limit exceeded")),
 		).toMatchInlineSnapshot(
-			`"The AI provider is rate-limiting requests. Try again in a moment."`,
+			`"Too many requests right now. Try again in a moment."`,
 		)
 		expect(formatChatError("boom")).toMatchInlineSnapshot(`"boom"`)
 	})

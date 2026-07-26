@@ -206,7 +206,7 @@ export const addUrl = mutation({
 		const url = args.url.trim()
 
 		if (!url) {
-			throw new Error("Enter a URL to add.")
+			throw new Error("Enter a URL to add as a source.")
 		}
 
 		await assertIngestionQuota(ctx, user._id)
@@ -316,7 +316,7 @@ export const setSelected = mutation({
 		const { source, notebook } = await requireSourceOwner(ctx, args.sourceId)
 
 		if (source.processingState === "failed") {
-			throw new Error("Failed sources cannot be selected.")
+			throw new Error("Failed sources can't be used in chat. Retry them first.")
 		}
 
 		const previousIds = await getReadySelectedIds(ctx, notebook._id)

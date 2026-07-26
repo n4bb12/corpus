@@ -117,7 +117,7 @@ export async function consumeChatSse(
 	if (!reader) {
 		return {
 			done: false,
-			error: "Chat response was empty.",
+			error: "No answer came back. Try again.",
 			text: "",
 		}
 	}
@@ -150,7 +150,7 @@ export async function consumeChatSse(
 						"message" in data &&
 						typeof data.message === "string"
 							? data.message
-							: "Generation failed."
+							: "Couldn't generate an answer."
 					error = message
 					return
 				}

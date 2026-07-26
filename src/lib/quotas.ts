@@ -6,7 +6,8 @@ export function quotaResetMessage(
 	kind: "ingestion" | "generation",
 	dateKey: string,
 ) {
-	const label = kind === "ingestion" ? "source ingestions" : "chat generations"
+	const label =
+		kind === "ingestion" ? "source additions" : "chat answers"
 	return `Daily ${label} limit reached. It resets after ${dateKey} UTC.`
 }
 
