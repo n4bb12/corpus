@@ -14,8 +14,10 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu"
+import { Label } from "src/components/ui/label"
 import type { Doc } from "src/convex/_generated/dataModel"
 import { layoutTransition } from "src/lib/motion"
+import { formatTitle } from "src/lib/source_title"
 
 const STATUS_LABEL: Record<string, string> = {
 	pending: "Queued",
@@ -47,6 +49,7 @@ export function SourceListItem({
 		source.kind === "url" ? LinkIcon : source.kind === "file" ? FileText : Type
 	const busy =
 		source.processingState !== "ready" && source.processingState !== "failed"
+	const checkboxId = `source-select-${source._id}`
 
 	return (
 		<motion.div
@@ -68,7 +71,7 @@ export function SourceListItem({
 				</span>
 				<span className="min-w-0">
 					<span className="line-clamp-2 text-sm font-medium">
-						{source.title}
+						{formatTitle(source.title)}
 					</span>
 					<span className="mt-0.5 block text-xs text-muted-foreground">
 						{source.processingState === "failed"
@@ -99,12 +102,18 @@ export function SourceListItem({
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
-				<Checkbox
-					checked={source.selected}
-					disabled={source.processingState === "failed"}
-					onCheckedChange={(checked) => onSelect(checked === true)}
-					aria-label={`Select ${source.title}`}
-				/>
+				<Label
+					htmlFor={checkboxId}
+					className="flex cursor-pointer items-center gap-2"
+				>
+					<span className="sr-only">Select {source.title}</span>
+					<Checkbox
+						id={checkboxId}
+						checked={source.selected}
+						disabled={source.processingState === "failed"}
+						onCheckedChange={(checked) => onSelect(checked === true)}
+					/>
+				</Label>
 			</div>
 		</motion.div>
 	)
