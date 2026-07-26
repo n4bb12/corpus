@@ -14,7 +14,6 @@ import {
 	useLastSignInMethod,
 } from "src/lib/last-sign-in-method"
 import { layoutTransition } from "src/lib/motion"
-import { cn } from "src/lib/utils"
 
 export function SignInPage() {
 	const lastMethod = useLastSignInMethod()
@@ -107,14 +106,7 @@ export function SignInPage() {
 							<Separator className="flex-1" />
 						</div>
 
-						<form
-							className={cn(
-								"relative space-y-4 rounded-sm p-1",
-								lastMethod === "email" &&
-									"ring-2 ring-primary ring-offset-2 ring-offset-background",
-							)}
-							onSubmit={onSubmit}
-						>
+						<form className="relative space-y-4" onSubmit={onSubmit}>
 							{lastMethod === "email" ? (
 								<span className="absolute -top-1.5 -right-1 z-10 rounded-sm bg-foreground px-1.5 py-px text-[10px] font-medium tracking-wide text-background uppercase">
 									Last used

@@ -57,8 +57,6 @@ export function GoogleSignInButton({
 				disabled={pending}
 				className={cn(
 					"w-full gap-3 rounded-md border-[#dadce0] bg-white text-[#3c4043] shadow-sm hover:bg-[#f8f9fa] hover:text-[#3c4043] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]",
-					highlighted &&
-						"ring-2 ring-primary ring-offset-2 ring-offset-background",
 					className,
 				)}
 				onClick={onClick}
