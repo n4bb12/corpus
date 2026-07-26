@@ -17,9 +17,11 @@ import {
 
 export function ThemeMenu() {
 	const preference = useThemePreference()
-	const [resolved, setResolved] = useState(() => resolveTheme(preference))
+	const [mounted, setMounted] = useState(false)
+	const [resolved, setResolved] = useState<"light" | "dark">("light")
 
 	useEffect(() => {
+		setMounted(true)
 		applyTheme(preference)
 		setResolved(resolveTheme(preference))
 
@@ -30,15 +32,24 @@ export function ThemeMenu() {
 		}
 
 		media.addEventListener("change", onChange)
-
-		return subscribeTheme((value) => {
+		const unsubscribe = subscribeTheme((value) => {
 			applyTheme(value)
 			setResolved(resolveTheme(value))
 		})
+
+		return () => {
+			media.removeEventListener("change", onChange)
+			unsubscribe()
+		}
 	}, [preference])
 
-	const Icon =
-		resolved === "dark" ? Moon : preference === "system" ? Monitor : Sun
+	const Icon = !mounted
+		? Monitor
+		: resolved === "dark"
+			? Moon
+			: preference === "system"
+				? Monitor
+				: Sun
 
 	return (
 		<DropdownMenu>
