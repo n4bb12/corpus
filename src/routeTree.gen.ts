@@ -14,6 +14,7 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as NotebooksNotebookIdRouteImport } from './routes/notebooks/$notebookId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiSourcesIngestRouteImport } from './routes/api/sources/ingest'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSourcesIngestRoute = ApiSourcesIngestRouteImport.update({
+  id: '/api/sources/ingest',
+  path: '/api/sources/ingest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/notebooks/$notebookId': typeof NotebooksNotebookIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/sources/ingest': typeof ApiSourcesIngestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/notebooks/$notebookId': typeof NotebooksNotebookIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/sources/ingest': typeof ApiSourcesIngestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,25 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/notebooks/$notebookId': typeof NotebooksNotebookIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/sources/ingest': typeof ApiSourcesIngestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/sign-in' | '/api/chat' | '/notebooks/$notebookId' | '/api/auth/$'
+    | '/'
+    | '/sign-in'
+    | '/api/chat'
+    | '/notebooks/$notebookId'
+    | '/api/auth/$'
+    | '/api/sources/ingest'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/api/chat' | '/notebooks/$notebookId' | '/api/auth/$'
+  to:
+    | '/'
+    | '/sign-in'
+    | '/api/chat'
+    | '/notebooks/$notebookId'
+    | '/api/auth/$'
+    | '/api/sources/ingest'
   id:
     | '__root__'
     | '/'
@@ -76,6 +96,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/notebooks/$notebookId'
     | '/api/auth/$'
+    | '/api/sources/ingest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -84,6 +105,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   NotebooksNotebookIdRoute: typeof NotebooksNotebookIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiSourcesIngestRoute: typeof ApiSourcesIngestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -123,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/sources/ingest': {
+      id: '/api/sources/ingest'
+      path: '/api/sources/ingest'
+      fullPath: '/api/sources/ingest'
+      preLoaderRoute: typeof ApiSourcesIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -132,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   NotebooksNotebookIdRoute: NotebooksNotebookIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiSourcesIngestRoute: ApiSourcesIngestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

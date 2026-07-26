@@ -14,6 +14,7 @@ import { Input } from "src/components/ui/input"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { describeRejectedFile, isAcceptedUpload } from "src/lib/file_types"
+import { startSourceIngest } from "src/lib/ingest-client"
 
 export type SourcesPaneProps = {
 	notebookId: Id<"notebooks">
@@ -34,8 +35,6 @@ export function SourcesPane({
 	const setSelectedMany = useMutation(api.sources.setSelectedMany)
 	const renameSource = useMutation(api.sources.rename)
 	const removeSource = useMutation(api.sources.remove)
-	const retrySource = useMutation(api.sources.retry)
-	const addFile = useMutation(api.sources.addFile)
 	const generateUploadUrl = useMutation(api.sources.generateUploadUrl)
 	const [query, setQuery] = useState("")
 	const [addOpen, setAddOpen] = useState(false)
@@ -135,7 +134,9 @@ export function SourcesPane({
 			const { storageId } = (await response.json()) as {
 				storageId: Id<"_storage">
 			}
-			await addFile({
+			await startSourceIngest({
+				action: "create",
+				kind: "file",
 				notebookId,
 				storageId,
 				filename: file.name,
@@ -254,7 +255,12 @@ export function SourcesPane({
 								setRenameId(source._id)
 								setRenameDraft(source.title)
 							}}
-							onRetry={() => void retrySource({ sourceId: source._id })}
+							onRetry={() =>
+								void startSourceIngest({
+									action: "retry",
+									sourceId: source._id,
+								})
+							}
 							onDelete={() => setDeleteId(source._id)}
 							onSelect={(selected) =>
 								void setSelected({ sourceId: source._id, selected })

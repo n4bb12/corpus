@@ -1,304 +1,135 @@
-"use node"
-
-import dns from "node:dns/promises"
-import { voyage } from "@ai-sdk/voyage"
-import { embed, embedMany } from "ai"
 import { v } from "convex/values"
-import { MarkItDown } from "markitdown-ts"
-import semantic from "semantic-chunker"
-import { deriveChunkLocators } from "src/lib/chunk_locators"
-import { LIMITS, MODELS } from "src/lib/limits"
-import { titleFromUrl } from "src/lib/source_title"
-import {
-	isBlockedResolvedAddress,
-	validatePublicHttpUrl,
-} from "src/lib/url_safety"
 import { internal } from "./_generated/api"
-import { internalAction } from "./_generated/server"
+import { mutation } from "./_generated/server"
+import { requireSourceOwner } from "./lib/ownership"
 
-const markitdown = new MarkItDown()
+const processingState = v.union(
+	v.literal("pending"),
+	v.literal("extracting"),
+	v.literal("chunking"),
+	v.literal("embedding"),
+	v.literal("ready"),
+	v.literal("failed"),
+)
 
-async function assertSafeUrl(raw: string) {
-	const validated = validatePublicHttpUrl(raw)
+export const setProcessingState = mutation({
+	args: {
+		sourceId: v.id("sources"),
+		processingState,
+	},
+	handler: async (ctx, args) => {
+		await requireSourceOwner(ctx, args.sourceId)
+		await ctx.db.patch(args.sourceId, {
+			processingState: args.processingState,
+			updatedAt: Date.now(),
+		})
+	},
+})
 
-	if (!validated.ok) {
-		throw new Error(validated.error)
-	}
+export const setExtracted = mutation({
+	args: {
+		sourceId: v.id("sources"),
+		title: v.string(),
+		normalizedStorageId: v.id("_storage"),
+		characterCount: v.number(),
+	},
+	handler: async (ctx, args) => {
+		await requireSourceOwner(ctx, args.sourceId)
+		await ctx.db.patch(args.sourceId, {
+			title: args.title,
+			normalizedStorageId: args.normalizedStorageId,
+			characterCount: args.characterCount,
+			updatedAt: Date.now(),
+		})
+	},
+})
 
-	const records = await dns.lookup(validated.url.hostname, { all: true })
+export const replaceChunks = mutation({
+	args: {
+		sourceId: v.id("sources"),
+		chunks: v.array(
+			v.object({
+				text: v.string(),
+				ordinal: v.number(),
+				startOffset: v.number(),
+				endOffset: v.number(),
+				embedding: v.array(v.float64()),
+			}),
+		),
+	},
+	handler: async (ctx, args) => {
+		const { source } = await requireSourceOwner(ctx, args.sourceId)
+		const existing = await ctx.db
+			.query("chunks")
+			.withIndex("by_source_ordinal", (q) => q.eq("sourceId", args.sourceId))
+			.collect()
 
-	for (const record of records) {
-		if (isBlockedResolvedAddress(record.address)) {
-			throw new Error("That host resolves to a blocked address.")
+		for (const chunk of existing) {
+			await ctx.db.delete(chunk._id)
 		}
-	}
 
-	return validated.url
-}
-
-async function fetchPublicHtml(url: URL) {
-	const controller = new AbortController()
-	const timeout = setTimeout(() => controller.abort(), 15_000)
-
-	try {
-		let current = url
-		let response: Response | null = null
-
-		for (let redirect = 0; redirect < 4; redirect += 1) {
-			await assertSafeUrl(current.toString())
-			response = await fetch(current, {
-				redirect: "manual",
-				signal: controller.signal,
-				headers: {
-					"User-Agent": "CorpusBot/1.0",
-					Accept: "text/html,application/xhtml+xml",
-				},
+		for (const chunk of args.chunks) {
+			await ctx.db.insert("chunks", {
+				ownerId: source.ownerId,
+				notebookId: source.notebookId,
+				sourceId: source._id,
+				text: chunk.text,
+				searchableText: chunk.text,
+				ordinal: chunk.ordinal,
+				startOffset: chunk.startOffset,
+				endOffset: chunk.endOffset,
+				embedding: chunk.embedding,
 			})
-
-			if (response.status >= 300 && response.status < 400) {
-				const location = response.headers.get("location")
-
-				if (!location) {
-					throw new Error("The URL redirected without a location.")
-				}
-
-				current = new URL(location, current)
-				continue
-			}
-
-			break
 		}
+	},
+})
 
-		if (!response?.ok) {
-			throw new Error("The URL could not be fetched.")
-		}
-
-		const contentType = response.headers.get("content-type") ?? ""
-
-		if (
-			!contentType.includes("text/html") &&
-			!contentType.includes("application/xhtml")
-		) {
-			throw new Error("Only public HTML pages are supported.")
-		}
-
-		const reader = response.body?.getReader()
-
-		if (!reader) {
-			throw new Error("The URL response was empty.")
-		}
-
-		const chunks: Uint8Array[] = []
-		let total = 0
-
-		while (true) {
-			const { done, value } = await reader.read()
-
-			if (done) {
-				break
-			}
-
-			total += value.byteLength
-
-			if (total > LIMITS.maxUrlResponseBytes) {
-				throw new Error(
-					`Fetched pages can be at most ${LIMITS.maxUrlResponseBytes / (1024 * 1024)}MB.`,
-				)
-			}
-
-			chunks.push(value)
-		}
-
-		const html = new TextDecoder().decode(
-			Buffer.concat(chunks.map((chunk) => Buffer.from(chunk))),
-		)
-		return { html, finalUrl: current.toString() }
-	} finally {
-		clearTimeout(timeout)
-	}
-}
-
-function extractReadableHtml(html: string) {
-	const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
-	const title = titleMatch?.[1]?.trim() ?? null
-	const articleMatch =
-		html.match(/<article[^>]*>([\s\S]*?)<\/article>/i) ??
-		html.match(/<main[^>]*>([\s\S]*?)<\/main>/i) ??
-		html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
-
-	const body = articleMatch?.[1] ?? html
-	const cleaned = body
-		.replace(/<script[\s\S]*?<\/script>/gi, "")
-		.replace(/<style[\s\S]*?<\/style>/gi, "")
-		.replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
-
-	return { title, html: cleaned }
-}
-
-export const processSource = internalAction({
+export const markReady = mutation({
 	args: {
 		sourceId: v.id("sources"),
 	},
 	handler: async (ctx, args) => {
-		const source = await ctx.runQuery(internal.ingestionHelpers.getSource, {
-			sourceId: args.sourceId,
+		const { source } = await requireSourceOwner(ctx, args.sourceId)
+
+		await ctx.db.patch(source._id, {
+			processingState: "ready",
+			errorCode: undefined,
+			updatedAt: Date.now(),
 		})
 
-		if (!source || source.deletedAt) {
-			return
-		}
-
-		try {
-			await ctx.runMutation(internal.ingestionHelpers.setProcessingState, {
-				sourceId: args.sourceId,
-				processingState: "extracting",
-			})
-
-			let markdown = ""
-			let nextTitle = source.title
-
-			if (source.kind === "url" && source.url) {
-				const safeUrl = await assertSafeUrl(source.url)
-				const { html, finalUrl } = await fetchPublicHtml(safeUrl)
-				const readable = extractReadableHtml(html)
-				const converted = await markitdown.convertBuffer(
-					Buffer.from(`<html><body>${readable.html}</body></html>`),
-					{ file_extension: ".html" },
-				)
-
-				markdown = converted?.markdown?.trim() ?? ""
-				nextTitle = titleFromUrl(finalUrl, readable.title ?? converted?.title)
-			} else if (source.textContent) {
-				markdown = source.textContent.trim()
-			} else if (source.originalStorageId) {
-				const blob = await ctx.storage.get(source.originalStorageId)
-
-				if (!blob) {
-					throw new Error("Original upload is missing.")
-				}
-
-				const buffer = Buffer.from(await blob.arrayBuffer())
-				const extension = source.filename?.includes(".")
-					? `.${source.filename.split(".").pop()}`
-					: source.kind === "text"
-						? ".txt"
-						: ".txt"
-
-				const converted = await markitdown.convertBuffer(buffer, {
-					file_extension: extension,
-				})
-				markdown = converted?.markdown?.trim() ?? buffer.toString("utf8").trim()
-			} else {
-				throw new Error("Source content is missing.")
-			}
-
-			if (!markdown) {
-				throw new Error("No useful text could be extracted.")
-			}
-
-			if (markdown.length > LIMITS.maxExtractedCharacters) {
-				throw new Error(
-					`Extracted text can be at most ${LIMITS.maxExtractedCharacters.toLocaleString()} characters.`,
-				)
-			}
-
-			const normalizedBlob = new Blob([markdown], { type: "text/markdown" })
-			const normalizedStorageId = await ctx.storage.store(normalizedBlob)
-
-			await ctx.runMutation(internal.ingestionHelpers.setExtracted, {
-				sourceId: args.sourceId,
-				title: nextTitle,
-				normalizedStorageId,
-				characterCount: markdown.length,
-			})
-
-			await ctx.runMutation(internal.ingestionHelpers.setProcessingState, {
-				sourceId: args.sourceId,
-				processingState: "chunking",
-			})
-
-			const embeddingModel = voyage.textEmbedding(MODELS.embed)
-			const chunker = semantic({
-				embed: async (text) => {
-					const { embedding } = await embed({
-						model: embeddingModel,
-						value: text,
-						providerOptions: {
-							voyage: {
-								inputType: "document",
-							},
-						},
-					})
-
-					return embedding
-				},
-				splitMode: "markdown",
-				maxChunkSize: 1200,
-				minChunkSize: 200,
-				zScoreThreshold: 1,
-			})
-			const texts: string[] = []
-
-			for await (const [text] of chunker(markdown)) {
-				const trimmed = text.trim()
-
-				if (trimmed) {
-					texts.push(trimmed)
-				}
-			}
-
-			if (!texts.length) {
-				throw new Error("No useful chunks could be created.")
-			}
-
-			const locators = deriveChunkLocators(texts, markdown)
-
-			await ctx.runMutation(internal.ingestionHelpers.setProcessingState, {
-				sourceId: args.sourceId,
-				processingState: "embedding",
-			})
-
-			const { embeddings: vectors } = await embedMany({
-				model: embeddingModel,
-				values: texts,
-				providerOptions: {
-					voyage: {
-						inputType: "document",
-					},
-				},
-			})
-
-			await ctx.runMutation(internal.ingestionHelpers.replaceChunks, {
-				sourceId: args.sourceId,
-				chunks: texts.map((text, index) => ({
-					text,
-					ordinal: locators[index]?.ordinal ?? index,
-					startOffset: locators[index]?.startOffset ?? 0,
-					endOffset: locators[index]?.endOffset ?? text.length,
-					embedding: vectors[index] ?? [],
-				})),
-			})
-
-			await ctx.runMutation(internal.ingestionHelpers.markReady, {
-				sourceId: args.sourceId,
-			})
-
+		if (source.selected) {
 			await ctx.scheduler.runAfter(
 				0,
-				internal.titles.maybeGenerateNotebookTitle,
+				internal.sourceRevisions.markReadySelectedRevision,
 				{
-					notebookId: source.notebookId,
-					sourceId: args.sourceId,
+					sourceId: source._id,
 				},
 			)
-		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : "Source processing failed."
-
-			await ctx.runMutation(internal.ingestionHelpers.markFailed, {
-				sourceId: args.sourceId,
-				errorCode: message.slice(0, 200),
-			})
 		}
+
+		await ctx.scheduler.runAfter(
+			0,
+			internal.titles.maybeGenerateNotebookTitle,
+			{
+				notebookId: source.notebookId,
+				sourceId: source._id,
+			},
+		)
+	},
+})
+
+export const markFailed = mutation({
+	args: {
+		sourceId: v.id("sources"),
+		errorCode: v.string(),
+	},
+	handler: async (ctx, args) => {
+		await requireSourceOwner(ctx, args.sourceId)
+		await ctx.db.patch(args.sourceId, {
+			processingState: "failed",
+			selected: false,
+			errorCode: args.errorCode,
+			updatedAt: Date.now(),
+		})
 	},
 })

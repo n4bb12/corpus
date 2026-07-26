@@ -1,13 +1,7 @@
 {
-  "$schema": "./node_modules/convex/schemas/convex.schema.json",
-  "functions": "src/convex/",
-  "node": {
-    "externalPackages": [
-      "markitdown-ts",
-      "semantic-chunker"
-    ]
-  },
-  "aiFiles": {
-    "enabled": false
-  }
+	"$schema": "./node_modules/convex/schemas/convex.schema.json",
+	"functions": "src/convex/",
+	"aiFiles": {
+		"enabled": false
+	}
 }

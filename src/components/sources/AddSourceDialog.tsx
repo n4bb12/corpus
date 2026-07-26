@@ -1,4 +1,3 @@
-import { useMutation } from "convex/react"
 import { AnimatePresence } from "motion/react"
 import { useEffect, useRef, useState } from "react"
 import { AddSourceMainPanel } from "src/components/sources/AddSourceMainPanel"
@@ -9,8 +8,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "src/components/ui/dialog"
-import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
+import { startSourceIngest } from "src/lib/ingest-client"
 
 export type AddSourceDialogProps = {
 	open: boolean
@@ -25,8 +24,6 @@ export function AddSourceDialog({
 	notebookId,
 	onFiles,
 }: AddSourceDialogProps) {
-	const addUrl = useMutation(api.sources.addUrl)
-	const addText = useMutation(api.sources.addText)
 	const [mode, setMode] = useState<"main" | "text">("main")
 	const [url, setUrl] = useState("")
 	const [text, setText] = useState("")
@@ -61,7 +58,12 @@ export function AddSourceDialog({
 		setError(null)
 
 		try {
-			await addUrl({ notebookId, url })
+			await startSourceIngest({
+				action: "create",
+				kind: "url",
+				notebookId,
+				url,
+			})
 			onOpenChange(false)
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Could not add URL.")
@@ -75,7 +77,12 @@ export function AddSourceDialog({
 		setError(null)
 
 		try {
-			await addText({ notebookId, text })
+			await startSourceIngest({
+				action: "create",
+				kind: "text",
+				notebookId,
+				text,
+			})
 			onOpenChange(false)
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Could not add text.")

@@ -8,13 +8,14 @@ NotebookLM-style grounded research notebooks. Add URL, file, or pasted-text sour
 TanStack Start (Vercel)
   ├── Better Auth proxy  →  Convex HTTP (/api/auth)
   ├── Chat SSE bridge    →  Convex prepare + Voyage/OpenAI
+  ├── Source ingest API  →  MarkItDown / chunk / embed, Convex mutations
   └── ConvexReactClient + convex-helpers query cache
 
 Convex
   ├── Better Auth component
   ├── Plunk transactional email
   ├── Notebooks / sources / chunks / chat / citations
-  ├── Ingestion actions (MarkItDown → semantic-chunker → Voyage embeddings)
+  ├── Ingestion step mutations (state, chunks, ready/failed)
   └── Hybrid retrieval (vector + text → Voyage rerank)
 ```
 
@@ -139,12 +140,13 @@ Set the same Convex env vars for production, with `SITE_URL` equal to your Verce
 | `VITE_CONVEX_URL` | Production Convex URL |
 | `VITE_CONVEX_SITE_URL` | Production Convex site URL |
 | `VITE_SITE_URL` | `https://your-app.vercel.app` |
-| `OPENAI_API_KEY` | Same as Convex if the SSE route reads it locally |
+| `OPENAI_API_KEY` | Chat SSE route |
+| `VOYAGE_API_KEY` | Source ingest embeddings |
 
 4. Keep Google OAuth redirect URIs for both `http://localhost:3000` and `https://corpus-n4bb12.vercel.app`. Set Convex `SITE_URL` to the production origin as the fallback.
 5. Deploy.
 
-Chat streaming runs from the TanStack Start `/api/chat` route on Vercel and persists through authenticated Convex mutations/actions.
+Chat streaming and source ingestion run on Vercel (`/api/chat`, `/api/sources/ingest`) and persist through authenticated Convex mutations. UI status comes from Convex queries.
 
 ## Verification
 

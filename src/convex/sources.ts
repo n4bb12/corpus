@@ -207,6 +207,21 @@ export const getNormalizedContent = query({
 	},
 })
 
+export const getOriginalContent = query({
+	args: {
+		sourceId: v.id("sources"),
+	},
+	handler: async (ctx, args) => {
+		const { source } = await requireSourceOwner(ctx, args.sourceId)
+
+		if (!source.originalStorageId) {
+			return null
+		}
+
+		return await ctx.storage.getUrl(source.originalStorageId)
+	},
+})
+
 export const generateUploadUrl = mutation({
 	args: {},
 	handler: async (ctx) => {
@@ -265,9 +280,6 @@ export const addText = mutation({
 			updatedAt: now,
 			lastUsedAt: now,
 		})
-		await ctx.scheduler.runAfter(0, internal.ingestion.processSource, {
-			sourceId,
-		})
 
 		return sourceId
 	},
@@ -317,9 +329,6 @@ export const addUrl = mutation({
 			updatedAt: now,
 			lastUsedAt: now,
 		})
-		await ctx.scheduler.runAfter(0, internal.ingestion.processSource, {
-			sourceId,
-		})
 
 		return sourceId
 	},
@@ -367,9 +376,6 @@ export const addFile = mutation({
 		await ctx.db.patch(notebook._id, {
 			updatedAt: now,
 			lastUsedAt: now,
-		})
-		await ctx.scheduler.runAfter(0, internal.ingestion.processSource, {
-			sourceId,
 		})
 
 		return sourceId
@@ -559,8 +565,5 @@ export const retry = mutation({
 			selected: true,
 		})
 		await bumpUsage(ctx, user._id, "ingestions")
-		await ctx.scheduler.runAfter(0, internal.ingestion.processSource, {
-			sourceId: source._id,
-		})
 	},
 })
