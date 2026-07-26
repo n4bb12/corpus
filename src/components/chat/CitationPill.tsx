@@ -1,3 +1,4 @@
+import { useRef, useState } from "react"
 import {
 	Popover,
 	PopoverContent,
@@ -23,15 +24,44 @@ export function CitationPill({
 }: CitationPillProps) {
 	const displayTitle = formatTitle(title)
 	const plainExcerpt = markdownToPlainText(excerpt)
+	const [open, setOpen] = useState(false)
+	const closeTimer = useRef<number | null>(null)
+
+	function clearCloseTimer() {
+		if (closeTimer.current !== null) {
+			window.clearTimeout(closeTimer.current)
+			closeTimer.current = null
+		}
+	}
+
+	function openPopover() {
+		clearCloseTimer()
+		setOpen(true)
+	}
+
+	function scheduleClose() {
+		clearCloseTimer()
+		closeTimer.current = window.setTimeout(() => {
+			setOpen(false)
+			closeTimer.current = null
+		}, 120)
+	}
 
 	return (
-		<Popover>
+		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<button
 					type="button"
 					className="relative inline-flex min-h-6 min-w-6 items-center justify-center rounded-full bg-primary/15 px-2 text-xs font-medium text-primary before:absolute before:-inset-2"
 					aria-label={`Citation ${index}: ${displayTitle}`}
+					onMouseEnter={openPopover}
+					onMouseLeave={scheduleClose}
+					onFocus={openPopover}
+					onBlur={scheduleClose}
 					onClick={() => {
+						clearCloseTimer()
+						setOpen(false)
+
 						if (canNavigate) {
 							onOpen()
 						}
@@ -40,7 +70,12 @@ export function CitationPill({
 					{index}
 				</button>
 			</PopoverTrigger>
-			<PopoverContent className="max-w-sm rounded-xl text-sm">
+			<PopoverContent
+				className="max-w-sm rounded-xl text-sm"
+				onMouseEnter={openPopover}
+				onMouseLeave={scheduleClose}
+				onOpenAutoFocus={(event) => event.preventDefault()}
+			>
 				<p className="mb-2 font-medium">{displayTitle}</p>
 				<p className="text-muted-foreground">{plainExcerpt}</p>
 				{!canNavigate ? (
