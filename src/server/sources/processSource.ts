@@ -72,11 +72,19 @@ async function extractMarkdown(
 
 		const buffer = Buffer.from(await response.arrayBuffer())
 		const extension = source.filename?.includes(".")
-			? `.${source.filename.split(".").pop()}`
+			? `.${source.filename.split(".").pop()?.toLowerCase()}`
 			: ".txt"
 		const converted = await normalizeBufferToMarkdown(buffer, extension)
 
-		markdown = converted.markdown || buffer.toString("utf8").trim()
+		markdown = converted.markdown
+
+		if (!markdown && extension !== ".pdf") {
+			markdown = buffer.toString("utf8").trim()
+		}
+
+		if (converted.title) {
+			nextTitle = converted.title
+		}
 	} else {
 		throw new Error("Source content is missing.")
 	}

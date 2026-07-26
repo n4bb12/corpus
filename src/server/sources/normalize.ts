@@ -1,4 +1,5 @@
 import { MarkItDown } from "markitdown-ts"
+import { extractPdfMarkdown } from "src/server/sources/pdf"
 
 const converter = new MarkItDown()
 
@@ -6,10 +7,16 @@ export async function normalizeBufferToMarkdown(
 	buffer: Buffer,
 	fileExtension: string,
 ) {
+	const extension = fileExtension.startsWith(".")
+		? fileExtension.toLowerCase()
+		: `.${fileExtension.toLowerCase()}`
+
+	if (extension === ".pdf") {
+		return extractPdfMarkdown(buffer)
+	}
+
 	const result = await converter.convertBuffer(buffer, {
-		file_extension: fileExtension.startsWith(".")
-			? fileExtension
-			: `.${fileExtension}`,
+		file_extension: extension,
 	})
 
 	return {

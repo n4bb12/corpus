@@ -14,6 +14,7 @@ import {
 } from "./citations"
 import { describeRejectedFile, isAcceptedUpload } from "./file_types"
 import { markdownToPlainText } from "./markdown_plain"
+import { cleanPdfText, isUsefulPdfText } from "./pdf_text"
 import { remainingQuota, utcDateKey } from "./quotas"
 import {
 	mergeRetrievalCandidates,
@@ -226,6 +227,18 @@ describe("markdown plain text", () => {
 				"## Heading\n\nA **bold** claim with a [link](https://example.com) and `code`.",
 			),
 		).toMatchInlineSnapshot(`"Heading A bold claim with a link and code."`)
+	})
+})
+
+describe("pdf text helpers", () => {
+	test("rejects page-marker-only extraction", () => {
+		expect(cleanPdfText("\n\n-- 1 of 1 --\n\n")).toMatchInlineSnapshot(`""`)
+		expect(isUsefulPdfText("\n\n-- 1 of 1 --\n\n")).toBe(false)
+		expect(
+			isUsefulPdfText(
+				"Elternbrief zum Start des Infoportals mit wichtigen Hinweisen.",
+			),
+		).toBe(true)
 	})
 })
 
