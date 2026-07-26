@@ -1,7 +1,7 @@
 import { getRouteApi, useNavigate } from "@tanstack/react-router"
 import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { api } from "src/convex/_generated/api"
 import { authClient } from "src/lib/auth-client"
 import { LIMITS } from "src/lib/limits"
@@ -81,23 +81,12 @@ export function useLibraryPage() {
 		}),
 	)
 
-	const placeholders = useMemo(
-		() =>
-			Array.from({ length: 8 }, (_, index) => ({
-				_id: `placeholder-${index}`,
-				title: "Loading notebook title goes here",
-				lastUsedAt: Date.now(),
-				sourceCount: 3,
-			})),
-		[],
-	)
-
 	const isLoading = result === undefined
-	const page = isLoading
-		? placeholders
-		: result.page.filter((notebook) => notebook._id !== creatingNotebookId)
-	const isEmpty = !isLoading && !search.q && !result.page.length
-	const noMatches = !isLoading && !!search.q && !result.page.length
+	const page = (result?.page ?? []).filter(
+		(notebook) => notebook._id !== creatingNotebookId,
+	)
+	const isEmpty = !isLoading && !search.q && !page.length
+	const noMatches = !isLoading && !!search.q && !page.length
 	const showPagination =
 		!isLoading && (!!search.cursor || (result !== undefined && !result.isDone))
 	const showSearch = showPagination || !!search.q || !!search.cursor

@@ -14,7 +14,6 @@ export type LibraryNotebook = {
 
 export type LibraryNotebookGridProps = {
 	page: LibraryNotebook[]
-	isLoading: boolean
 	searchQuery?: string
 	creating: boolean
 	showPagination: boolean
@@ -29,7 +28,6 @@ export type LibraryNotebookGridProps = {
 
 export function LibraryNotebookGrid({
 	page,
-	isLoading,
 	searchQuery,
 	creating,
 	showPagination,
@@ -43,15 +41,8 @@ export function LibraryNotebookGrid({
 }: LibraryNotebookGridProps) {
 	return (
 		<>
-			<div
-				className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-12 lg:gap-6"
-				aria-busy={isLoading}
-			>
-				{isLoading ? (
-					<span className="sr-only" role="status">
-						Loading notebooks
-					</span>
-				) : !searchQuery ? (
+			<div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-12 lg:gap-6">
+				{!searchQuery ? (
 					<div className="col-span-1 sm:col-span-1 lg:col-span-4 lg:row-span-2">
 						<AddNotebookCard disabled={creating} onClick={onCreate} tall />
 					</div>
@@ -71,7 +62,6 @@ export function LibraryNotebookGrid({
 								addSuffix: true,
 							})}
 							sourceCount={notebook.sourceCount}
-							loading={isLoading}
 							featured={!searchQuery && index === 0}
 							onRename={async (title) => {
 								await onRename(notebook._id as Id<"notebooks">, title)

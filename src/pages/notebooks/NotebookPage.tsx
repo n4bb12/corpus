@@ -24,25 +24,22 @@ export function NotebookPage() {
 						animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
 						transition={layoutTransition}
 					>
-						{page.notebook ? (
-							<InlineNotebookTitle
-								title={page.notebook.title}
-								onSave={async (title) => {
-									const notebook = page.notebook
+						<InlineNotebookTitle
+							title={page.notebook?.title ?? ""}
+							loading={!page.notebook}
+							onSave={async (title) => {
+								const notebook = page.notebook
 
-									if (!notebook) {
-										return
-									}
+								if (!notebook) {
+									return
+								}
 
-									await page.rename({
-										notebookId: notebook._id,
-										title,
-									})
-								}}
-							/>
-						) : (
-							<div className="h-7 w-48 placeholder-shimmer" aria-hidden />
-						)}
+								await page.rename({
+									notebookId: notebook._id,
+									title,
+								})
+							}}
+						/>
 					</motion.div>
 				}
 			/>

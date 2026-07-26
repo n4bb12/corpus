@@ -39,7 +39,9 @@ export const ChatMessageList = memo(function ChatMessageList({
 	onRetry,
 }: ChatMessageListProps) {
 	const empty =
-		!optimisticUserPrompt && !entries?.some((entry) => entry.kind === "message")
+		entries !== undefined &&
+		!optimisticUserPrompt &&
+		!entries.some((entry) => entry.kind === "message")
 
 	return (
 		<div className="mx-auto flex min-h-full w-full max-w-[50rem] flex-col gap-6 py-4">

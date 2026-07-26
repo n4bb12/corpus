@@ -15,7 +15,6 @@ export type NotebookCardProps = {
 	title: string
 	lastUsedLabel: string
 	sourceCount: number
-	loading?: boolean
 	featured?: boolean
 	onRename: (title: string) => Promise<void>
 	onDelete: () => Promise<void>
@@ -26,7 +25,6 @@ export function NotebookCard({
 	title,
 	lastUsedLabel,
 	sourceCount,
-	loading = false,
 	featured = false,
 	onRename,
 	onDelete,
@@ -41,10 +39,7 @@ export function NotebookCard({
 			<motion.div
 				layout
 				transition={layoutTransition}
-				className={cn(
-					"group relative h-full transition-transform duration-(--duration-hover) ease-spring hover:-translate-y-0.5",
-					loading && "pointer-events-none",
-				)}
+				className="group relative h-full transition-transform duration-(--duration-hover) ease-spring hover:-translate-y-0.5"
 			>
 				<Bezel
 					className="h-full shadow-(--shadow-pine)"
@@ -53,25 +48,21 @@ export function NotebookCard({
 						featured && "md:min-h-[14rem] md:p-7",
 					)}
 				>
-					{loading ? null : (
-						<Link
-							to="/notebooks/$notebookId"
-							params={{ notebookId }}
-							search={{ tab: "chat" }}
-							className="absolute inset-0 z-0 rounded-[1.125rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-							aria-label={`Open ${label}`}
-						/>
-					)}
+					<Link
+						to="/notebooks/$notebookId"
+						params={{ notebookId }}
+						search={{ tab: "chat" }}
+						className="absolute inset-0 z-0 rounded-[1.125rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+						aria-label={`Open ${label}`}
+					/>
 					<NotebookCardContent
 						label={label}
 						lastUsedLabel={lastUsedLabel}
 						sourceCount={sourceCount}
-						loading={loading}
 						featured={featured}
 					/>
 					<NotebookCardMenu
 						label={label}
-						loading={loading}
 						onRename={() => {
 							setDraft(title)
 							setRenameOpen(true)

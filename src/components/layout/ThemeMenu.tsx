@@ -14,8 +14,13 @@ import {
 	subscribeTheme,
 	useThemePreference,
 } from "src/lib/theme"
+import { cn } from "src/lib/utils"
 
-export function ThemeMenu() {
+export type ThemeMenuProps = {
+	className?: string
+}
+
+export function ThemeMenu({ className }: ThemeMenuProps) {
 	const preference = useThemePreference()
 	const [mounted, setMounted] = useState(false)
 	const [resolved, setResolved] = useState<"light" | "dark">("light")
@@ -58,7 +63,7 @@ export function ThemeMenu() {
 					variant="ghost"
 					size="icon"
 					aria-label="Theme"
-					className="rounded-sm"
+					className={cn("rounded-sm", className)}
 				>
 					<Icon size={18} />
 				</Button>

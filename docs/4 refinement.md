@@ -2483,3 +2483,84 @@ Keeping the circular chip and making the theme button `rounded-full` so hover ma
 
 Restored the circular chip and made the theme button `rounded-full` inside it, so hover stays round without the square clash.
 
+# Error clarity
+_Exported on 7/27/2026 at 00:08:09 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+It's not clear enough that these are errors.
+
+---
+
+**Cursor**
+
+Error rows currently look like normal list items — I'll inspect the source list styling and make failures visually distinct.
+
+This is an error-state clarity fix — I'll load the design context and harden guidance, then update the list item styling.
+
+Failed rows still use pine icons and muted grey copy — I'll restyle them with the destructive feedback pattern already used elsewhere.
+
+Failed sources now read as failures at a glance: alert icon in destructive red, error text in the same color, and a light red wash on the row — same feedback treatment as chat errors.
+
+PRODUCT.md is missing newer product-record sections; say if you want me to run `init` to fill those in.
+
+---
+
+**User**
+
+Only show library search if there is pagination.
+
+---
+
+**Cursor**
+
+I'll find where library search and pagination are wired, then gate the search UI on pagination being present.
+
+I'll gate the library search on pagination (and keep it visible while a query or page cursor is active so it doesn't vanish mid-search).
+
+Library search now only appears when there’s more than one page. It stays visible while a search query or page cursor is active, so you can still clear or edit mid-search.
+
+---
+
+**User**
+
+The notebook page should have loading skeletons but not as a separate layout. Apply styles to the original elements. Do the same on the library page. Only apply it to elements that are actually loading as in "does it exist?" or "what is the exact text?".
+
+---
+
+**Cursor**
+
+I'll inspect how notebook and library loading currently work, then move skeleton styling onto the real elements that are still resolving.
+
+I'll restyle the real title, preview, and card text for loading—and stop shimmering icons and other known chrome.
+
+Implementing: real title and preview with shimmer text, library text-only shimmer, and source-count shimmer while the list is still resolving.
+
+Loading now stays on the real UI instead of swap-in skeletons:
+
+- **Notebook title** — always `InlineNotebookTitle`, with shimmer on the title text while the notebook is unresolved
+- **Source preview** — same prose article, placeholder paragraphs shimmer until markdown arrives
+- **Sources count** — shimmers only while the count is unknown
+- **Library cards** — shimmer only title / last-used / source count; the notebook icon stays normal
+- **Chat** — empty state waits until entries resolve, so it doesn’t flash “no messages” while loading
+
+---
+
+**User**
+
+The library still shows a custom skeleton layout
+
+---
+
+**Cursor**
+
+The library still invents placeholder cards while loading — I'll remove that fake grid and only shimmer real content once we know what exists.
+
+Removing the fake placeholder cards and keeping only the real grid chrome while the list resolves.
+
+While the list is unresolved, the page shouldn't assume a grid exists — I'll hold the grid and empty state until we know.
+
+Removed the fake 8-card placeholder grid. While notebooks are still loading, the library keeps the real page chrome and waits — empty state and notebook cards only appear once we know what exists.
+

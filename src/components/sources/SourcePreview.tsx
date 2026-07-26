@@ -3,7 +3,6 @@ import { marked } from "marked"
 import { useEffect, useMemo, useRef } from "react"
 import { Button } from "src/components/ui/button"
 import { ScrollArea } from "src/components/ui/scroll-area"
-import { Skeleton } from "src/components/ui/skeleton"
 import {
 	type CitationOffsetRange,
 	resolveCitationOffsets,
@@ -25,19 +24,11 @@ export type SourcePreviewProps = {
 	onHighlightUnresolved?: (excerpt: string) => void
 }
 
-const SKELETON_LINES = [
-	{ id: "line-1", width: "w-[92%]", spaced: false },
-	{ id: "line-2", width: "w-[78%]", spaced: false },
-	{ id: "line-3", width: "w-[88%]", spaced: false },
-	{ id: "line-4", width: "w-[64%]", spaced: true },
-	{ id: "line-5", width: "w-[95%]", spaced: false },
-	{ id: "line-6", width: "w-[72%]", spaced: false },
-	{ id: "line-7", width: "w-[84%]", spaced: false },
-	{ id: "line-8", width: "w-[58%]", spaced: true },
-	{ id: "line-9", width: "w-[90%]", spaced: false },
-	{ id: "line-10", width: "w-[70%]", spaced: false },
-	{ id: "line-11", width: "w-[86%]", spaced: false },
-	{ id: "line-12", width: "w-[48%]", spaced: false },
+const PREVIEW_PLACEHOLDER_BLOCKS = [
+	"Loading the first passage of this source while the text is prepared for reading.",
+	"A second block keeps the preview layout stable until the real markdown arrives.",
+	"Shorter line.",
+	"Another paragraph approximates typical source density without inventing a separate skeleton layout.",
 ] as const
 
 function blocksWithOffsets(content: string) {
@@ -72,22 +63,6 @@ function blocksWithOffsets(content: string) {
 	}
 
 	return blocks
-}
-
-function SourcePreviewSkeleton() {
-	return (
-		<div className="flex h-full flex-col gap-3" aria-busy="true">
-			{SKELETON_LINES.map((line) => (
-				<Skeleton
-					key={line.id}
-					className={cn("h-4 rounded-md", line.width, line.spaced && "mb-3")}
-				/>
-			))}
-			<span className="sr-only" role="status">
-				Loading source
-			</span>
-		</div>
-	)
 }
 
 function locatorFromHighlight(
@@ -225,7 +200,22 @@ export function SourcePreview({
 							})}
 						</article>
 					) : (
-						<SourcePreviewSkeleton />
+						<>
+							<span className="sr-only" role="status">
+								Loading source
+							</span>
+							<article
+								className="prose prose-sm dark:prose-invert max-w-none space-y-4"
+								aria-busy="true"
+								aria-hidden
+							>
+								{PREVIEW_PLACEHOLDER_BLOCKS.map((text) => (
+									<p key={text} className="placeholder-shimmer">
+										{text}
+									</p>
+								))}
+							</article>
+						</>
 					)}
 				</div>
 			</ScrollArea>

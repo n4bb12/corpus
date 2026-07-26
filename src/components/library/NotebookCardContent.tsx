@@ -5,7 +5,6 @@ export type NotebookCardContentProps = {
 	label: string
 	lastUsedLabel: string
 	sourceCount: number
-	loading: boolean
 	featured?: boolean
 }
 
@@ -13,7 +12,6 @@ export function NotebookCardContent({
 	label,
 	lastUsedLabel,
 	sourceCount,
-	loading,
 	featured = false,
 }: NotebookCardContentProps) {
 	return (
@@ -22,9 +20,8 @@ export function NotebookCardContent({
 				className={cn(
 					"pointer-events-none relative z-10 flex shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10",
 					featured ? "size-12" : "size-11",
-					loading && "placeholder-shimmer",
 				)}
-				aria-hidden={loading}
+				aria-hidden
 			>
 				<Notebook size={featured ? 24 : 22} strokeWidth={1.5} />
 			</div>
@@ -33,28 +30,14 @@ export function NotebookCardContent({
 					className={cn(
 						"line-clamp-2 font-heading font-semibold tracking-tight",
 						featured ? "text-xl md:text-2xl" : "text-base",
-						loading && "placeholder-shimmer",
 					)}
-					aria-hidden={loading}
 				>
 					{label}
 				</h2>
-				<p
-					className={cn(
-						"mt-2 text-sm text-muted-foreground tabular-nums",
-						loading && "placeholder-shimmer",
-					)}
-					aria-hidden={loading}
-				>
+				<p className="mt-2 text-sm text-muted-foreground tabular-nums">
 					{lastUsedLabel}
 				</p>
-				<p
-					className={cn(
-						"mt-1 text-sm text-muted-foreground tabular-nums",
-						loading && "placeholder-shimmer",
-					)}
-					aria-hidden={loading}
-				>
+				<p className="mt-1 text-sm text-muted-foreground tabular-nums">
 					{sourceCount} sources
 				</p>
 			</div>

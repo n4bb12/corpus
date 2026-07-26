@@ -9,14 +9,12 @@ import {
 
 export type NotebookCardMenuProps = {
 	label: string
-	loading: boolean
 	onRename: () => void
 	onDelete: () => void
 }
 
 export function NotebookCardMenu({
 	label,
-	loading,
 	onRename,
 	onDelete,
 }: NotebookCardMenuProps) {
@@ -29,7 +27,6 @@ export function NotebookCardMenu({
 						size="icon"
 						className="pointer-events-auto rounded-full opacity-100 transition-opacity duration-(--duration-menu) ease-spring md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
 						aria-label={`Notebook menu for ${label}`}
-						disabled={loading}
 						onClick={(event) => event.preventDefault()}
 					>
 						<MoreHorizontal size={18} />

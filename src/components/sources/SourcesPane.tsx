@@ -85,6 +85,7 @@ export function SourcesPane({
 			<div className="shrink-0">
 				<SourcesPaneHeader
 					sourceCount={pane.sources?.length ?? 0}
+					sourcesLoading={pane.sources === undefined}
 					uploadNotice={pane.uploadNotice}
 					query={pane.query}
 					onQueryChange={pane.setQuery}

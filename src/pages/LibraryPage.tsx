@@ -54,6 +54,12 @@ export function LibraryPage() {
 						</Reveal>
 					) : null}
 
+					{library.isLoading ? (
+						<span className="sr-only" role="status">
+							Loading notebooks
+						</span>
+					) : null}
+
 					{library.isEmpty ? (
 						<Reveal delay={0.05}>
 							<LibraryEmptyState
@@ -78,16 +84,15 @@ export function LibraryPage() {
 						</Reveal>
 					) : null}
 
-					{!library.isEmpty && !library.noMatches ? (
+					{!library.isLoading && !library.isEmpty && !library.noMatches ? (
 						<Reveal delay={0.05}>
 							<LibraryNotebookGrid
 								page={library.page}
-								isLoading={library.isLoading}
 								searchQuery={library.search.q}
 								creating={library.creating}
 								showPagination={library.showPagination}
 								canGoPrevious={!!library.search.cursor}
-								canGoNext={!library.isLoading && !library.result?.isDone}
+								canGoNext={!library.result?.isDone}
 								onCreate={() => void library.onCreate()}
 								onPrevious={() =>
 									void library.navigate({
