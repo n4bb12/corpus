@@ -1,10 +1,33 @@
-import type { ComponentProps, Ref, UIEventHandler } from "react"
 import { ScrollArea as ScrollAreaPrimitive } from "radix-ui"
+import {
+	type ComponentProps,
+	type Ref,
+	type UIEventHandler,
+	useEffect,
+	useRef,
+} from "react"
 import { cn } from "src/lib/utils"
 
-export type ScrollAreaProps = ComponentProps<typeof ScrollAreaPrimitive.Root> & {
+export type ScrollAreaProps = ComponentProps<
+	typeof ScrollAreaPrimitive.Root
+> & {
 	viewportRef?: Ref<HTMLDivElement>
 	onViewportScroll?: UIEventHandler<HTMLDivElement>
+	/** Multiplier for wheel/trackpad scroll delta. Defaults to 1. */
+	wheelSpeed?: number
+}
+
+function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
+	if (!ref) {
+		return
+	}
+
+	if (typeof ref === "function") {
+		ref(value)
+		return
+	}
+
+	ref.current = value
 }
 
 function ScrollArea({
@@ -12,8 +35,33 @@ function ScrollArea({
 	children,
 	viewportRef,
 	onViewportScroll,
+	wheelSpeed = 1,
 	...props
 }: ScrollAreaProps) {
+	const localViewportRef = useRef<HTMLDivElement | null>(null)
+
+	useEffect(() => {
+		const node = localViewportRef.current
+
+		if (!node || wheelSpeed === 1) {
+			return
+		}
+
+		function onWheel(event: WheelEvent) {
+			if (event.ctrlKey || event.metaKey || !localViewportRef.current) {
+				return
+			}
+
+			event.preventDefault()
+			localViewportRef.current.scrollTop += event.deltaY * wheelSpeed
+			localViewportRef.current.scrollLeft += event.deltaX * wheelSpeed
+		}
+
+		node.addEventListener("wheel", onWheel, { passive: false })
+
+		return () => node.removeEventListener("wheel", onWheel)
+	}, [wheelSpeed])
+
 	return (
 		<ScrollAreaPrimitive.Root
 			data-slot="scroll-area"
@@ -21,7 +69,10 @@ function ScrollArea({
 			{...props}
 		>
 			<ScrollAreaPrimitive.Viewport
-				ref={viewportRef}
+				ref={(node) => {
+					localViewportRef.current = node
+					assignRef(viewportRef, node)
+				}}
 				data-slot="scroll-area-viewport"
 				className="size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
 				onScroll={onViewportScroll}
