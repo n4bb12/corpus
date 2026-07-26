@@ -119,7 +119,7 @@ export function LibraryPage() {
 	}
 
 	return (
-		<div className="relative min-h-dvh">
+		<div className="atmosphere atmosphere-noise relative min-h-dvh">
 			<div className="relative z-10">
 				<AppHeader
 					email={session.data?.user.email}
