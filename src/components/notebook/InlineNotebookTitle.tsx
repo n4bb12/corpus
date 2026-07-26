@@ -101,7 +101,7 @@ export function InlineNotebookTitle({
 					"transition-all duration-(--duration-hover) ease-spring",
 					loading
 						? "pointer-events-none placeholder-shimmer"
-						: "hover:border-border/70 hover:bg-muted/55 focus-visible:border-primary focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-primary/30",
+						: "hover:border-muted-foreground/70 hover:bg-muted/55 focus-visible:border-primary focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-primary/30",
 				)}
 			/>
 			{loading ? null : (
