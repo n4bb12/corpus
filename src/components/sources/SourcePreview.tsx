@@ -1,16 +1,27 @@
 import { ArrowLeft } from "lucide-react"
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { Button } from "src/components/ui/button"
 import { ScrollArea } from "src/components/ui/scroll-area"
 import { Skeleton } from "src/components/ui/skeleton"
+import {
+	type CitationOffsetRange,
+	resolveCitationOffsets,
+} from "src/lib/citation_highlight"
 import { formatTitle } from "src/lib/source_title"
 import { cn } from "src/lib/utils"
+
+export type SourcePreviewHighlight = {
+	start?: number
+	end?: number
+	excerpt: string
+}
 
 export type SourcePreviewProps = {
 	title: string
 	markdown: string | null
-	highlightOffsets?: { start: number; end: number } | null
+	highlight?: SourcePreviewHighlight | null
 	onBack: () => void
+	onHighlightUnresolved?: (excerpt: string) => void
 }
 
 const SKELETON_LINES = [
@@ -59,29 +70,98 @@ function SourcePreviewSkeleton() {
 	)
 }
 
+function locatorFromHighlight(
+	highlight?: SourcePreviewHighlight | null,
+): CitationOffsetRange | null {
+	if (
+		!highlight ||
+		typeof highlight.start !== "number" ||
+		typeof highlight.end !== "number"
+	) {
+		return null
+	}
+
+	return { start: highlight.start, end: highlight.end }
+}
+
+function scrollTargetStart(
+	paragraphs: Array<{ text: string; start: number }>,
+	offsets: CitationOffsetRange,
+) {
+	const containing = paragraphs.find(({ text, start }) => {
+		const end = start + text.length
+
+		return start <= offsets.start && end > offsets.start
+	})
+
+	if (containing) {
+		return containing.start
+	}
+
+	const overlapping = paragraphs.find(({ text, start }) => {
+		const end = start + text.length
+
+		return start < offsets.end && end > offsets.start
+	})
+
+	return overlapping?.start
+}
+
 export function SourcePreview({
 	title,
 	markdown,
-	highlightOffsets,
+	highlight,
 	onBack,
+	onHighlightUnresolved,
 }: SourcePreviewProps) {
-	const paragraphs = markdown ? paragraphsWithOffsets(markdown) : []
+	const paragraphs = useMemo(
+		() => (markdown ? paragraphsWithOffsets(markdown) : []),
+		[markdown],
+	)
 	const highlightRef = useRef<HTMLParagraphElement | null>(null)
+	const unresolvedKey = useRef<string | null>(null)
+	const resolvedOffsets = useMemo(() => {
+		if (!markdown || !highlight) {
+			return null
+		}
+
+		return resolveCitationOffsets(
+			markdown,
+			locatorFromHighlight(highlight),
+			highlight.excerpt,
+		)
+	}, [highlight, markdown])
+	const targetStart =
+		resolvedOffsets && paragraphs.length
+			? scrollTargetStart(paragraphs, resolvedOffsets)
+			: undefined
 
 	useEffect(() => {
-		if (!highlightOffsets || !markdown) {
+		if (!markdown || !highlight) {
 			return
 		}
 
-		const frame = window.requestAnimationFrame(() => {
-			highlightRef.current?.scrollIntoView({
-				behavior: "smooth",
-				block: "center",
+		if (resolvedOffsets) {
+			unresolvedKey.current = null
+			const frame = window.requestAnimationFrame(() => {
+				highlightRef.current?.scrollIntoView({
+					behavior: "smooth",
+					block: "center",
+				})
 			})
-		})
 
-		return () => window.cancelAnimationFrame(frame)
-	}, [highlightOffsets, markdown])
+			return () => window.cancelAnimationFrame(frame)
+		}
+
+		const key = `${highlight.excerpt}:${markdown.length}`
+
+		if (unresolvedKey.current === key) {
+			return
+		}
+
+		unresolvedKey.current = key
+		onHighlightUnresolved?.(highlight.excerpt)
+	}, [highlight, markdown, onHighlightUnresolved, resolvedOffsets])
 
 	return (
 		<div className="flex h-full flex-col">
@@ -105,19 +185,14 @@ export function SourcePreview({
 						{paragraphs.map(({ text, start }) => {
 							const end = start + text.length
 							const highlighted =
-								!!highlightOffsets &&
-								start < highlightOffsets.end &&
-								end > highlightOffsets.start
-							const isScrollTarget =
-								highlighted &&
-								!!highlightOffsets &&
-								start <= highlightOffsets.start &&
-								end > highlightOffsets.start
+								!!resolvedOffsets &&
+								start < resolvedOffsets.end &&
+								end > resolvedOffsets.start
 
 							return (
 								<p
 									key={start}
-									ref={isScrollTarget ? highlightRef : undefined}
+									ref={start === targetStart ? highlightRef : undefined}
 									className={cn("my-0", highlighted && "citation-highlight")}
 								>
 									{text}

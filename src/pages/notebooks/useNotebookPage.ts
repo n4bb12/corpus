@@ -55,8 +55,9 @@ export function useNotebookPage() {
 	const touch = useMutation(api.notebooks.touch)
 	const [previewSourceId, setPreviewSourceId] = useState<string | null>(null)
 	const [highlight, setHighlight] = useState<{
-		start: number
-		end: number
+		start?: number
+		end?: number
+		excerpt: string
 	} | null>(null)
 	const [excerptOnly, setExcerptOnly] = useState<string | null>(null)
 	const [addSourceOpen, setAddSourceOpen] = useState(false)

@@ -1,16 +1,18 @@
+import type { SourcePreviewHighlight } from "src/components/sources/SourcePreview"
 import { SourcePreview } from "src/components/sources/SourcePreview"
 import { SourcesList } from "src/components/sources/SourcesList"
 import { SourcesPaneDialogs } from "src/components/sources/SourcesPaneDialogs"
 import { SourcesPaneHeader } from "src/components/sources/SourcesPaneHeader"
 import { useSourcesPane } from "src/components/sources/useSourcesPane"
 import type { Id } from "src/convex/_generated/dataModel"
+import { useEventCallback } from "src/lib/use-event-callback"
 
 export type SourcesPaneProps = {
 	notebookId: Id<"notebooks">
 	previewSourceId?: string | null
-	highlightOffsets?: { start: number; end: number } | null
+	highlight?: SourcePreviewHighlight | null
 	onPreviewSource: (sourceId: string | null) => void
-	onHighlightHandled?: () => void
+	onExcerptFallback?: (excerpt: string) => void
 	addOpen?: boolean
 	onAddOpenChange?: (open: boolean) => void
 }
@@ -18,8 +20,9 @@ export type SourcesPaneProps = {
 export function SourcesPane({
 	notebookId,
 	previewSourceId,
-	highlightOffsets,
+	highlight,
 	onPreviewSource,
+	onExcerptFallback,
 	addOpen: addOpenControlled,
 	onAddOpenChange,
 }: SourcesPaneProps) {
@@ -30,12 +33,24 @@ export function SourcesPane({
 		onAddOpenChange,
 	})
 
+	const handlePreview = useEventCallback((sourceId: Id<"sources">) => {
+		pane.scrollMemory.current = pane.listRef.current?.scrollTop ?? 0
+		onPreviewSource(sourceId)
+	})
+	const handleAdd = useEventCallback(() => {
+		pane.setAddOpen(true)
+	})
+	const handleHighlightUnresolved = useEventCallback((excerpt: string) => {
+		onExcerptFallback?.(excerpt)
+	})
+
 	if (pane.previewSource) {
 		return (
 			<SourcePreview
 				title={pane.previewSource.title}
 				markdown={pane.previewMarkdown}
-				highlightOffsets={highlightOffsets}
+				highlight={highlight}
+				onHighlightUnresolved={handleHighlightUnresolved}
 				onBack={() => {
 					onPreviewSource(null)
 					requestAnimationFrame(() => {
@@ -82,12 +97,9 @@ export function SourcesPane({
 				selectedCount={pane.selectedCount}
 				allSelected={pane.allSelected}
 				someSelected={pane.someSelected}
-				onAdd={() => pane.setAddOpen(true)}
+				onAdd={handleAdd}
 				onSelectMany={pane.handleSelectMany}
-				onPreview={(sourceId) => {
-					pane.scrollMemory.current = pane.listRef.current?.scrollTop ?? 0
-					onPreviewSource(sourceId)
-				}}
+				onPreview={handlePreview}
 				onRename={pane.beginRename}
 				onRetry={pane.handleRetry}
 				onDelete={pane.handleDelete}

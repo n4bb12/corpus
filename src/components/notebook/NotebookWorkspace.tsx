@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "motion/react"
 import { ChatPane } from "src/components/chat/ChatPane"
+import type { SourcePreviewHighlight } from "src/components/sources/SourcePreview"
 import { SourcesPane } from "src/components/sources/SourcesPane"
 import type { Id } from "src/convex/_generated/dataModel"
 import { layoutTransition } from "src/lib/motion"
@@ -9,13 +10,13 @@ export type NotebookWorkspaceProps = {
 	notebookId: string
 	tab: "sources" | "chat"
 	previewSourceId: string | null
-	highlight: { start: number; end: number } | null
+	highlight: SourcePreviewHighlight | null
 	addSourceOpen: boolean
 	onPreviewSource: (sourceId: string | null) => void
 	onAddSourceOpenChange: (open: boolean) => void
 	onTabChange: (tab: "sources" | "chat") => void
 	onExcerptOnly: (excerpt: string | null) => void
-	onHighlight: (highlight: { start: number; end: number } | null) => void
+	onHighlight: (highlight: SourcePreviewHighlight | null) => void
 }
 
 export function NotebookWorkspace({
@@ -41,8 +42,12 @@ export function NotebookWorkspace({
 				<SourcesPane
 					notebookId={notebookId as Id<"notebooks">}
 					previewSourceId={previewSourceId}
-					highlightOffsets={highlight}
-					onPreviewSource={onPreviewSource}
+					highlight={highlight}
+					onPreviewSource={(sourceId) => {
+						onHighlight(null)
+						onPreviewSource(sourceId)
+					}}
+					onExcerptFallback={onExcerptOnly}
 					addOpen={addSourceOpen}
 					onAddOpenChange={onAddSourceOpenChange}
 				/>
@@ -87,12 +92,12 @@ export function NotebookWorkspace({
 								}
 
 								onPreviewSource(sourceId)
-								onHighlight(
-									typeof startOffset === "number" &&
-										typeof endOffset === "number"
-										? { start: startOffset, end: endOffset }
-										: null,
-								)
+								onHighlight({
+									start:
+										typeof startOffset === "number" ? startOffset : undefined,
+									end: typeof endOffset === "number" ? endOffset : undefined,
+									excerpt,
+								})
 								onTabChange("sources")
 							}}
 						/>
