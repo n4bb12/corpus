@@ -37,7 +37,7 @@ export function AppHeader({
 								className="hidden h-5 w-px shrink-0 bg-border/70 sm:block"
 								aria-hidden
 							/>
-							<div className="min-w-0 w-full max-w-md">{notebookTitle}</div>
+							<div className="min-w-0 w-full max-w-200">{notebookTitle}</div>
 						</>
 					) : null}
 				</div>
