@@ -19,8 +19,8 @@ const config = defineConfig({
 					maxDuration: 300,
 				},
 			},
-			// jsdom resolves runtime files from its package dir; bundling breaks those paths.
-			traceDeps: ["jsdom*"],
+			// These resolve runtime files from their package dirs; bundling breaks those paths.
+			traceDeps: ["jsdom*", "pdfjs-dist*"],
 		}),
 		tailwindcss(),
 		tanstackStart({

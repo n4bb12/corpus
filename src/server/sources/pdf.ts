@@ -1,15 +1,26 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { generateText } from "ai"
-import { PDFParse } from "pdf-parse"
 import { requireEnv } from "src/lib/env"
 import { LIMITS, MODELS } from "src/lib/limits"
 import { cleanPdfText, isUsefulPdfText } from "src/lib/pdf_text"
 
+async function loadPdfParse() {
+	const { ensureDomMatrix } = await import("src/server/polyfills/dommatrix")
+
+	ensureDomMatrix()
+
+	const { PDFParse } = await import("pdf-parse")
+
+	return PDFParse
+}
+
 async function extractPdfTextLayer(buffer: Buffer) {
+	const PDFParse = await loadPdfParse()
 	const parser = new PDFParse({ data: buffer })
 
 	try {
 		const result = await parser.getText()
+
 		return cleanPdfText(result.text ?? "")
 	} finally {
 		await parser.destroy()
@@ -17,6 +28,7 @@ async function extractPdfTextLayer(buffer: Buffer) {
 }
 
 async function extractPdfViaVision(buffer: Buffer) {
+	const PDFParse = await loadPdfParse()
 	const parser = new PDFParse({ data: buffer })
 
 	try {

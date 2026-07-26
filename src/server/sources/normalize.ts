@@ -1,7 +1,14 @@
-import { MarkItDown } from "markitdown-ts"
 import { extractPdfMarkdown } from "src/server/sources/pdf"
 
-const converter = new MarkItDown()
+async function getConverter() {
+	const { ensureDomMatrix } = await import("src/server/polyfills/dommatrix")
+
+	ensureDomMatrix()
+
+	const { MarkItDown } = await import("markitdown-ts")
+
+	return new MarkItDown()
+}
 
 export async function normalizeBufferToMarkdown(
 	buffer: Buffer,
@@ -15,6 +22,7 @@ export async function normalizeBufferToMarkdown(
 		return extractPdfMarkdown(buffer)
 	}
 
+	const converter = await getConverter()
 	const result = await converter.convertBuffer(buffer, {
 		file_extension: extension,
 	})

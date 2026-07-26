@@ -20,7 +20,7 @@ export function PendingLabel({
 			{pending ? (
 				<Spinner aria-label={pendingLabel} className="size-4 shrink-0" />
 			) : null}
-			<span className="inline-flex items-center">{children}</span>
+			{children}
 		</span>
 	)
 }

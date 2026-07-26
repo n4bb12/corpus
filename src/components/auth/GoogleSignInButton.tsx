@@ -56,7 +56,7 @@ export function GoogleSignInButton({
 				variant="outline"
 				disabled={pending}
 				className={cn(
-					"w-full gap-3 rounded-md border-[#dadce0] bg-white text-[#3c4043] shadow-sm hover:bg-[#f8f9fa] hover:text-[#3c4043] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]",
+					"w-full rounded-md border-[#dadce0] bg-white text-[#3c4043] shadow-sm hover:bg-[#f8f9fa] hover:text-[#3c4043] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]",
 					className,
 				)}
 				onClick={onClick}
@@ -64,7 +64,7 @@ export function GoogleSignInButton({
 				<PendingLabel
 					pending={pending}
 					pendingLabel="Signing in with Google"
-					className="w-full gap-3"
+					className="gap-3"
 				>
 					<GoogleMark />
 					Continue with Google
