@@ -110,10 +110,36 @@ describe("retrieval helpers", () => {
 	test("merges and budgets evidence", () => {
 		const merged = mergeRetrievalCandidates(
 			[
-				{ chunkId: "a", sourceId: "s1", text: "one", score: 0.9 },
-				{ chunkId: "b", sourceId: "s1", text: "two", score: 0.4 },
+				{
+					chunkId: "a",
+					sourceId: "s1",
+					text: "one",
+					score: 0.9,
+					startOffset: 0,
+					endOffset: 3,
+					ordinal: 0,
+				},
+				{
+					chunkId: "b",
+					sourceId: "s1",
+					text: "two",
+					score: 0.4,
+					startOffset: 4,
+					endOffset: 7,
+					ordinal: 1,
+				},
 			],
-			[{ chunkId: "a", sourceId: "s1", text: "one", score: 0.5 }],
+			[
+				{
+					chunkId: "a",
+					sourceId: "s1",
+					text: "one",
+					score: 0.5,
+					startOffset: 0,
+					endOffset: 3,
+					ordinal: 0,
+				},
+			],
 		)
 
 		expect(merged[0]?.channel).toMatchInlineSnapshot(`"both"`)
@@ -126,6 +152,9 @@ describe("retrieval helpers", () => {
 						text: "12345",
 						score: 1,
 						channel: "vector",
+						startOffset: 0,
+						endOffset: 5,
+						ordinal: 0,
 					},
 					{
 						chunkId: "b",
@@ -133,6 +162,9 @@ describe("retrieval helpers", () => {
 						text: "67890",
 						score: 0.5,
 						channel: "text",
+						startOffset: 5,
+						endOffset: 10,
+						ordinal: 1,
 					},
 				],
 				8,

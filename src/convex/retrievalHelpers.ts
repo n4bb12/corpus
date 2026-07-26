@@ -8,6 +8,9 @@ type VectorHit = {
 	sourceId: Id<"sources">
 	text: string
 	score: number
+	startOffset: number
+	endOffset: number
+	ordinal: number
 }
 
 export const searchText = internalQuery({
@@ -34,6 +37,9 @@ export const searchText = internalQuery({
 				sourceId: hit.sourceId,
 				text: hit.text,
 				score: 1 / (index + 1),
+				startOffset: hit.startOffset,
+				endOffset: hit.endOffset,
+				ordinal: hit.ordinal,
 			}))
 	},
 })
@@ -91,6 +97,9 @@ export const searchVectors = internalAction({
 				sourceId: chunk.sourceId,
 				text: chunk.text,
 				score: hit.score,
+				startOffset: chunk.startOffset,
+				endOffset: chunk.endOffset,
+				ordinal: chunk.ordinal,
 			})
 		}
 

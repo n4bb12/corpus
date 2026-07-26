@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react"
+import { useEffect, useRef } from "react"
 import { Button } from "src/components/ui/button"
 import { formatTitle } from "src/lib/source_title"
 import { cn } from "src/lib/utils"
@@ -33,6 +34,22 @@ export function SourcePreview({
 }: SourcePreviewProps) {
 	const content = markdown ?? "Loading preview…"
 	const paragraphs = paragraphsWithOffsets(content)
+	const highlightRef = useRef<HTMLParagraphElement | null>(null)
+
+	useEffect(() => {
+		if (!highlightOffsets || !markdown) {
+			return
+		}
+
+		const frame = window.requestAnimationFrame(() => {
+			highlightRef.current?.scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+			})
+		})
+
+		return () => window.cancelAnimationFrame(frame)
+	}, [highlightOffsets, markdown])
 
 	return (
 		<div className="flex h-full flex-col">
@@ -55,13 +72,19 @@ export function SourcePreview({
 					{paragraphs.map(({ text, start }) => {
 						const end = start + text.length
 						const highlighted =
-							highlightOffsets &&
+							!!highlightOffsets &&
+							start < highlightOffsets.end &&
+							end > highlightOffsets.start
+						const isScrollTarget =
+							highlighted &&
+							!!highlightOffsets &&
 							start <= highlightOffsets.start &&
-							end >= highlightOffsets.start
+							end > highlightOffsets.start
 
 						return (
 							<p
 								key={start}
+								ref={isScrollTarget ? highlightRef : undefined}
 								className={cn("my-0", highlighted && "citation-highlight")}
 							>
 								{text}

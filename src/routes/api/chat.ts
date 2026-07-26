@@ -144,6 +144,9 @@ export const Route = createFileRoute("/api/chat")({
 									sourceId: string
 									text: string
 									score: number
+									startOffset: number
+									endOffset: number
+									ordinal: number
 								}>
 								insufficient: boolean
 							}
@@ -195,6 +198,10 @@ Never cite chunk IDs that were not supplied.`
 								system,
 								prompt: userPrompt,
 								abortSignal: controller.signal,
+								experimental_transform: smoothStream({
+									delayInMs: 20,
+									chunking: "word",
+								}),
 							})
 
 							for await (const part of result.stream) {
@@ -274,6 +281,17 @@ Never cite chunk IDs that were not supplied.`
 									chunkId: citation.chunkId as never,
 									sourceTitleSnapshot: "Source",
 									excerpt: evidence?.text.slice(0, 400) || "",
+									locator:
+										evidence &&
+										typeof evidence.startOffset === "number" &&
+										typeof evidence.endOffset === "number" &&
+										typeof evidence.ordinal === "number"
+											? {
+													startOffset: evidence.startOffset,
+													endOffset: evidence.endOffset,
+													ordinal: evidence.ordinal,
+												}
+											: undefined,
 									order,
 								}
 							})

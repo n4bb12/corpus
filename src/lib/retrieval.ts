@@ -4,6 +4,9 @@ export type RetrievalCandidate = {
 	text: string
 	score: number
 	channel: "vector" | "text" | "both"
+	startOffset: number
+	endOffset: number
+	ordinal: number
 }
 
 export function mergeRetrievalCandidates(
