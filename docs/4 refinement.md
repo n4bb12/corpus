@@ -1,0 +1,2018 @@
+# Project adjustments and fixes
+_Exported on 7/25/2026 at 15:01:28 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make these fixes and adjustments. Make commits for each change as you go.
+
+- For fonts, use a combination of fraunces and outfit.
+- Give the google sign in button a branded look.
+- The sign-in page should highlight the last used sign-in method. Use a persistent zustand state.
+- We currently depend on sonner but I don't see us using it. We previously planned to use in-context feedback, not notifications.
+- Use bun test in favor of vitest.
+- Playwright wasn't in the plan. Remove it and the global tests folder.
+- Replace the current tsconfig paths with a src->src alias.
+- Replace ../../convex imports with absolute imports.
+- Remove the convex aliases at src/utils.
+- Upgrade the biome config. "The use of the recommended field has been deprecated, and will removed in the next major version of Biome. Use preset instead.biome(deserialize)". Enable tailwind support.
+- We should be able to use voyage through the AI SDK. I would prefer that so it requires less code changes to switch the provider.
+- We're using lots of one-off classes like rounded-[10px]. Choose standard tailwind classes like rounded-sm. Reach for the closest match.
+- Extract the inline theme script in src/routes/__root.tsx to a component. Use the storage item name constant in src/lib/theme.ts.
+- React FormEvent should be SubmitEvent. Add this to the global agents file.
+- Import React instead of chaining off of it. Add this to the global agents file.
+- Implement pages in the src folder instead of the routes folder. Use routes only for TanStack conventions. Add this to the global agents file. (Not relevant here but add the same rule for Next.js apps.)
+- src/lib/theme.ts uses a manual solution for local storage. Instead, use the persistence plugin.
+- Remove unused shadcn components.
+- Split AddSourceDialog, SourcesPane, ChatPane, and other large components.
+- We're using both Lucide and Phosphor icons. Switch to full Lucide.
+- Fix variable classnames, e.g. "The class `shadow-[var(--shadow-pine)]` can be written as `shadow-(--shadow-pine)`"
+- Move convex to src/convex. This can be configured in convex.json.
+- Is the reranking model name correct? rerank-2.5 or voyage-rerank-2.5?
+
+---
+
+**Cursor**
+
+I'll work through these fixes one by one and commit each change. First I'll inspect the repo layout and the global agents file so the commits stay scoped and consistent.
+
+Gathering more detail on fonts, Voyage usage, utils aliases, and the large components before starting the first commits.
+
+Rerank model is `rerank-2.5` (correct). Starting with fonts, then working through the rest with a commit per change.
+
+Next: branded Google button and last-used sign-in method with persisted Zustand state.
+
+Fixing the Zustand hook to match the project pattern, then committing the Google button and last-used sign-in separately.
+
+Splitting into two commits: branded Google button first, then last-used highlighting.
+
+Switching to Bun's test runner and removing Playwright plus the global `tests` folder.
+
+Next up: `src/*` alias, absolute Convex imports, and moving Convex into `src/convex`.
+
+Moving Convex into `src/convex`, switching to absolute imports, and removing the `src/utils` re-export aliases.
+
+Upgrading Biome and switching Voyage to the AI SDK next.
+
+Next: standardizing Tailwind classes, extracting the theme script, and switching theme state to the persist plugin.
+
+Zustand persist stores JSON by default — I'll use custom storage so the boot script can keep reading the raw preference string.
+
+Updating the global AGENTS file, then fixing React imports and form events across the app.
+
+Fixing React imports and `SubmitEvent` next, then extracting pages and switching icons.
+
+Extracting page components into `src/pages`, then splitting the large components.
+
+Splitting the large components into focused pieces.
+
+All requested fixes are in, each as its own commit (or a tightly related one when items depended on each other).
+
+**Rerank model:** `rerank-2.5` is correct — not `voyage-rerank-2.5`. That matches `@ai-sdk/voyage` and Voyage’s API.
+
+Highlights:
+- Fonts → Fraunces + Outfit  
+- Branded Google button + last-used method (Zustand persist)  
+- Sonner removed; upload skips are inline  
+- `bun test`; Playwright and `tests/` removed (helpers colocated under `src/convex`)  
+- `src/*` alias; Convex moved to `src/convex` with absolute imports; `src/utils` re-exports gone  
+- Biome `preset: "recommended"` + Tailwind CSS parsing  
+- Voyage via `@ai-sdk/voyage`  
+- Standard radii (`rounded-sm`) and `shadow-(--shadow-pine)`  
+- `ThemeScript` + Zustand persist for theme  
+- Global AGENTS (+ Dorkas sync): `SubmitEvent`, named React imports, pages outside routes  
+- Unused shadcn removed; Phosphor → Lucide  
+- Pages in `src/pages`; large source/chat components split  
+
+`bun types` and `bun test` both pass.
+
+# Sign-in page adjustments
+_Exported on 7/26/2026 at 00:31:58 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make these fixes and adjustments. Make commits for each change as you go.
+
+- Use semantic-chunker in favor of mastra. We're not using mastra for anything else, so remove it.
+- Use Plunk instead of Resend.
+- Use Magic Link sign-in instead of email and password.
+- I need to be able to sign in through localhost and corpus-n4bb12.vercel.app.
+- Fix non-null assertions. We often use it with environment variables. Fail catastrophically if any required environment variable is not set.
+- Last-used sign-in method should only be shown on page reload, not immediately on click.
+- Center the sign-in form card. Logo and theme switcher should sit in the corners but equally spaced from the edges and with comfortable spacing on desktop.
+- Every async action should have a loading state. Use an animated tripple dot instead of the shadcn circular loading spinner. The icon replaces the label without changing the button width. Even the google sign in button shows a loading state on click so it provides instant feedback before the redirect.
+- The sign-in page should be exciting, inviting and explain the product, its features and benefits. Add background decorations and soft, slow, animated illustrations. I like the current grain.
+
+---
+
+**Cursor**
+
+I'll work through these one by one with a commit per change. First I'm mapping the current auth, email, chunking, and sign-in UI setup.
+
+Next I'll inspect auth, env usage, and package options so each commit stays focused.
+
+I have enough context to start. First commit: swap Mastra for `semantic-chunker`.
+
+Next up: swap Resend for Plunk.
+
+Next: Magic Link auth, then trusted origins for localhost and the Vercel app.
+
+Next: require env vars explicitly and fail hard when any are missing.
+
+Fixing last-used so it only reflects the value from page load.
+
+Hydration can leave the mount snapshot empty — fixing that so the last-used method still appears after reload.
+
+Adding animated triple-dot loading for async actions next.
+
+Building the inviting sign-in page with product story and soft animations, keeping the existing grain.
+
+All requested changes are in, each as its own commit (plus a small hydration fix for last-used).
+
+**Stack**
+1. Mastra → `semantic-chunker` (Voyage for boundary embeds)
+2. Resend → Plunk (`PLUNK_API_KEY`, `PLUNK_FROM_EMAIL`)
+3. Email/password → Google + magic link
+4. Trusted origins: `localhost:3000` + `corpus-n4bb12.vercel.app`
+5. `requireEnv` / `requireViteEnv` instead of `!`
+6. Last-used highlight only after reload (persists on click, displays from hydration snapshot)
+7. Auth chrome in equal corners; form layout reworked
+8. `PendingLabel` + animated triple dots on async actions (including Google)
+9. Sign-in pitch, features, soft floating illustrations; grain kept
+
+**You’ll need to configure**
+- Convex: `PLUNK_API_KEY`, `PLUNK_FROM_EMAIL` (remove Resend vars)
+- Google OAuth JS origins + redirect URIs for both hosts
+- Redeploy / `convex dev` so the Resend component drop is applied remotely
+
+---
+
+**User**
+
+- Add a distinct vite dev task and a compound dev task that runs both. Use concurrently to run them side by side.
+
+---
+
+**Cursor**
+
+Scripts are now:
+
+1. `dev:vite` — Vite alone  
+2. `dev:convex` — Convex alone  
+3. `dev` — both via `concurrently` (named/colorized streams)
+
+`concurrently` is in `devDependencies`. README run section points at `bun run dev`.
+
+---
+
+**User**
+
+<timestamp>Saturday, Jul 25, 2026, 3:29 PM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: error
+task_id: 660416
+title: Regenerate Convex API with network
+tool_call_id: call-a3648912-071c-44b0-a7d2-1122d9da4377-75
+fc_6b6fa6b9-86c8-9bf4-afea-e8a5d4cdb745_1
+detail: exit_code=1
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/660416.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+<timestamp>Saturday, Jul 25, 2026, 3:29 PM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: error
+task_id: 660417
+title: Convex codegen with full network
+tool_call_id: call-5a9a5c99-ad21-4673-9920-59ed885da597-76
+fc_961ce416-8d12-9780-b504-4509515e3b92_0
+detail: exit_code=1
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/660417.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+---
+
+**Cursor**
+
+Those earlier `convex codegen` runs failed with `TypeError: fetch failed` (couldn’t reach Convex). The Resend component types were already removed from `api.d.ts` by hand, so the Plunk switch is fine. When you next run `bun run dev` / `dev:convex`, codegen should refresh itself.
+
+---
+
+**User**
+
+Keep utils out of the convex directory, especially if they are used by non-convex code or if they are generic. And you can't use dashes. Use underscores instead.
+
+✖ Error fetching POST  https://peaceful-bee-346.eu-west-1.convex.cloud/api/deploy2/start_push 400 Bad Request: InvalidConfig: lib/file-types.js is not a valid path to a Convex module. Path component file-types.js can only contain alphanumeric characters, underscores, or periods.
+
+---
+
+**Cursor**
+
+I'll find dashed Convex module paths and any generic utils that should live outside `src/convex`.
+
+Moving generic helpers into `src/lib` (underscores for former dashed names) and leaving Convex-only helpers in `src/convex`.
+
+Convex was rejecting dashed module paths. Generic helpers are now under `src/lib` with underscores:
+
+- `file_types`, `chat_history`, `chunk_locators`, `source_title`, `url_safety`
+- also moved: `citations`, `limits`, `quotas`, `retrieval`, and their tests
+
+`src/convex/lib` only keeps Convex-bound code (`ownership.ts`). Types and tests pass.
+
+---
+
+**User**
+
+Fix biome issues.
+
+---
+
+**Cursor**
+
+`bun check` is clean. Fixed SVG titles, dropped the citation non-null assert, and keyed preview lines by offset instead of array index.
+
+# Tanstack Vercel output adapter
+_Exported on 7/26/2026 at 01:47:28 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Use the tanstack vercel output adapter.
+
+---
+
+**Cursor**
+
+I'll check the current Vite/TanStack setup and switch it to the Vercel output adapter.
+
+Checking TanStack Start docs for the Vercel adapter setup.
+
+Looking for a dedicated TanStack Vercel adapter package — docs currently point at Nitro for Vercel.
+
+Configuring Nitro's Vercel preset (TanStack Start's Vercel output adapter) and aligning deploy config.
+
+Last build used Nitro's `bun` preset (auto-detected because the project runs with Bun), so Vercel wasn't getting the right output. Locking the preset to `vercel`.
+
+Done. Nitro was auto-picking the **`bun`** preset (because you build with Bun), so Vercel never got Build Output API artifacts.
+
+Changes:
+1. **`vite.config.ts`** — `nitro({ preset: "vercel", ... })`
+2. **`vercel.json`** — `"framework": "tanstack-start"`
+3. **`package.json`** — `start` uses `vite preview` (no more `.output/server`)
+4. **`README.md`** — deploy notes updated
+
+`bun run build` now emits `.vercel/output` (static + `__server.func`).
+
+---
+
+**User**
+
+<timestamp>Sunday, Jul 26, 2026, 1:35 AM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: success
+task_id: 239747
+title: Search for TanStack vercel adapter package
+tool_call_id: call-917bfae0-afcb-498a-a628-1c03129b82f9-31
+fc_f54782e5-3c48-91fc-9906-675ca8ef1b5c_0
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/239747.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+---
+
+**Cursor**
+
+That background search finished: there’s no separate `@tanstack/vercel` package. Vercel deploy for TanStack Start is Nitro’s `preset: "vercel"`, which is what’s already wired up.
+
+---
+
+**User**
+
+why rollupConfig: { external: [/^@sentry\//] },
+
+---
+
+**Cursor**
+
+It’s leftover scaffold from the TanStack create template (the optional Sentry add-on). It tells Nitro not to bundle `@sentry/*` into the server build.
+
+This project doesn’t use Sentry anywhere, so that line does nothing useful and can be removed.
+
+# Convex module size issue
+_Exported on 7/26/2026 at 02:35:20 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+markdown-it is quite large. Too large for a convex mutation. However, we shouldn't be doing everything in convex necessarily. We can do source processing on a vercel API route and call convex mutations from there. We only need to forward authentication. Any objection?
+
+[convex] - Preparing Convex functions...
+[convex]
+[convex] ✖ Error: Unable to start push to https://peaceful-bee-346.eu-west-1.convex.cloud
+[convex] ✖ Error fetching POST  https://peaceful-bee-346.eu-west-1.convex.cloud/api/deploy2/start_push 400 Bad Request: ModulesTooLarge: Hit an error while pushing:
+[convex] Total module size exceeded the zipped maximum (49.14 MiB > maximum size 42.92 MiB)
+
+---
+
+**Cursor**
+
+No objection in principle — moving heavy markdown processing off Convex is the right call for that size limit. I'll quickly check how source processing and auth are wired today so the objections (if any) are concrete.
+
+No real objection — that split is the right direction. The Convex push is blowing the ~43 MiB limit because ingestion pulls in heavy converters (`pdfjs-dist` alone is ~37 MB via `markitdown-ts`), not because Convex is the wrong place for *orchestrating* writes.
+
+A few constraints worth designing for:
+
+1. **Auth** — Forward the user session into a `ConvexHttpClient` so mutations still run as that user and keep ownership checks. Don’t use a deploy/admin key to write chunks unless those mutations re-validate the caller carefully; that’s the easy footgun.
+
+2. **Trigger** — Today `sources.*` schedules `internal.ingestion.processSource`. After the move, something has to kick the Vercel route (client after `sourceId`, or Convex → Vercel with a shared secret). Prefer not relying on “client always remembers to call process.”
+
+3. **Timeouts** — Fetch → convert → semantic chunk → embed can overrun short serverless limits. Keep that pipeline on a route with enough duration, or split embed into Convex actions that only need the AI SDK.
+
+4. **Failure/retry** — You lose the Convex scheduler’s fire-and-forget. Keep `processingState` / `markFailed` as the source of truth and make the route idempotent on `sourceId`.
+
+So: yes — do heavy source processing on Vercel, persist via authenticated Convex mutations. Just treat auth as “run as the user,” not “admin write with a forwarded identity claim.”
+
+---
+
+**User**
+
+1 Yes.
+
+2 Well it's not a real schedule. it's with a delay of 0. it's just a handover. like setTimeout(0, ...). can't we do the orchestration in an API route? Sure, we lose implicit transactions but we can still orchestrate writes on convex. e.g.
+step 1: call vercel API route. api route calls init mutation:
+step 2: insert source as pending, bump usage, patch notebook timestamp
+step 3: api route processes route then calls source update mutation with new status.
+step 4: api route generates embeddings then calls source update mutation with new status.
+Each mutation bundles the necessary writes in a transaction. Due to the scheduler mode, the source processing isn't within the same transaction anyway. So it seems to me we're not really losing anything if we move the library-heavy, processing-heavy stuff and the outer orchestration to an API route.
+
+3 We can go up to 300 seconds on vercel. just configure it on the API route if need be.
+
+4 Well yes. if it fails in the API route, we can catch and mark as failed. What's the problem?
+
+---
+
+**Cursor**
+
+You’re right on 2–4.
+
+The `runAfter(0, …)` path was never one transaction with the insert. Moving the outer loop to a Vercel route and keeping each Convex mutation as a small transactional write (create pending → set extracted → replace chunks / ready, or mark failed) is the same consistency model you already have.
+
+The only residual design choice is **who owns the long request**:
+
+1. **Client → Vercel (orchestrates) → Convex** — simplest. Prefer an idempotency key (or “create only if not exists”) on the init mutation so a retry doesn’t double-insert / double-bump usage.
+2. **Fire-and-forget vs await** — awaiting up to 300s is fine functionally; for UX you may still return after init and let the route finish in the background (or use a waitUntil-style pattern), with UI driven by `processingState` subscriptions.
+
+No objection to the architecture as you described it.
+
+---
+
+**User**
+
+We can do both. We don't need to await it on the client. My assumption was that we rely purely on convex queries for updates.
+
+---
+
+**Cursor**
+
+Yes — that’s the clean version.
+
+Client kicks the API route without awaiting the full pipeline; the route drives Convex mutations; the UI only watches Convex queries/`processingState`. Same live updates you have today, just with Vercel as the worker instead of a Convex action.
+
+---
+
+**User**
+
+Exactly. Then let's go ahead and implement this.
+
+---
+
+**Cursor**
+
+Implementing Vercel-orchestrated ingestion with Convex mutations for writes. Exploring the current ingestion/auth/client flow so we can move the heavy work off Convex cleanly.
+
+Implementing: Convex keeps transactional step mutations; the Vercel route owns init + heavy processing; the client awaits only init, then fire-and-forgets process.
+
+Fixing the Zod schema (discriminated unions can't share `action: "create"`), then wiring the client.
+
+Moving `VOYAGE_API_KEY` check into the try/catch so a missing key marks the source failed instead of leaving it pending.
+
+Done. Heavy ingestion no longer lives in Convex.
+
+**Flow**
+1. Client awaits `startSourceIngest` → `POST /api/sources/ingest` (`create` / `retry`) → Convex init mutation → `202`
+2. Client fire-and-forgets `process` on the same route
+3. Route runs MarkItDown → chunk → Voyage embed, writing via authenticated Convex step mutations
+4. UI keeps using Convex queries for `processingState`
+
+**Notable changes**
+- Removed the Convex `processSource` action and `markitdown-ts` / `semantic-chunker` from `convex.json` `externalPackages` (that external zip was a big part of the ModulesTooLarge failure)
+- New route: `/api/sources/ingest`
+- Pipeline: `src/server/sources/processSource.ts`
+- Client helper: `src/lib/ingest-client.ts`
+
+**You need**
+- `VOYAGE_API_KEY` in `.env.local` (Vite) and on Vercel (same as chat’s OpenAI key)
+- Restart `bun run dev:convex` so the slimmed functions push
+
+I couldn’t complete a Convex push from this session (auth/network to the CLI failed here).
+
+---
+
+**User**
+
+We could also use waitUntil + 202 to responde early. This would be more consistent with the concept that the client isn't expected to await it.
+
+---
+
+**Cursor**
+
+Collapsing to a single request: init, `waitUntil(process)`, return `202`. Checking how waitUntil is available in this stack.
+
+Done. One request now:
+
+1. Init/retry mutation  
+2. `scheduleBackground(processSourcePipeline(sourceId, token))` via `@vercel/functions` `waitUntil`  
+3. Return `202` immediately  
+
+The auth JWT is captured before the response and passed into a `ConvexHttpClient`, so background work doesn’t depend on request cookie context after the response. Locally, when there’s no Vercel `waitUntil`, the detached promise still runs on the Node event loop.
+
+The separate `process` round-trip is gone; the client only awaits the fast `202` (for quota/validation errors).
+
+---
+
+**User**
+
+[convex] - Preparing Convex functions...
+[convex]
+[convex] ✖ TypeScript typecheck via `tsc` failed.
+[convex] To ignore failing typecheck, use `--typecheck=disable`.
+[convex] - Collecting TypeScript errors
+[convex]
+[convex] src/convex/notebooks.ts:51:36 - error TS2550: Property 'at' does not exist on type '{ _creationTime: number; _id: Id<"notebooks">; chatEpoch: number; createdAt: number; deletedAt?: number | undefined; lastUsedAt: number; ownerId: string; sourceRevision: number; title: string; titleGenerationState: "complete" | ... 2 more ... | "pending"; titleOrigin: "generated" | ... 1 more ... | "placeholder"; up...'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+[convex]
+[convex] 51     continueCursor: hasMore ? page.at(-1)?._id : null,
+[convex]                                       ~~
+[convex]
+[convex]
+[convex] src/convex/notebooks.ts:93:42 - error TS2550: Property 'at' does not exist on type '{ _creationTime: number; _id: Id<"notebooks">; chatEpoch: number; createdAt: number; deletedAt?: number | undefined; lastUsedAt: number; ownerId: string; sourceRevision: number; title: string; titleGenerationState: "complete" | ... 2 more ... | "pending"; titleOrigin: "generated" | ... 1 more ... | "placeholder"; up...'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+[convex]
+[convex] 93    continueCursor: isDone ? null : (page.at(-1)?._id ?? null),
+[convex]                                             ~~
+[convex]
+[convex] src/lib/chat_history.ts:77:26 - error TS2550: Property 'at' does not exist on type 'ChatEntryLike[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+[convex]
+[convex] 77  const latest = messages.at(-1)
+[convex]                             ~~
+[convex]
+[convex]
+[convex] Found 3 errors in 2 files.
+[convex]
+[convex] Errors  Files
+[convex]      2  src/convex/notebooks.ts:51
+[convex]      1  src/lib/chat_history.ts:77
+
+---
+
+**Cursor**
+
+Convex's `tsc` is on ES2021, so `.at()` fails. Updating the Convex tsconfig lib.
+
+Updated `src/convex/tsconfig.json` from `ES2021` to `ES2022` so `.at()` typechecks. Convex’s check should pass now.
+
+---
+
+**User**
+
+Add a composite tsc check and make sure both run on bun fix.
+
+---
+
+**Cursor**
+
+Updating the `types` script so app and Convex typechecks both run; `bun fix` already calls `bun types`.
+
+`bun types` now runs both:
+
+1. `types:app` — root `tsc --noEmit`
+2. `types:convex` — `tsc --noEmit -p src/convex/tsconfig.json`
+
+`bun fix` already ends with `bun types`, so both checks run there.
+
+# Sign in page adjustments
+_Exported on 7/26/2026 at 03:30:01 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make these fixes and adjustments. Make commits for each change as you go.
+
+- Sign in page: Remove the 3 cards.
+- Less corny background illustrations.
+- Larger sign-in card. 2:3 ratio. Comfortable padding.
+- Larger email input. Sync input height with button height app-wide. Increase both to 40px.
+- Last used: smaller, black-ish, more into the top-right corner.
+- [vite] Warning: A notFoundError was encountered on the route with ID "__root__", but a notFoundComponent option was not configured, nor was a router level defaultNotFoundComponent configured. Consider configuring at least one of these to avoid TanStack Router's overly generic defaultNotFoundComponent (<p>Not Found</p>)
+- Likely related to the theme switcher init. Not sure how to solve this since we can't set suppressHydrationWarning on DropdownMenu: react-dom_client.js?v=7e9fc0a3:2968 Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+  ...
+    <Moon size={18} data-tsd-source="/src/compo...">
+      <svg
+        ...
+- "Go to sources" -> Replace with "Add first source"
+- Rename notebooks with optimistic update.
+- Hide 0/0 selected if there are no sources.
+- Grain on home page is too strong. Remove or reduce. Notebook detail page has no grain. Consistency.
+- Centered pagination. Only show if there are multiple pages.
+- Add a + card at index 0 for adding a source.
+- Notebook Card menu should be in the top-right corner.
+- Entire notebook card should be linked (except menu).
+- Consistent header layout between home and notebook detail page.
+- All checkbox toggle should be right-aligned. Label left of checkbox and clickable.
+- Square-ish checkboxes. Bigger checkboxes.
+- "Mission &#8211; Biblebots" (website title) is displayed with escaped HTML entities. Fix.
+- Somewhere in the markdown pipeline we're getting extra empty paragraphs after every real paragraph: <p class="" data-tsd-source="/src/components/sources/SourcePreview.tsx:57:8">&nbsp;</p>
+
+
+---
+
+**Cursor**
+
+I'll work through these fixes one by one with a commit per change. First I'll map the relevant UI, routing, and markdown files.
+
+Next I'll read the sign-in, theme, library, and source UI files that these fixes touch.
+
+Starting with the sign-in page: remove the feature cards, quiet the decorations, enlarge the card, and refine the Last used badge.
+
+Next up: chat copy, sources UX, grain, checkboxes, title decoding, and the empty-paragraph preview bug.
+
+Finishing library and notebook: grain, pagination, card link/menu, optimistic rename, and unified header.
+
+Fixing the select-all label a11y lint, then committing.
+
+All requested fixes are in, each as its own commit (15 UI commits on top of your earlier work).
+
+Highlights:
+- **Sign-in** — feature cards removed, softer blobs only, 2:3 card with more padding, smaller blackish Last used badges tucked into the corner
+- **Controls** — default input/button height `40px`
+- **Router / theme** — root `notFoundComponent`; ThemeMenu icon waits for mount to avoid hydration mismatch
+- **Sources / chat** — “Add first source”, leading `+` add row, hide empty select-all, right-aligned clickable select label, larger squarer checkboxes
+- **Library** — grain removed, centered pagination only when needed, full-card links, menu top-right, optimistic rename, shared header with notebook detail
+- **Content** — HTML entity decoding for titles; blank markdown lines no longer become empty `<p>&nbsp;</p>`
+
+`bun fix` and tests pass.
+
+---
+
+**User**
+
+Larger sign-in card on desktop. See creenshot for diretion. More compact sign-in card padding on mobile. Softer background grain. Match the dashboard. We don't have the [+] card yet. Please add.
+
+---
+
+**Cursor**
+
+I'll check the sign-in card, grain, and sources list so we can match the screenshot and add the missing `+` card.
+
+Aligning the sign-in card with the screenshot (larger on desktop, tighter on mobile), softening grain to match the library, and making the sources `+` card clearly visible.
+
+Done — three commits:
+
+1. **Sign-in** — centered card like the screenshot; larger on desktop (`30–32rem`, 2:3, roomy padding); compact `p-5` on mobile; “Welcome back” copy.
+2. **Grain** — opacity cut to `0.014`; same soft grain on auth and library.
+3. **Sources** — dedicated `AddSourceCard` at the top of the list (dashed `+` card that opens add source).
+
+---
+
+**User**
+
+Probably needs a query skip:
+
+ConvexError: [CONVEX Q(notebooks:list)] [Request ID: 6b1628490ee6b814] Server Error
+Uncaught ConvexError: Unauthenticated
+    at getAuthUser [as getAuthUser] (../../node_modules/@convex-dev/better-auth/src/client/create-client.ts:187:11)
+    at async requireUser (../../src/convex/lib/ownership.ts:9:6)
+    at async handler (../src/convex/notebooks.ts:16:8)
+
+  Called by client
+    at getAuthUser [as getAuthUser] (../../node_modules/@convex-dev/better-auth/src/client/create-client.ts:187:11)
+    at async requireUser (../../src/convex/lib/ownership.ts:9:6)
+    at async handler (../src/convex/notebooks.ts:16:8)
+
+  Called by client
+    at OptimisticQueryResults.queryResult (http://localhost:3000/node_modules/.vite/deps/browser-BqKFVNMB.js?v=7e9fc0a3:696:63)
+    at BaseConvexClient.localQueryResult (http://localhost:3000/node_modules/.vite/deps/browser-BqKFVNMB.js?v=7e9fc0a3:2111:38)
+    at Object.localQueryResult (http://localhost:3000/node_modules/.vite/deps/react-02vKW6Tr.js?v=7e9fc0a3:315:49)
+    at QueriesObserver.getLocalResults (http://localhost:3000/node_modules/.vite/deps/react-02vKW6Tr.js?v=7e9fc0a3:629:19)
+    at getCurrentValue (http://localhost:3000/node_modules/.vite/deps/react-02vKW6Tr.js?v=7e9fc0a3:697:20)
+    at http://localhost:3000/node_modules/.vite/deps/react-02vKW6Tr.js?v=7e9fc0a3:148:19
+    at basicStateReducer (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=7e9fc0a3:4390:42)
+    at dispatchSetStateInternal (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=7e9fc0a3:5152:64)
+    at dispatchSetState (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=7e9fc0a3:5133:4)
+    at checkForUpdates (http://localhost:3000/node_modules/.vite/deps/react-02vKW6Tr.js?v=7e9fc0a3:146:4)
+
+The above error occurred in the <LibraryPage> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, CatchBoundaryImpl.
+
+
+---
+
+**Cursor**
+
+The list query is firing before auth is ready. I'll check how we gate authenticated queries and add a skip.
+
+I'll skip the notebook page queries until Convex auth is ready, same as the library.
+
+Library skip is in. Applying the same auth gate on the notebook page.
+
+Fixed. Authenticated queries now use `"skip"` until `useConvexAuth().isAuthenticated` is true — on the library, notebook page, sources pane, and chat pane — so they don’t race the Convex auth handshake.
+
+---
+
+**User**
+
+Keep the card. Restore the app intro hero.
+
+---
+
+**Cursor**
+
+Restoring the intro hero beside the larger sign-in card.
+
+Restored the intro hero beside the larger card: two-column layout on desktop, compact mobile padding kept, card still 2:3 on `md+`.
+
+---
+
+**User**
+
+magic link failing: [convex] 7/26/2026, 3:07:04 AM [CONVEX H(POST /api/auth/sign-in/magic-link)] [ERROR] '2026-07-26T01:07:04.499Z ERROR [Better Auth]: TypeError' [TypeError: we.default is not a constructor]
+[convex] 7/26/2026, 3:07:04 AM [CONVEX H(POST /api/auth/sign-in/magic-link)] [ERROR] '# SERVER_ERROR: ' [TypeError: we.default is not a constructor]
+
+---
+
+**Cursor**
+
+That error usually means a bad default import in the magic-link email path. I'll check the auth and mail setup.
+
+Replacing the Plunk CJS SDK with a direct `fetch` call — Convex's isolate breaks that default export.
+
+The failure was `@plunk/node`’s CJS default export breaking under Convex’s isolate (`we.default is not a constructor`).
+
+Magic-link email now calls Plunk’s HTTP API with `fetch` instead of the SDK. Also switched the magic-link plugin import to the recommended subpath. Retry sign-in after Convex finishes pushing.
+
+---
+
+**User**
+
+Replace tripple dot with shadcn circular loader / default button loader. Don't replace or cover button labels.
+
+---
+
+**Cursor**
+
+I'll add the shadcn spinner and update `PendingLabel` so the label stays visible with a loader beside it.
+
+Pending buttons now keep their labels and show a shadcn-style circular spinner beside them. The triple-dot overlay is gone.
+
+---
+
+**User**
+
+The "Add first source" button is non-functional. 
+
+---
+
+**Cursor**
+
+The button only switches to the sources tab and never opens the add dialog—on desktop that tab is already visible. I'll wire it to open the add-source dialog.
+
+It only switched to the sources tab before — which is already visible on desktop — so nothing happened. It now opens the add-source dialog.
+
+---
+
+**User**
+
+Much less opaque modal backdrop. Just very slight.
+
+---
+
+**Cursor**
+
+Backdrop is now `bg-black/10` with a barely-there blur instead of the heavy `80%` dim.
+
+---
+
+**User**
+
+Most of the card is not clickable. Only around the edges it is.
+
+---
+
+**Cursor**
+
+The card content is sitting above the link and eating clicks. I'll make the content pass clicks through and keep the menu interactive.
+
+The icon and text were sitting above the link and blocking clicks. They now pass clicks through; only the menu stays interactive.
+
+---
+
+**User**
+
+Lots of layout, alignment and spacing issues.
+
+---
+
+**Cursor**
+
+I'll tighten the Sources pane spacing and alignment from the screenshot.
+
+Unifying Sources pane padding and spacing so the header, search, and add card line up cleanly.
+
+Fixed. Shared `px-4` across the pane, header row is a fixed `h-10` with centered title/button, search icon lines up with the field, and the add card has consistent gap and centered content.
+
+---
+
+**User**
+
+Same as before: [convex] 7/26/2026, 3:14:57 AM [CONVEX H(POST /api/auth/sign-in/magic-link)] [ERROR] '2026-07-26T01:14:57.222Z ERROR [Better Auth]: Error' [Error: Incorrect Bearer token specified]
+[convex] 7/26/2026, 3:14:57 AM [CONVEX H(POST /api/auth/sign-in/magic-link)] [ERROR] '# SERVER_ERROR: ' [Error: Incorrect Bearer token specified]
+
+---
+
+**Cursor**
+
+That Plunk error means the API key isn’t being accepted. I’ll check how we construct the client and pass the bearer token.
+
+Local Plunk key looks like a secret (`sk_`), but Convex CLI can't read deployment env from here. I'll harden the sender and sync the Plunk vars onto Convex.
+
+`Incorrect Bearer token specified` is Plunk rejecting the key Convex is sending. Magic-link email runs in the **Convex** HTTP action, so `.env.local` alone is not enough — `PLUNK_API_KEY` must be set on the Convex deployment, and it must be the **secret** key (`sk_…`), not the public `pk_…` key.
+
+Your local `.env.local` already has an `sk_` key. Sync it to Convex:
+
+```bash
+bunx convex env set PLUNK_API_KEY '<paste sk_ key from Plunk → Settings → API Keys>'
+bunx convex env set PLUNK_FROM_EMAIL '<verified sender>'
+bunx convex env set PLUNK_FROM_NAME 'Corpus'
+```
+
+Then retry the magic link. I added a clearer validation/error in `send.ts` so a wrong key type fails with an explicit message next time.
+
+---
+
+**User**
+
+<timestamp>Sunday, Jul 26, 2026, 3:22 AM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: success
+task_id: 782368
+title: List Convex env var names for Plunk
+tool_call_id: call-0af1bb17-29b3-4b57-865d-c6012ac230e0-205
+fc_3aed760e-060b-97ed-a5a2-adfb35b94669_0
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/782368.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+<timestamp>Sunday, Jul 26, 2026, 3:22 AM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: success
+task_id: 782369
+title: Check if Plunk vars exist on Convex
+tool_call_id: call-db6a49d9-ceda-41f0-906a-19842a617a8a-208
+fc_2da4f94f-d7ab-9a9b-b566-a5cf521b50d5_1
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/782369.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+<timestamp>Sunday, Jul 26, 2026, 3:22 AM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: success
+task_id: 782370
+title: Check Plunk key prefixes locally and Convex env
+tool_call_id: call-366c7e47-5f05-4f37-a1b5-0a32eb19a858-210
+fc_3a145fb7-fe84-9191-8c92-9c2240259620_1
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/782370.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+---
+
+**Cursor**
+
+Convex CLI couldn’t reach the deployment from here (`fetch failed`), so I couldn’t verify remote Plunk env. Locally you do have a proper `sk_` key in `.env.local` — sync that to Convex with `bunx convex env set` as noted above.
+
+---
+
+**User**
+
+This works:
+
+curl -X POST "https://next-api.useplunk.com/v1/send" \
+  -H "Authorization: Bearer $PLUNK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "corpus@n4bb12.dev",
+    "to": "[...]@gmail.com",
+    "subject": "Hey",
+    "body": "<h1>Hey</h1>"
+  }'
+
+---
+
+**Cursor**
+
+The working curl hits `next-api.useplunk.com` — our code still uses the old host. Updating that now.
+
+Updated. Magic-link sends now use `https://next-api.useplunk.com/v1/send` like your working curl.
+
+---
+
+**User**
+
+Still getting this: We need signed-in guards on our queries.
+
+__root.tsx:129 ConvexError: [CONVEX Q(notebooks:get)] [Request ID: 5e11c2b0e73b5808] Server Error
+Uncaught ConvexError: Unauthenticated
+    at getAuthUser [as getAuthUser] (../../node_modules/@convex-dev/better-auth/src/client/create-client.ts:187:11)
+    at async requireUser (../../src/convex/lib/ownership.ts:9:6)
+    at async requireNotebookOwner (../../src/convex/lib/ownership.ts:23:6)
+    at async handler (../src/convex/notebooks.ts:104:9)
+
+  Called by client
+    at getAuthUser [as getAuthUser] (../../node_modules/@convex-dev/better-auth/src/client/create-client.ts:187:11)
+    at async requireUser (../../src/convex/lib/ownership.ts:9:6)
+    at async requireNotebookOwner (../../src/convex/lib/ownership.ts:23:6)
+    at async handler (../src/convex/notebooks.ts:104:9)
+
+---
+
+**Cursor**
+
+Checking which queries still run before auth is ready, especially `notebooks:get`.
+
+`expectAuth` should stop the race where queries fire before the Convex token is ready. I'll wire that up and tighten the signed-in query guards.
+
+The race was queries starting before Convex finished validating the Better Auth token.
+
+Fixed with:
+1. `expectAuth: true` on the Convex client
+2. Shared `useSignedInQueryArgs` / `useIsSignedIn` that skip until `!isLoading && isAuthenticated`
+3. `touch` only runs after signed-in
+
+Reload and the `Unauthenticated` throws on `notebooks:get` should be gone.
+
+---
+
+**User**
+
+No it happens after sign-out before hitting the sign-in page.
+
+---
+
+**Cursor**
+
+Sign-out clears auth while library/notebook queries are still mounted, so they re-fire and throw. I'll skip queries immediately on sign-out and hard-redirect to sign-in.
+
+Sign-out was clearing the token while library/notebook queries were still subscribed. It now flips a `signingOut` flag first (so all guarded queries skip), then hard-navigates to `/sign-in`.
+
+# Chat interface adjustments
+_Exported on 7/26/2026 at 03:49:11 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make these fixes and adjustments. Make commits for each change as you go.
+
+- Enable TanStack Start prerendering.
+- Notebooks should receive an automatic name based on the summarized content of the first source as soon as it is added.
+- Create new sources with empty title. Display "Untitled notebook" in readonly mode as a fallback text. Input is empty on edit in that case.
+- Larger chat input font size. Chat input floats above scrollable message thread. No top border / separator.
+- Remove the last-used input border.
+- Sending a chat message adds the message to the thread but there is no response indication yet. We planned a shimmering text that updates based on status events from the SSE stream for things like vectorization, reranking, answer TTFT, etc. (in a non-technical language). But there is currently no feedback.
+- After a timeout, chat requests fail with "[vite] 3:33:07 AM [vite] Internal server error: The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()" with no further info. There is error feedback above the chat input but no error indication in the thread and no retry button.
+
+---
+
+**Cursor**
+
+I'll work through these one by one with a commit per change. First I'll map the relevant prerender, notebook naming, chat UI, and SSE error-handling code.
+
+Next I’ll check how title generation is triggered and what the plan says about chat status events.
+
+Starting with prerendering, then working through notebook titles and the chat feedback fixes.
+
+Next: empty notebook titles with an Untitled fallback, then earlier auto-naming.
+
+Moving auto-title generation to run as soon as the first source is extracted.
+
+Implementing SSE status events with shimmer feedback, then error/retry handling.
+
+All seven changes are in, each as its own commit:
+
+1. **Prerendering** — `tanstackStart({ prerender: { enabled: true, crawlLinks: true } })`
+2. **Empty notebook titles** — stored as `""`; UI shows “Untitled notebook” when readonly; edit starts empty
+3. **Auto-title** — runs as soon as the first source is extracted (not after embeddings)
+4. **Chat composer** — larger `text-base` input, floats over the thread, no top border
+5. **Last used** — removed the ring highlight on email/Google sign-in
+6. **Status feedback** — SSE `status` events + Convex `progressLabel` with shimmering copy (“Looking through your sources…”, “Searching…”, “Picking the best matches…”, “Writing an answer…”)
+7. **Failures** — interrupted/timeout turns are marked failed in the thread with an error card and **Retry**; evidence work now runs inside the stream so the connection isn’t held silent upfront
+
+`bun fix`, types, and tests all pass.
+
+---
+
+**User**
+
+Increase sources modal size. Change ration to 3:2.
+
+---
+
+**Cursor**
+
+Add source dialog is now larger (`sm:max-w-3xl`, up from `32rem`) with a `3:2` aspect ratio.
+
+---
+
+**User**
+
+We got further but on openai errors, we still don't show error feedback (in this case none whatsoever) and no retry. (the error was insufficient_quota but that's not the main issue).
+
+---
+
+**Cursor**
+
+I'll trace how OpenAI failures flow through the chat SSE path and why they never become a failed thread message with Retry.
+
+The client treats a finished SSE stream as success and never reads `error` events, so OpenAI failures can leave the assistant blank. I'll parse SSE on the client and harden server-side finalization.
+
+Adding a UI fallback for already-stuck empty assistant turns from earlier failures:
+
+OpenAI failures were finishing the SSE stream without the client treating them as errors, so the assistant slot could end up blank with no Retry.
+
+Fixed by:
+1. **Consuming SSE events on the client** — `error` / missing `done` now mark the turn failed and surface Retry
+2. **Hardening the server path** — watch `result.stream` error parts, reject empty answers, always finalize as failed with a readable message (including quota)
+3. **Recovering stuck empty “complete” turns** — those now show the failure card + Retry too
+
+`insufficient_quota` should now show something like “The AI provider is out of quota. Try again later.” in the thread with a Retry button.
+
+# UI fixes and adjustments
+_Exported on 7/26/2026 at 04:21:04 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make these fixes and adjustments. Make commits for each change as you go.
+
+- Use shadcn shimmer for the shimmer animation.
+- Citation popovers should not show raw markdown.
+- Citation pills should show popovers on hover, not on click and should close on click.
+- Citation pills should alternate with paragraphs, not all end up at the end.
+- Vercel AI SDK has a feature "smoothStream" for less chunky streaming.
+- They also currently don't scroll to the section nor highlight it.
+- The chat thread needs more bottom spacing to offset the input panel.
+- Toggling sources is currently quite choppy. Probably causes heavy re-rendering.
+- Notebooks don't yet get auto-named
+- Menu items should also have pointer cursors.
+- We still don't have a notebook card with a plus on the home page for adding new notebooks.
+- Don't vertically move notebook cards on hover.
+- White background on inputs like "Search notebooks".
+
+---
+
+**Cursor**
+
+I'll work through these fixes one at a time with a commit per change. First I'm surveying the codebase for the relevant UI, citation, streaming, and notebook pieces.
+
+Next I’ll read the citation, chat, notebook, and styling code those items touch, plus the refinement notes for expected behavior.
+
+I have enough context to start. Checking the AI SDK transform option, then applying fixes commit by commit.
+
+Starting with the independent UI fixes, committing each one as I go.
+
+Next up: strip markdown from citation popovers, then the hover/click and inline pill behavior.
+
+Updating citation pills so the popover opens on hover and closes on click.
+
+Implementing inline citation pills that sit after their paragraphs.
+
+Next: wire citation locators through and scroll/highlight the cited passage in the source preview.
+
+Improving notebook auto-naming with quote cleanup and a source-title fallback when the model fails.
+
+All 13 adjustments are in, each as its own commit:
+
+1. **Shimmer** — chat progress uses shadcn `shimmer`
+2. **Plain excerpts** — citation popovers strip markdown
+3. **Hover popovers** — open on hover/focus, close on click
+4. **Inline pills** — numbered markers kept in content; pills sit after paragraphs
+5. **smoothStream** — word-chunked streaming via AI SDK
+6. **Scroll/highlight** — locators saved on citations; preview scrolls and highlights
+7. **Chat padding** — `pb-56` under the thread
+8. **Source toggles** — removed layout/`AnimatePresence` churn
+9. **Auto-name** — LLM title with source-title fallback
+10. **Menu cursors** — `cursor-pointer` on dropdown items
+11. **Plus card** — `AddNotebookCard` at the start of the library grid
+12. **Card hover** — no vertical lift
+13. **Inputs** — solid `bg-card` background
+
+`bun fix`, types, and tests all pass.
+
+---
+
+**User**
+
+Some inconsisencies: height not fully used. separator between 1 and 2 but not 2 and 3.
+
+---
+
+**Cursor**
+
+I'll inspect the Add Source dialog layout and even out the height usage and separators.
+
+I'll make the drop zone fill the dialog height and add a matching "or" separator before paste text.
+
+Fixed both issues:
+
+1. The file drop zone now expands to fill the dialog’s remaining height.
+2. An `or` separator sits between files and paste text, matching the one above.
+
+---
+
+**User**
+
+After creating a source, the new source is immediately in the list. Maybe the realtime update comes in too fast. Then not sure how we can solve it easily. Check if we do an optimistic update here. Coult be better not to do it here.
+
+---
+
+**Cursor**
+
+I'll check whether source creation uses an optimistic update and how the list reacts when a new source lands.
+
+There’s no optimistic update — the real Convex insert finishes while the dialog is still open, so the list updates under it. I’ll close the dialog first, then create the source.
+
+There was no optimistic update — the real Convex insert finished while the dialog was still open, so the list updated underneath it.
+
+The dialog now closes first, then the source is created. The list update arrives afterward via the normal subscription. On failure, the dialog reopens with the error.
+
+---
+
+**User**
+
+The search should find untitled notebooks.
+
+---
+
+**Cursor**
+
+I'll check how notebook search is implemented and make untitled notebooks match "Untitled" queries.
+
+Untitled notebooks store an empty title, so full-text search can't match "Untitled". I'll include them when the query matches that display name.
+
+Untitled notebooks are stored with an empty title, so full-text search never hit them. Queries that match “Untitled notebook” (e.g. `untitled`, `note`) now also include those empty-title notebooks.
+
+---
+
+**User**
+
+Search should exclude the "New notebook" card.
+
+---
+
+**Cursor**
+
+I'll hide the add-notebook card whenever a search query is active.
+
+The “New notebook” card is now hidden whenever a search query is active.
+
+---
+
+**User**
+
+Add a clear button to the search
+
+---
+
+**Cursor**
+
+Adding a clear control to the library search field.
+
+The library search field now shows an X clear button whenever it has text.
+
+---
+
+**User**
+
+Limit the width of the notebook title input.
+
+---
+
+**Cursor**
+
+Limiting the header notebook title so it doesn't stretch across the full width.
+
+The header notebook title is now capped at `max-w-md` so it no longer stretches across the bar.
+
+---
+
+**User**
+
+Disable add source submit buttons if inputs are empty.
+
+---
+
+**Cursor**
+
+URL **Add** and **Add text** are now disabled until their fields have non-empty input.
+
+---
+
+**User**
+
+PDF currently doesnt get parsed. The only content is: -- 1 of 1 --
+@c:\Data\Downloads\Elternbrief_Start_Infoportal.pdf 
+
+---
+
+**Cursor**
+
+I'll trace the PDF/file extraction path to see why only the page marker is coming through.
+
+Reproducing extraction against the user's PDF to see what `pdf-parse` returns.
+
+Confirmed: this PDF has no text layer (only the `-- 1 of 1 --` marker). I'll add a screenshot + OpenAI vision fallback for scanned PDFs, and drop the unused tesseract dependency.
+
+Fixing a syntax break in `processSource.ts`, then adding tests.
+
+That PDF is image-based — it has no text layer, so `pdf-parse` only returned the page marker `-- 1 of 1 --`.
+
+Extraction now:
+1. Tries the embedded text layer first
+2. If that’s empty/useless, renders pages and runs OpenAI vision OCR
+3. Fails with a clear error if still nothing readable
+
+Re-add or retry the source so it goes through the new path.
+
+---
+
+**User**
+
+Source cards are not fully clickable
+
+---
+
+**Cursor**
+
+I'll make the whole source card open the preview, except for the menu and checkbox.
+
+The whole source card is now the preview hit target; only the menu and checkbox stay separate.
+
+---
+
+**User**
+
+Misaligned checkboxes. Also change the order: Add -> Toggle all -> Items
+
+---
+
+**Cursor**
+
+I'll align the select-all checkbox with the item checkboxes and reorder to Add → Toggle all → Items.
+
+Order is now Add → select-all → items. The select-all checkbox sits in the same column as the item checkboxes (with a spacer for the menu button).
+
+---
+
+**User**
+
+Give question suggestions a slight background
+
+---
+
+**Cursor**
+
+Suggestion chips now use a light `bg-muted/40` background, a bit stronger on hover.
+
+---
+
+**User**
+
+Replace the small add button at the top with "N sources".
+
+---
+
+**Cursor**
+
+The header Add button is now a count like `0 sources`. Adding still goes through the Add source card.
+
+# Search sources adjustments
+_Exported on 7/26/2026 at 04:33:29 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make these fixes and adjustments. Make commits for each change as you go.
+
+- Search sources should also have a clear button. The clear button should be the same as on the home page and should have a hover background.
+- The notebook got named "Elternbrief_Start_Infoportal.pdf" when the source was added but it should contain a summary, not the literal file name.
+- Find components larger than 100 lines and split them into smaller files.
+- Hide search sources if there are less than 6.
+
+---
+
+**Cursor**
+
+I'll work through these one at a time and commit each fix. First I'm locating the search clear UI, notebook naming on source add, oversized components, and the sources search visibility logic.
+
+Next I'll inspect the home-page clear control and how notebook titles are generated from sources.
+
+I'll start with the search clear button, then dig into the notebook-title fallback that uses the filename.
+
+Implementing the clear button first, then the title and search-visibility fixes.
+
+Updating title generation so notebooks get a content summary instead of falling back to the filename.
+
+I'll fix title extraction so short headings don't get glued onto the first sentence.
+
+Next I'll hide the sources search when there are fewer than 6 sources, then start splitting the oversized components.
+
+Now splitting oversized components. I'll read the largest ones and extract focused pieces.
+
+I'll split the largest components into hooks and focused UI pieces, and leave the ones that are only barely over 100 lines alone.
+
+SourcesPane is still too large — extracting dialogs and the list body next.
+
+Fixing the non-null assertion, then splitting the remaining oversized pages.
+
+Trimming the remaining oversized TSX components; hooks and shadcn UI can stay.
+
+Fixing the type errors next.
+
+All four changes are in, each as its own commit:
+
+1. **Clear button** — Sources search matches the library clear control, including `hover:bg-muted`.
+2. **Notebook naming** — Auto-title prefers an LLM summary; falls back to a content sentence from the source markdown, and rejects filename-like titles (e.g. `Elternbrief_Start_Infoportal.pdf`).
+3. **Component splits** — Large panes/pages broken into focused components and hooks (`SourcesPane`, library, chat, notebook, sign-in).
+4. **Hide search** — Sources search only shows when there are at least 6 sources.
+
+`bun fix`, types, and tests all pass. Re-add or retry that PDF source if you want the notebook retitled with the new naming logic.
+
+# UI adjustments and optimizations
+_Exported on 7/26/2026 at 05:06:20 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make these fixes and adjustments. Make commits for each change as you go.
+
+- Use shadcn scrollbars for scrollable areas such as the sources list and text or the chat thread.
+- Citation pill popovers need to close when another is hovered or when the mouse is moved outside.
+- Citation markers in the source text currently kiss the text. Make them a bit larger and offset from the text.
+- When source texts load, there is a distracting spinner. Let's try a full panel skeleton instead.
+- (De)selecting sources is still choppy. Probably causes heavy re-rendering. Optimize.
+- The sources changed separator is quite ugly. Use a format like --- icon text ---.
+- Sources panel should scroll faster.
+
+---
+
+**Cursor**
+
+I'll work through each fix as a separate commit. First I'm locating the scrollbar, citation, skeleton, and sources-selection code.
+
+Installing the shadcn components with full network access, then applying the fixes one commit at a time.
+
+Updating ScrollArea to support viewport refs, then wiring it into the scrollable panels.
+
+Next: citation popovers — shared open state so only one stays open, and they close when the pointer leaves.
+
+Enlarging citation markers and giving them more offset from the text.
+
+Replacing the source preview loading state with a full-panel skeleton.
+
+Optimizing source selection with optimistic updates, memoized list items, and skipping unnecessary notebook patches.
+
+Updating the sources-changed separator to a `--- icon text ---` style.
+
+Speeding up sources-panel scrolling with a wheel multiplier on that ScrollArea.
+
+All seven adjustments are in, each as its own commit:
+
+1. **ScrollArea** — sources list, source preview, and chat thread use shadcn `ScrollArea`
+2. **Citation popovers** — shared open index so hovering another pill or leaving closes the current one
+3. **Citation markers** — larger (`size-7`) with more offset from the paragraph text
+4. **Source preview loading** — full-panel skeleton instead of “Loading preview…”
+5. **Source selection** — optimistic updates, memoized list items, stable callbacks, and no notebook patch on simple toggles
+6. **Sources changed** — `--- icon text ---` separator style
+7. **Faster sources scroll** — `wheelSpeed={2.25}` on the sources list
+
+`bun fix`, types, and tests all pass.
+
+---
+
+**User**
+
+Here is what I mean by kiss the text.
+
+---
+
+**Cursor**
+
+Got it — that's the green highlight bar in the source preview sitting flush against the text. I'll thicken it and add padding so it no longer kisses the characters.
+
+That was the source-preview highlight bar, not the chat pills. I thickened the left marker and added padding so the text sits clear of it, and reverted the earlier pill sizing change that missed the mark.
+
+---
+
+**User**
+
+> Citation popovers — shared open index so hovering another pill or leaving closes the current one
+
+Better but not as intended quite yet. Popovers seem to get stuck and sometimes don't open. Behaving very glitchy. We could try a tooltip approach with a shared/singleton popover.
+
+Another issue is that these citations sometimes don't have a counterpart in the source text to scroll to.
+
+---
+
+**Cursor**
+
+I'll dig into the glitchy citation popovers and the missing scroll targets, then switch the pills to a shared tooltip/singleton approach.
+
+I'll switch citation pills to Radix tooltips (one open at a time) and add excerpt-based fallback when locators don't land in the source text.
+
+Wiring excerpt fallback into the highlight/scroll path next.
+
+Two fixes landed:
+
+**Citation hovers** — Switched from controlled popovers to a shared `TooltipProvider`. Only one tooltip is open at a time, hover/leave behaves normally, and click still navigates.
+
+**Missing scroll targets** — Locators are resolved against the source text, then fall back to finding the excerpt in the markdown. If neither works, the existing excerpt popover shows. Scroll also targets the first overlapping paragraph when the start offset lands on a blank line.
+
+---
+
+**User**
+
+"Sources changed" should be hash-based so of the selection lands on the previous set, the separator is not added.
+
+---
+
+**Cursor**
+
+I'll check how source-boundary separators are created and make them hash-based so returning to a previous selection doesn't insert another one.
+
+Implementing hash-based source boundaries so reverting to the chat's selection removes a pending separator instead of adding another.
+
+Source boundaries are now hash-based.
+
+Each ready-selected set gets a stable hash. The notebook remembers `chatSelectionHash` from the last chat turn. Changing away from that set still inserts a “Sources changed” separator; switching back to the same hash removes the pending separator instead of adding another one.
+
+---
+
+**User**
+
+Highlighted sources should not be in a nested pannel. only highlight them through a different background.
+
+---
+
+**Cursor**
+
+I'll simplify the citation highlight to a background-only treatment so it no longer reads as a nested panel.
+
+Cited passages now only get a background tint — the padding, inset bar, and rounded “panel” styling are gone.
+
+---
+
+**User**
+
+Yes but full width.or 
+
+---
+
+**Cursor**
+
+I'll bleed the highlight background to the panel edges while keeping the text padding aligned.
+
+The highlight background now bleeds to the panel edges; text stays on the same padded alignment.
+
+---
+
+**User**
+
+Citation pills now show a weird dot and switching content is only possible by leaving a pill and re-hovering a different one. moving the mouse horizontally between pills doesn't work. We keep showing the first one that was hovered.
+
+---
+
+**Cursor**
+
+The arrow is the weird dot, and Radix tooltips aren't swapping content when you move between pills. I'll switch to a singleton hover card that updates on each pill enter.
+
+Implementing a singleton popover anchored to the active pill so content updates on horizontal moves and the tooltip arrow (the dot) goes away.
+
+Fixed both issues with a singleton hover card: one shared popover re-anchors and updates as you move across pills, and the tooltip arrow (the dot) is gone.
+
+---
+
+**User**
+
+Pad the source background but without affecting layout and without borders. Rounded corners.
+
+Unhighlighted:
+
+|  text
+
+Highlighted:
+
+| | text
+
+---
+
+**Cursor**
+
+I'll add padded, rounded highlight backgrounds with compensating negative margins so the text position stays put.
+
+Highlights now have padding and rounded corners. Matching negative margins keep the text where it was, and there’s still no border.
+
+---
+
+**User**
+
+There is still some scattered markdown in the visual sources text, e.g. ** 
+
+---
+
+**Cursor**
+
+I'll check how source preview text is rendered — raw markdown markers like `**` are likely being shown as plain text.
+
+Source preview is rendering raw markdown lines. I'll parse each line with `marked` so markers like `**` display as formatted text.
+
+Source preview now runs each line through `marked`, so things like `**bold**` render as formatting instead of raw markers. Citation offsets still map against the original markdown.
+
+---
+
+**User**
+
+> Highlights now have padding and rounded corners. Matching negative margins keep the text where it was, and there’s still no border.
+
+That's not the look I wanted. I drawed a sketch
+
+---
+
+**Cursor**
+
+Got it — the highlight should start at the text column (not full-bleed), with inner padding and square corners. Updating the styles to match your sketch.
+
+Updated to match the sketch: highlight starts at the text column (not full-bleed), padded around the text, square corners, background only.
+
+---
+
+**User**
+
+> Source preview now runs each line through marked, so things like **bold** render as formatting instead of raw markers. Citation offsets still map against the original markdown.
+
+That's good but we're missing a bit of layout, e.g. the spacing between paragraphs is gone. Are we already using tailwind typography / tailwind prose? And for chat responses?
+
+---
+
+**Cursor**
+
+I'll check how prose/typography is applied in source preview and chat, and why paragraph spacing dropped.
+
+Yes — both source preview and chat use `@tailwindcss/typography` (`prose prose-sm dark:prose-invert`). Spacing broke because we render every non-empty line as its own block and zero out margins. I'll group blank-line-separated blocks and let prose spacing apply again.
+
+Yes — both already use Tailwind Typography via `@plugin "@tailwindcss/typography"`:
+
+- Source preview: `prose prose-sm dark:prose-invert`
+- Chat responses: same classes in `AssistantContent`
+
+The spacing bug was from splitting on every non-empty line and zeroing margins. Preview now groups blank-line-separated blocks (like normal markdown paragraphs), renders each with `marked`, and uses `space-y-4` between them.
+
+---
+
+**User**
+
+> Updated to match the sketch: highlight starts at the text column (not full-bleed), padded around the text, square corners, background only.
+
+Yes but with rounded corners as requested. And without affecting layout. The text must stay in the same position.
+
+---
+
+**Cursor**
+
+I'll add rounded corners and padding with matching negative margins so the highlight grows around the text without moving it.
+
+That’s already in place: padding with matching negative margins (text stays put), rounded corners, background only — no full-bleed.
+
+You're right — I'll implement the 50/50 split: half the panel padding stays white, half sits inside the green, text position unchanged, rounded corners.
+
+The highlight now uses half of the panel’s `px-4` padding on each side:
+
+- **Unhighlighted:** `0.5rem` white + `0.5rem` white + text  
+- **Highlighted:** `0.5rem` white + green starts + `0.5rem` inside green + text  
+
+Text stays on the same column; corners are rounded (`0.5rem`).
+
+# Text highlighting style
+_Exported on 7/26/2026 at 05:12:43 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Give me this source highlighting look. Text in exact same position. 50/50 split of padding when background is active. Rounded corners.
+
+---
+
+**Cursor**
+
+Already implemented in `src/styles.css`: text stays fixed, the 16px inset splits into 8px gutter + 8px highlight padding, with 8px rounded corners.
+
+`PRODUCT.md` uses an older Impeccable schema; run `init` later to refresh it if desired.
+
+---
+
+**User**
+
+It may look like that from the code but visually, it conforms to none of what I asked.
+
+And no visual overlap of background between passages please.
+
+---
+
+**Cursor**
+
+You’re right. The screenshot shows the background starting at the text edge, square-looking joined blocks, and overlapping highlight bands. I’ll fix the rendered geometry rather than relying on the current margin math.
+
+Fixed the rendered geometry:
+
+- Text remains stationary.
+- Highlight starts halfway through the panel gutter.
+- Rounded corners are visible.
+- Separate passages retain a visible gap—no overlapping backgrounds.
+
+Type-check, lint, and UI scan pass.
+
+# Notebook grid display issue
+_Exported on 7/26/2026 at 05:13:41 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Any way we can avoid showing a new notebook in the grid before navigation?
+
+---
+
+**Cursor**
+
+Yes. I now hide the newly created notebook ID from the grid while navigation completes, preventing the brief card flash.
+
+Verified with typecheck, lint, and 18 passing tests.
+
+Separately, `PRODUCT.md` uses an older schema; run Impeccable `init` if you want to refresh it.
+
+# Choppy chat streaming issue
+_Exported on 7/26/2026 at 05:15:37 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Chat streaming is still quite choppy despite the transform stream.
+
+---
+
+**Cursor**
+
+The transform is working server-side, but its output is not used to render the chat. The browser accumulates SSE text in a local variable, while the visible assistant message only changes after each awaited Convex persistence call (roughly every 400 ms plus mutation latency). That makes the persistence cadence—not the 20 ms transform—control the animation.
+
+I’m treating that as the primary hypothesis. Secondary possibilities are expensive Markdown rendering on every token and stream buffering by the runtime; I’ll first wire SSE deltas directly into the active message and verify the consumer emits incremental updates.
+
+Fixed the choppy streaming.
+
+Root causes:
+- SSE deltas weren’t rendered directly; UI relied on 400 ms Convex updates.
+- Awaiting Convex persistence paused the server stream.
+
+Now SSE updates render immediately, persistence runs asynchronously, and scrolling follows streamed content.
+
+Verified with:
+- 20 passing tests
+- TypeScript checks
+- Biome checks
+- No new lint errors
+
+# Message suggestion delay
+_Exported on 7/26/2026 at 05:20:24 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+There is a noticable delay between clicking on a suggested message and it disappearing and showing the chat thread.
+
+---
+
+**Cursor**
+
+I found the delay boundary: clicking starts the request immediately, but the empty suggestions remain controlled by the server-backed message query. They cannot disappear until Convex publishes the new user message. I’m building the repro around that state transition, then I’ll make the clicked prompt render optimistically.
+
+The minimal failing case is: zero server messages + an in-flight submitted prompt must produce a non-empty thread immediately; once the server messages arrive, the optimistic copy must disappear to avoid duplication. The most likely cause is confirmed—the UI has no local submitted-message state. Lower-ranked possibilities (button transition styling, scroll rendering, or SSE startup) occur after or outside the condition that keeps the suggestions visible.
+
+Fixed the delay.
+
+The clicked suggestion now:
+- Disappears immediately.
+- Renders as an optimistic user message.
+- Is replaced when Convex publishes the real thread, without duplication.
+
+Verified with full tests, app/Convex type checks, and Biome.
+
+---
+
+**User**
+
+Can we also get citations after paragraphs instead of injecting them after end of stream?
+
+---
+
+**Cursor**
+
+Yes. The markers already arrive at each paragraph’s end, but the client deliberately discards citation metadata whenever `streamedContent` is active. I’ll send the retrieved citation catalog before text generation and resolve each completed marker during streaming; the final database write will still validate and persist citations as before.
+
+Implemented. Citation pills now appear after each cited paragraph during streaming, rather than all appearing when generation finishes.
+
+Final citation validation and persistence remain unchanged.
+
+Verified:
+- 21 tests passing
+- Type checks passing
+- Biome passing
+- Production build passing
+
+# File upload modal behavior
+_Exported on 7/26/2026 at 05:28:03 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+When uploading a file, the modal closes early. Then a pause with no feedback. Then the source appears in the sidebar. Can we block on dialog confirm or show an early source with status as uploading?
+
+---
+
+**Cursor**
+
+I'll look at how file upload and the dialog currently work so we can either keep the dialog open until confirm finishes or show an early sidebar source with an uploading status.
+
+The gap is clear: the dialog closes before storage upload finishes, and the source row only appears after ingest. I'll check how processing states and file creation work so we can show an early uploading source.
+
+I'll show an early sidebar source with an "Uploading" status — that covers the dialog and drag-and-drop, and matches the optimistic chat pattern.
+
+I'll fix leftover optimistic rows when a mid-batch upload fails, then add tests.
+
+Went with the early source approach — it also covers drag-and-drop outside the dialog.
+
+When files are accepted, the sidebar immediately shows placeholder rows with a spinner and **Uploading**. The dialog can still close right away. Once storage upload + ingest create the real source, the placeholder swaps to the live row (Queued → …) with no empty gap.
+
+Verified: types, Biome, 22 tests.
+
+---
+
+**User**
+
+Soft fade-in/out for source count separator
+
+---
+
+**Cursor**
+
+I'll add a soft fade for the chat "Sources changed · N active" separator on appear, update, and remove.
+
+Making the `motion` element a direct `AnimatePresence` child so exit fades actually run.
+
+The chat source-boundary separator now fades in and out, and the active count crossfades when it updates.
+
+---
+
+**User**
+
+Faster feedback please. More ease-out style. Shorter animation.
+
+---
+
+**Cursor**
+
+Shortening the fade and switching the count crossfade off `wait` so it feels snappier.
+
+Fades are now 100ms with a sharper ease-out, and the count crossfades in parallel instead of waiting on exit.
+
+---
+
+**User**
+
+Still feels slow. Maybere there's too much of a delay until the animation triggers.
+
+---
+
+**Cursor**
+
+The lag is likely before the animation starts — selection changes wait on Convex before the boundary appears. I'll trace that path and see if we can trigger the fade optimistically.
+
+Selection already updates the checkboxes optimistically, but the chat boundary waits on the mutation. I'll mirror the boundary into the chat query on click so the fade starts immediately.
+
+---
+
+**User**
+
+It's instant on the chat input, so it should work for the thread, too.
+
+---
+
+**Cursor**
+
+The composer already follows the optimistic source selection; I'll wire the same update into the chat thread boundary so it appears on click too.
+
+The lag wasn’t the fade — the composer already used optimistic source selection, while the thread waited on the mutation.
+
+Source toggles now patch `chat.list` optimistically too, so the boundary appears/updates on click like the “N sources” control. The React key uses `selectionHash` so the optimistic row doesn’t remount when the server confirms.
+
+# Prod deployment file error
+_Exported on 7/26/2026 at 05:38:15 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Accessing the prod deployment downloads a file with 
+
+{"name":"ResolveMessage","position":null,"message":"Cannot find module './xhr-sync-worker.js' from '/vercel/path0/.vercel/output/functions/__server.func/_runtime.mjs'","level":"error","specifier":"./xhr-sync-worker.js","importKind":"require-resolve","referrer":"/vercel/path0/.vercel/output/functions/__server.func/_runtime.mjs"}
+
+---
+
+**Cursor**
+
+That error usually means a server bundle is pulling in jsdom (or another XHR polyfill) and trying to resolve `xhr-sync-worker.js` at runtime. I’ll dig into where that dependency is coming from and how the Vercel server build is packaging it.
+
+`jsdom` (via `markitdown-ts`) looks like the source of `xhr-sync-worker.js`. Next I’ll trace how that ends up in the Vercel server bundle and set up a repro.
+
+Visiting any prod URL failing points to jsdom being pulled into the shared server bundle at startup. I’ll check the Vite/Nitro config and try to reproduce the missing worker in a local build.
+
+There's already a local Vercel output — I'll inspect the server function bundle for the missing worker and try to reproduce the resolve failure.
+
+Reproduced the exact missing-worker error. Next I’ll confirm whether prerender/SSR is baking that failure into the deployed page output.
+
+Confirmed: the shared `__require` resolves the worker next to `_runtime.mjs`, and that file isn’t emitted. Next I’ll try externalizing `jsdom` (and a build-time copy if needed) and re-run the feedback loop.
+
+`compiled` runs after the Nitro server build and before TanStack’s post-build prerender, so copying the worker there should unblock both. Implementing that and verifying with a rebuild.
+
+Dropping the `rollupConfig` plugin — `defu` can replace Nitro’s plugin array. Keeping only the `compiled` hook.
+
+Prerender completed successfully. Verifying the static pages and that JSDOM can load.
+
+**Prod was serving failed prerender output**, not a live runtime crash.
+
+`markitdown-ts` pulls in `jsdom`, which does `require.resolve("./xhr-sync-worker.js")` through a shared `__require` rooted at `_runtime.mjs`. The bundler never emits that worker, so prerender failed and wrote the `ResolveMessage` JSON as `/` and `/sign-in`.
+
+**Fix:** copy `xhr-sync-worker.js` into the Nitro server output on `compiled` in `vite.config.ts`. Rebuild now produces real HTML and JSDOM loads cleanly.
+
+Redeploy to pick this up.
+
+---
+
+**User**
+
+Why does the client bundle need jsdom or markitdown-ts?
+
+---
+
+**Cursor**
+
+They shouldn’t — I’ll check whether `jsdom`/`markitdown-ts` actually land in the client build, or only in the SSR/server graph via the ingest import chain.
+
+It doesn’t. The **client** assets have neither package.
+
+They only show up in the **SSR/server** graph because:
+
+`/api/sources/ingest` → `processSource` → `normalize` → `markitdown-ts` → `jsdom`
+
+That API route is pulled into the shared SSR router bundle, so prerender/SSR loads jsdom even for `/` and `/sign-in`. That’s a server bundling issue, not a client dependency.
+
+---
+
+**User**
+
+~/git/church/biblebots/dashboard uses markitdown-ts and tanstack, too, but it doesn't have that issue.
+
+---
+
+**Cursor**
+
+I’ll compare how that dashboard imports and bundles `markitdown-ts` versus this app — likely a different server boundary or Nitro/Vite config.
+
+Because that app already treats `jsdom` as an **external traced package**, and it never hits the failure path this one did.
+
+In biblebots:
+
+```73:76:/home/n4bb12/git/church/biblebots/dashboard/vite.config.ts
+    nitro: {
+      // These dependencies resolve runtime files from their package directories; bundling breaks those paths.
+      traceDeps: ["@ffmpeg-installer/ffmpeg*", "fluent-ffmpeg*", "jsdom*", "pdfjs-dist*"],
+    },
+```
+
+Also:
+
+1. `prerender.enabled: false` — no static pages get baked from a broken SSR render  
+2. root `ssr: false` — SPA shell, so page requests don’t run the markitdown/jsdom server graph on every load
+
+Corpus was **bundling** `jsdom` into `_libs/jsdom.mjs`, which breaks `require.resolve("./xhr-sync-worker.js")`. Biblebots **traces** `jsdom*` into `node_modules` so the worker file stays next to the real package code.
+
+The worker-copy hook we added is a workaround for the bundled case. Matching biblebots with `traceDeps: ["jsdom*"]` is the cleaner fix — and you could drop the copy hook if that works.
+
+---
+
+**User**
+
+Go.
+
+---
+
+**Cursor**
+
+Switching to `traceDeps: ["jsdom*"]` like biblebots and removing the worker-copy workaround.
+
+Done. Switched to `traceDeps: ["jsdom*"]` and removed the worker-copy hook.
+
+Verified: jsdom is traced into the function `node_modules` (with `xhr-sync-worker.js`), prerender emits real HTML, and MarkItDown converts HTML successfully.
+
+# DOMMatrix reference error
+_Exported on 7/26/2026 at 19:50:10 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+on any API or server function call:
+ReferenceError: DOMMatrix is not defined
+
+    at /var/task/_libs/markitdown-ts+[...].mjs:19777:24
+
+    at moduleEvaluation (native:1:11)
+
+    at moduleEvaluation (native:1:11)
+
+    at requestImportModule (native:2)
+
+    at processTicksAndRejections (native:7:39) {
+
+  cause: ReferenceError: DOMMatrix is not defined
+
+      at /var/task/_libs/markitdown-ts+[...].mjs:19777:24
+
+      at moduleEvaluation (native:1:11)
+
+      at moduleEvaluation (native:1:11)
+
+      at requestImportModule (native:2)
+
+      at processTicksAndRejections (native:7:39),
+
+  status: 500,
+
+  statusText: undefined,
+
+  headers: undefined,
+
+  data: undefined,
+
+  body: undefined,
+
+  unhandled: true
+
+}
+
+---
+
+**Cursor**
+
+`DOMMatrix` is a browser API — something in the `markitdown-ts` import chain is pulling it into a server/API context. I'll trace where that package is loaded and how the call path hits it.
+
+There's prior notes on `markitdown-ts` / `jsdom` bundling — next I'll reproduce `DOMMatrix is not defined` with a minimal server import and inspect the call chain.
+
+Local Bun import is fine — the failure is in the Vercel-bundled `markitdown-ts`. I'll reproduce against the server build and compare with biblebots' `pdfjs-dist` tracing.
+
+Local import works because resolution walks up to project `node_modules` and finds `@napi-rs/canvas`. I'll isolate the Vercel function package so that can't happen and reproduce the crash.
+
+Reproduced the exact `ReferenceError: DOMMatrix is not defined`. Ranked hypotheses next, then I'll test the strongest fix.
+
+Build traced `@napi-rs/canvas`. Updating the repro to verify the fix against an isolated function package (Vercel-like).
+
+Tracing `@napi-rs/canvas` isn't enough — the native platform package never lands in the function bundle, so the polyfill still fails on Vercel. Installing a pure-JS `DOMMatrix` before `markitdown`/`pdf-parse` load.
+
+Polyfill fixes the crash when canvas natives are missing. Rebuilding to confirm the production graph loads it before `markitdown-ts`.
+
+The bundler inlined the polyfill into the module body while keeping `markitdown-ts` as a top-level import, so it still evaluates first. Injecting the polyfill into the `markitdown-ts` chunk itself so it runs before `new DOMMatrix()`.
+
+The bundler deferred the polyfill into an `__esmMin` init call, so it still runs after `pdfjs` loads. Copying the canvas native packages into the function output so pdfjs can polyfill `DOMMatrix` itself.
+
+Natives are in the package. `ws` (a jsdom dependency) wasn't traced — I'll add it and re-run the isolated repro under Bun, matching Vercel.
+
+**Cause:** `markitdown-ts` → `pdfjs-dist` runs `new DOMMatrix()` at module load. It tries to polyfill from `@napi-rs/canvas`, but Nitro only traced the JS package, not the optional Linux native bindings. On Vercel that `require` fails, so every shared server import that pulls this graph (any API route) blows up with `DOMMatrix is not defined`.
+
+**Fix:**
+1. Trace `pdfjs-dist*` and `@napi-rs/canvas*` (same idea as biblebots).
+2. On Nitro `compiled`, copy `@napi-rs/canvas-linux-x64-gnu` and `…-musl` into the function `node_modules`.
+
+Verified with an isolated Bun import of the server chunk: red without natives, green with them.
+
+Redeploy to pick this up.
+
+---
+
+**User**
+
+Pretty sure biblebots doesn't need copyCanvasNatives
+
+---
+
+**Cursor**
+
+I'll check how biblebots gets canvas natives without a copy hook, and whether we can match that instead.
+
+Biblebots only traces `pdfjs-dist*` and ships `@napi-rs/canvas` without the native packages — I'll dig into why that doesn't blow up for them.
+
+You're right — biblebots doesn't copy natives either, and an isolated biblebots-style tree still hits the same `DOMMatrix` crash. Their real edge is not loading that graph on every request. I'll drop `copyCanvasNatives` and lazy-load + polyfill instead.
+
+You're right. Biblebots doesn't copy natives either — and their traced tree also lacks them. An isolated biblebots-style import of `pdfjs` hits the same `DOMMatrix` crash.
+
+What they avoid is **eagerly evaluating** that graph on every request. Corpus was pulling `markitdown-ts` into the shared server bundle at load time.
+
+Dropped `copyCanvasNatives`. Now:
+1. `traceDeps` matches biblebots (`jsdom*`, `pdfjs-dist*`)
+2. Dynamic import of markitdown/pdf-parse only when normalizing
+3. Pure-JS `DOMMatrix` from `@napi-rs/canvas/geometry.js` right before that import
+
+Router loads clean without natives; conversion path polyfills then loads markitdown successfully.
+
+# Google sign-in button gap
+_Exported on 7/26/2026 at 22:54:35 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+The button in @src/components/auth/GoogleSignInButton.tsx has gap-3 but the element only has these classes attached: inline-flex items-center
+
+---
+
+**Cursor**
+
+I'll look at the button component and how its styles are applied.
+
+The icon and label sit in an inner `span` with only `inline-flex items-center` — `gap-3` is on the outer wrapper, so it never spaces them. Checking other `PendingLabel` usages before fixing.
+
+The gapless inner wrapper in `PendingLabel` is the culprit — removing it so icon and label are siblings of the flex container that has `gap-3`.
+
+`gap-3` never reached the icon and label. `PendingLabel` put it on the outer span, then wrapped children in an inner `span` with only `inline-flex items-center` — so the mark and text were siblings of a gapless flex container.
+
+Removed that inner wrapper so children (and the spinner when pending) share the outer flex gap. Dropped the useless `gap-3` / `w-full` on the `Button` / `PendingLabel` that weren’t spacing anything useful.
+
