@@ -40,19 +40,38 @@ const SKELETON_LINES = [
 	{ id: "line-12", width: "w-[48%]", spaced: false },
 ] as const
 
-function paragraphsWithOffsets(content: string) {
-	const paragraphs: Array<{ text: string; start: number }> = []
+function blocksWithOffsets(content: string) {
+	const blocks: Array<{ text: string; start: number }> = []
 	let offset = 0
+	let blockStart = 0
+	let blockLines: string[] = []
 
 	for (const line of content.split("\n")) {
 		if (line.trim()) {
-			paragraphs.push({ text: line, start: offset })
+			if (!blockLines.length) {
+				blockStart = offset
+			}
+
+			blockLines.push(line)
+		} else if (blockLines.length) {
+			blocks.push({
+				text: blockLines.join("\n"),
+				start: blockStart,
+			})
+			blockLines = []
 		}
 
 		offset += line.length + 1
 	}
 
-	return paragraphs
+	if (blockLines.length) {
+		blocks.push({
+			text: blockLines.join("\n"),
+			start: blockStart,
+		})
+	}
+
+	return blocks
 }
 
 function SourcePreviewSkeleton() {
@@ -115,8 +134,8 @@ export function SourcePreview({
 	onBack,
 	onHighlightUnresolved,
 }: SourcePreviewProps) {
-	const paragraphs = useMemo(
-		() => (markdown ? paragraphsWithOffsets(markdown) : []),
+	const blocks = useMemo(
+		() => (markdown ? blocksWithOffsets(markdown) : []),
 		[markdown],
 	)
 	const highlightRef = useRef<HTMLDivElement | null>(null)
@@ -133,8 +152,8 @@ export function SourcePreview({
 		)
 	}, [highlight, markdown])
 	const targetStart =
-		resolvedOffsets && paragraphs.length
-			? scrollTargetStart(paragraphs, resolvedOffsets)
+		resolvedOffsets && blocks.length
+			? scrollTargetStart(blocks, resolvedOffsets)
 			: undefined
 
 	useEffect(() => {
@@ -182,8 +201,8 @@ export function SourcePreview({
 			</div>
 			<ScrollArea className="min-h-0 flex-1 px-4 py-4">
 				{markdown ? (
-					<article className="prose prose-sm dark:prose-invert max-w-none space-y-3">
-						{paragraphs.map(({ text, start }) => {
+					<article className="prose prose-sm dark:prose-invert max-w-none space-y-4">
+						{blocks.map(({ text, start }) => {
 							const end = start + text.length
 							const highlighted =
 								!!resolvedOffsets &&
@@ -196,7 +215,7 @@ export function SourcePreview({
 									key={start}
 									ref={start === targetStart ? highlightRef : undefined}
 									className={cn(
-										"my-0 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+										"[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
 										highlighted && "citation-highlight",
 									)}
 									dangerouslySetInnerHTML={{ __html: html }}
