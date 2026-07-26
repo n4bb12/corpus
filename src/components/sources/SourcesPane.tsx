@@ -225,11 +225,15 @@ export function SourcesPane({
 			</div>
 
 			{selectable.length ? (
-				<label className="flex cursor-pointer items-center justify-end gap-2 px-4 py-3 text-sm">
-					<span className="tabular-nums text-muted-foreground">
+				<div className="flex items-center justify-end gap-2 px-4 py-3 text-sm">
+					<label
+						htmlFor="select-all-sources"
+						className="cursor-pointer tabular-nums text-muted-foreground"
+					>
 						{selectedCount}/{selectable.length} selected
-					</span>
+					</label>
 					<Checkbox
+						id="select-all-sources"
 						checked={
 							allSelected ? true : someSelected ? "indeterminate" : false
 						}
@@ -240,9 +244,8 @@ export function SourcesPane({
 								selected: checked === true,
 							})
 						}
-						aria-label="Select all visible sources"
 					/>
-				</label>
+				</div>
 			) : null}
 
 			<div ref={listRef} className="relative flex-1 overflow-auto px-2 pb-4">

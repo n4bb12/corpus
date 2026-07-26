@@ -87,7 +87,9 @@ function NotFoundPage() {
 		<div className="atmosphere flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
 			<BrandLockup />
 			<div className="space-y-2">
-				<h1 className="text-2xl font-semibold tracking-tight">Page not found</h1>
+				<h1 className="text-2xl font-semibold tracking-tight">
+					Page not found
+				</h1>
 				<p className="text-sm text-muted-foreground">
 					That route does not exist, or the notebook may have been removed.
 				</p>
