@@ -1,6 +1,7 @@
 import { v } from "convex/values"
 import {
 	canRetryLatestAssistant,
+	hashSourceSelection,
 	successfulPairsAfterBoundary,
 } from "src/lib/chat_history"
 import { CHAT_PROGRESS } from "src/lib/chat_progress"
@@ -227,6 +228,9 @@ export const prepareGeneration = mutation({
 		}
 
 		await ctx.db.patch(notebook._id, {
+			chatSelectionHash: hashSourceSelection(
+				selectedReady.map((source) => source._id),
+			),
 			updatedAt: now,
 			lastUsedAt: now,
 		})
@@ -363,6 +367,32 @@ export const finalizeAssistant = mutation({
 			errorMessage: args.errorMessage,
 			progressLabel: undefined,
 		})
+
+		if (args.status === "complete") {
+			const notebook = await ctx.db.get(message.notebookId)
+
+			if (notebook) {
+				const sources = await ctx.db
+					.query("sources")
+					.withIndex("by_notebook_createdAt", (q) =>
+						q.eq("notebookId", notebook._id),
+					)
+					.collect()
+				const selectedReadyIds = sources
+					.filter(
+						(source) =>
+							!source.deletedAt &&
+							source.selected &&
+							source.processingState === "ready",
+					)
+					.map((source) => source._id)
+
+				await ctx.db.patch(notebook._id, {
+					chatSelectionHash: hashSourceSelection(selectedReadyIds),
+					updatedAt: Date.now(),
+				})
+			}
+		}
 	},
 })
 

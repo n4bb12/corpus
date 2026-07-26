@@ -94,16 +94,63 @@ export type SourceRevisionEvent = {
 	revision: number
 }
 
+export function hashSourceSelection(ids: string[]) {
+	return [...ids].sort().join("\0")
+}
+
 export function shouldCreateSourceRevision(
 	previousIds: string[],
 	nextIds: string[],
 ) {
-	if (previousIds.length !== nextIds.length) {
-		return true
+	return hashSourceSelection(previousIds) !== hashSourceSelection(nextIds)
+}
+
+export type SourceBoundaryPlan =
+	| { type: "none"; selectionHash: string }
+	| { type: "insert"; selectionHash: string; activeSourceCount: number }
+	| { type: "update"; selectionHash: string; activeSourceCount: number }
+	| { type: "remove"; selectionHash: string }
+
+export function planSourceBoundary(args: {
+	previousIds: string[]
+	nextIds: string[]
+	chatSelectionHash?: string | null
+	hasSuccessfulExchange: boolean
+	activeStreaming: boolean
+	trailingKind: "sourceBoundary" | "message" | null
+}): SourceBoundaryPlan {
+	const selectionHash = hashSourceSelection(args.nextIds)
+	const previousHash = hashSourceSelection(args.previousIds)
+
+	if (
+		!args.hasSuccessfulExchange ||
+		args.activeStreaming ||
+		selectionHash === previousHash
+	) {
+		return { type: "none", selectionHash }
 	}
 
-	const previous = [...previousIds].sort()
-	const next = [...nextIds].sort()
+	const baselineHash = args.chatSelectionHash || previousHash
 
-	return previous.some((id, index) => id !== next[index])
+	if (selectionHash === baselineHash) {
+		if (args.trailingKind === "sourceBoundary") {
+			return { type: "remove", selectionHash }
+		}
+
+		return { type: "none", selectionHash }
+	}
+
+	if (args.trailingKind === "sourceBoundary") {
+		return {
+			type: "update",
+			selectionHash,
+			activeSourceCount: args.nextIds.length,
+		}
+	}
+
+	return {
+		type: "insert",
+		selectionHash,
+		activeSourceCount: args.nextIds.length,
+	}
 }

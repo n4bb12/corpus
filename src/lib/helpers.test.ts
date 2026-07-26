@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test"
 import { formatChatError } from "./chat_errors"
 import {
 	canRetryLatestAssistant,
+	hashSourceSelection,
+	planSourceBoundary,
 	shouldCreateSourceRevision,
 	successfulPairsAfterBoundary,
 } from "./chat_history"
@@ -340,6 +342,38 @@ describe("chat history", () => {
 			]),
 		).toBe(true)
 		expect(shouldCreateSourceRevision(["a"], ["a", "b"])).toBe(true)
+		expect(shouldCreateSourceRevision(["b", "a"], ["a", "b"])).toBe(false)
+		expect(
+			planSourceBoundary({
+				previousIds: ["a"],
+				nextIds: ["b"],
+				chatSelectionHash: hashSourceSelection(["a"]),
+				hasSuccessfulExchange: true,
+				activeStreaming: false,
+				trailingKind: "message",
+			}),
+		).toMatchInlineSnapshot(`
+      {
+        "activeSourceCount": 1,
+        "selectionHash": "b",
+        "type": "insert",
+      }
+    `)
+		expect(
+			planSourceBoundary({
+				previousIds: ["b"],
+				nextIds: ["a"],
+				chatSelectionHash: hashSourceSelection(["a"]),
+				hasSuccessfulExchange: true,
+				activeStreaming: false,
+				trailingKind: "sourceBoundary",
+			}),
+		).toMatchInlineSnapshot(`
+      {
+        "selectionHash": "a",
+        "type": "remove",
+      }
+    `)
 	})
 })
 

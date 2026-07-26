@@ -229,6 +229,7 @@ export const clearChat = mutation({
 
 		await ctx.db.patch(notebook._id, {
 			chatEpoch: nextEpoch,
+			chatSelectionHash: undefined,
 			updatedAt: now,
 			lastUsedAt: now,
 		})
