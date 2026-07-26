@@ -2774,3 +2774,85 @@ That hits the library page because it wraps the header/CTA/grid in `Reveal`.
 
 Repro/`scripts/check-hydration.sh` went red → green with `--force-prefers-reduced-motion`.
 
+# Notebook name input border
+_Exported on 7/27/2026 at 00:50:29 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+The notebook name input needs a darker border on hover, it's almost unnoticable.
+
+---
+
+**Cursor**
+
+I'll find the notebook name input and darken its hover border.
+
+The hover uses `border-border/70` on a transparent base — bumping that up.
+
+Hover border is now `foreground/25` instead of `border/70`, so it should read clearly without competing with the focus ring.
+
+---
+
+**User**
+
+Loading skeleton animations are way too fast.
+
+---
+
+**Cursor**
+
+Slowing the placeholder shimmer — it's currently at 1.4s.
+
+Placeholder shimmer duration is now **2.8s** (was 1.4s), so the sweep should feel calmer across title, preview, and source-count loading states.
+
+---
+
+**User**
+
+still barely noticable
+
+---
+
+**Cursor**
+
+Making the hover border stronger — `foreground/25` is still too faint against that background.
+
+Switched to `muted-foreground/70` — much stronger contrast than the previous faint border.
+
+---
+
+**User**
+
+"Add first source" doesn't always work. It should do the exact same as the "Add source" card.
+
+---
+
+**Cursor**
+
+I'll compare how "Add first source" and the "Add source" card handle clicks.
+
+`onAddSource` isn't wired in `NotebookWorkspace`, and the add dialog unmounts while a source preview is open. Fixing both.
+
+Two issues:
+
+1. **`onAddSource` was never passed** into `ChatPane`, so the button did nothing.
+2. **The add dialog unmounted during source preview**, so opening it from chat failed in that state.
+
+"Add first source" now opens the same add-source dialog as the "Add source" card, and the dialogs stay mounted during preview.
+
+---
+
+**User**
+
+The small buttons in the modals should also be 100% rounded.
+
+---
+
+**Cursor**
+
+Modal action buttons use `rounded-sm` — switching those to `rounded-full`.
+
+Modal action buttons (and the dialog close control) now use `rounded-full` instead of `rounded-sm`.
+
