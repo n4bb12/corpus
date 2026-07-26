@@ -31,6 +31,15 @@ describe("source titles", () => {
 		)
 	})
 
+	test("decodes html entities", () => {
+		expect(
+			normalizeTitle("Mission &#8211; Biblebots", "Fallback"),
+		).toMatchInlineSnapshot(`"Mission – Biblebots"`)
+		expect(
+			normalizeTitle("A &amp; B &ndash; C", "Fallback"),
+		).toMatchInlineSnapshot(`"A & B – C"`)
+	})
+
 	test("builds fallbacks", () => {
 		expect(titleFromPastedText("Line one\nLine two")).toMatchInlineSnapshot(
 			`"Line one"`,

@@ -1,5 +1,34 @@
+const NAMED_ENTITIES: Record<string, string> = {
+	amp: "&",
+	apos: "'",
+	gt: ">",
+	lt: "<",
+	nbsp: " ",
+	quot: '"',
+	mdash: "—",
+	ndash: "–",
+	hellip: "…",
+}
+
+export function decodeHtmlEntities(value: string) {
+	return value
+		.replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => {
+			const codePoint = Number.parseInt(hex, 16)
+
+			return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : _
+		})
+		.replace(/&#(\d+);/g, (_, dec: string) => {
+			const codePoint = Number(dec)
+
+			return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : _
+		})
+		.replace(/&([a-z]+);/gi, (match, name: string) => {
+			return NAMED_ENTITIES[name.toLowerCase()] ?? match
+		})
+}
+
 export function normalizeTitle(raw: string, fallback: string) {
-	const collapsed = raw.replace(/\s+/g, " ").trim()
+	const collapsed = decodeHtmlEntities(raw).replace(/\s+/g, " ").trim()
 
 	if (!collapsed) {
 		return fallback
@@ -10,6 +39,10 @@ export function normalizeTitle(raw: string, fallback: string) {
 	}
 
 	return collapsed.slice(0, 100).trimEnd()
+}
+
+export function formatTitle(raw: string) {
+	return decodeHtmlEntities(raw).replace(/\s+/g, " ").trim()
 }
 
 export function titleFromPastedText(text: string) {
