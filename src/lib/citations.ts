@@ -4,6 +4,7 @@ export type CitationRef = {
 }
 
 const CITATION_PATTERN = /\[\[cite:([^\]]+)\]\]/g
+const NUMBERED_CITATION_PATTERN = /\[\[cite:(\d+)\]\]/g
 
 export function parseCitationMarkers(text: string) {
 	const refs: CitationRef[] = []
@@ -13,19 +14,90 @@ export function parseCitationMarkers(text: string) {
 			.map((id) => id.trim())
 			.filter(Boolean)
 
+		const markers: string[] = []
+
 		for (const chunkId of ids) {
-			if (!refs.some((ref) => ref.chunkId === chunkId)) {
+			let order = refs.findIndex((ref) => ref.chunkId === chunkId)
+
+			if (order < 0) {
 				refs.push({ chunkId })
+				order = refs.length - 1
 			}
+
+			markers.push(`[[cite:${order + 1}]]`)
 		}
 
-		return ""
+		return markers.join(" ")
 	})
 
 	return {
-		text: cleaned.replace(/\n{3,}/g, "\n\n").trim(),
+		text: cleaned
+			.replace(/[ \t]+\n/g, "\n")
+			.replace(/ {2,}/g, " ")
+			.replace(/\n{3,}/g, "\n\n")
+			.trim(),
 		citations: refs,
 	}
+}
+
+export function stripCitationMarkers(text: string) {
+	return text
+		.replace(CITATION_PATTERN, "")
+		.replace(/\n{3,}/g, "\n\n")
+		.replace(/[ \t]+\n/g, "\n")
+		.trim()
+}
+
+export function remapCitationMarkers(
+	text: string,
+	citations: CitationRef[],
+	valid: CitationRef[],
+) {
+	const validIds = new Set(valid.map((citation) => citation.chunkId))
+	const oldToNew = new Map<number, number>()
+	let next = 1
+
+	citations.forEach((citation, index) => {
+		if (validIds.has(citation.chunkId)) {
+			oldToNew.set(index + 1, next)
+			next += 1
+		}
+	})
+
+	return text
+		.replace(NUMBERED_CITATION_PATTERN, (_match, rawIndex: string) => {
+			const mapped = oldToNew.get(Number(rawIndex))
+
+			return mapped ? ` [[cite:${mapped}]]` : ""
+		})
+		.replace(/[ \t]+\n/g, "\n")
+		.replace(/ +/g, " ")
+		.replace(/\n{3,}/g, "\n\n")
+		.trim()
+}
+
+export function splitCitedParagraphs(markdown: string) {
+	const paragraphs = markdown.split(/\n\n+/)
+
+	return paragraphs
+		.map((paragraph) => {
+			const citationIndexes: number[] = []
+			const text = paragraph
+				.replace(NUMBERED_CITATION_PATTERN, (_match, rawIndex: string) => {
+					const index = Number(rawIndex)
+
+					if (Number.isFinite(index) && index > 0) {
+						citationIndexes.push(index)
+					}
+
+					return ""
+				})
+				.replace(/[ \t]+$/gm, "")
+				.trim()
+
+			return { text, citationIndexes }
+		})
+		.filter((paragraph) => paragraph.text || paragraph.citationIndexes.length)
 }
 
 export function validateCitations(

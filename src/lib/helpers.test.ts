@@ -7,7 +7,11 @@ import {
 } from "./chat_history"
 import { parseSseChunk } from "./chat_sse"
 import { deriveChunkLocators } from "./chunk_locators"
-import { parseCitationMarkers, validateCitations } from "./citations"
+import {
+	parseCitationMarkers,
+	splitCitedParagraphs,
+	validateCitations,
+} from "./citations"
 import { markdownToPlainText } from "./markdown_plain"
 import { describeRejectedFile, isAcceptedUpload } from "./file_types"
 import { remainingQuota, utcDateKey } from "./quotas"
@@ -144,13 +148,39 @@ describe("retrieval helpers", () => {
 describe("citations", () => {
 	test("parses and validates markers", () => {
 		const parsed = parseCitationMarkers("Hello [[cite:c1,c2]] world")
-		expect(parsed.text).toMatchInlineSnapshot(`"Hello  world"`)
+		expect(parsed.text).toMatchInlineSnapshot(
+			`"Hello [[cite:1]] [[cite:2]] world"`,
+		)
 		expect(
 			validateCitations(parsed.citations, new Set(["c1"])).valid,
 		).toMatchInlineSnapshot(`
       [
         {
           "chunkId": "c1",
+        },
+      ]
+    `)
+	})
+
+	test("splits numbered markers onto paragraphs", () => {
+		expect(
+			splitCitedParagraphs(
+				"First claim. [[cite:1]]\n\nSecond claim. [[cite:2]] [[cite:1]]",
+			),
+		).toMatchInlineSnapshot(`
+      [
+        {
+          "citationIndexes": [
+            1,
+          ],
+          "text": "First claim.",
+        },
+        {
+          "citationIndexes": [
+            2,
+            1,
+          ],
+          "text": "Second claim.",
         },
       ]
     `)

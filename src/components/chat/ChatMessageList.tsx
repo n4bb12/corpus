@@ -3,6 +3,10 @@ import { marked } from "marked"
 import { CitationPill } from "src/components/chat/CitationPill"
 import { Button } from "src/components/ui/button"
 import type { api } from "src/convex/_generated/api"
+import {
+	splitCitedParagraphs,
+	stripCitationMarkers,
+} from "src/lib/citations"
 
 export type ChatCiteArgs = {
 	sourceId?: string
@@ -13,6 +17,7 @@ export type ChatCiteArgs = {
 }
 
 type ChatListEntry = FunctionReturnType<typeof api.chat.list>[number]
+type ChatCitation = NonNullable<ChatListEntry["citations"]>[number]
 
 export type ChatMessageListProps = {
 	entries: ChatListEntry[] | undefined
@@ -29,6 +34,113 @@ const SUGGESTIONS = [
 	"Where do these sources agree or disagree?",
 	"Summarize the strongest evidence for the key point.",
 ]
+
+function CitationPills({
+	citations,
+	indexes,
+	onCite,
+}: {
+	citations: ChatCitation[]
+	indexes: number[]
+	onCite: (args: ChatCiteArgs) => void
+}) {
+	const uniqueIndexes = [...new Set(indexes)]
+
+	return (
+		<div className="flex flex-wrap gap-2">
+			{uniqueIndexes.map((index) => {
+				const citation = citations[index - 1]
+
+				if (!citation) {
+					return null
+				}
+
+				return (
+					<CitationPill
+						key={`${citation._id}-${index}`}
+						index={index}
+						title={citation.liveTitle}
+						excerpt={citation.excerpt}
+						canNavigate={citation.canNavigate}
+						onOpen={() =>
+							onCite({
+								sourceId: citation.sourceId,
+								startOffset: citation.locator?.startOffset,
+								endOffset: citation.locator?.endOffset,
+								excerpt: citation.excerpt,
+								canNavigate: citation.canNavigate,
+							})
+						}
+					/>
+				)
+			})}
+		</div>
+	)
+}
+
+function AssistantContent({
+	content,
+	citations,
+	onCite,
+}: {
+	content: string
+	citations: ChatCitation[]
+	onCite: (args: ChatCiteArgs) => void
+}) {
+	const hasInlineMarkers = /\[\[cite:\d+\]\]/.test(content)
+
+	if (!citations.length || !hasInlineMarkers) {
+		const html = marked.parse(stripCitationMarkers(content), {
+			async: false,
+		}) as string
+
+		return (
+			<div className="space-y-3">
+				<div
+					className="prose prose-sm dark:prose-invert max-w-none"
+					dangerouslySetInnerHTML={{ __html: html }}
+				/>
+				{citations.length ? (
+					<CitationPills
+						citations={citations}
+						indexes={citations.map((_, index) => index + 1)}
+						onCite={onCite}
+					/>
+				) : null}
+			</div>
+		)
+	}
+
+	const paragraphs = splitCitedParagraphs(content)
+
+	return (
+		<div className="space-y-3">
+			{paragraphs.map((paragraph, paragraphIndex) => {
+				const html = paragraph.text
+					? (marked.parse(paragraph.text, { async: false }) as string)
+					: ""
+
+				return (
+					<div key={`paragraph-${paragraphIndex}`} className="space-y-2">
+						{html ? (
+							<div
+								className="prose prose-sm dark:prose-invert max-w-none"
+								dangerouslySetInnerHTML={{ __html: html }}
+							/>
+						) : null}
+						{paragraph.citationIndexes.length ? (
+							<CitationPills
+								citations={citations}
+								indexes={paragraph.citationIndexes}
+								onCite={onCite}
+							/>
+						) : null}
+					</div>
+				)
+			})}
+		</div>
+	)
+}
 
 export function ChatMessageList({
 	entries,
@@ -111,9 +223,6 @@ export function ChatMessageList({
 					)
 				}
 
-				const html = marked.parse(entry.content || "", {
-					async: false,
-				}) as string
 				const latestFailed =
 					canRetry &&
 					(entry.status === "failed" ||
@@ -139,32 +248,11 @@ export function ChatMessageList({
 							</p>
 						) : null}
 						{entry.content ? (
-							<div
-								className="prose prose-sm dark:prose-invert max-w-none"
-								dangerouslySetInnerHTML={{ __html: html }}
+							<AssistantContent
+								content={entry.content}
+								citations={entry.citations ?? []}
+								onCite={onCite}
 							/>
-						) : null}
-						{entry.citations?.length ? (
-							<div className="flex flex-wrap gap-2">
-								{entry.citations.map((citation, index) => (
-									<CitationPill
-										key={citation._id}
-										index={index + 1}
-										title={citation.liveTitle}
-										excerpt={citation.excerpt}
-										canNavigate={citation.canNavigate}
-										onOpen={() =>
-											onCite({
-												sourceId: citation.sourceId,
-												startOffset: citation.locator?.startOffset,
-												endOffset: citation.locator?.endOffset,
-												excerpt: citation.excerpt,
-												canNavigate: citation.canNavigate,
-											})
-										}
-									/>
-								))}
-							</div>
 						) : null}
 						{showFailure ? (
 							<div className="space-y-2">

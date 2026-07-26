@@ -9,7 +9,11 @@ import {
 } from "src/lib/auth-server"
 import { formatChatError } from "src/lib/chat_errors"
 import { CHAT_PROGRESS } from "src/lib/chat_progress"
-import { parseCitationMarkers, validateCitations } from "src/lib/citations"
+import {
+	parseCitationMarkers,
+	remapCitationMarkers,
+	validateCitations,
+} from "src/lib/citations"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
 
@@ -281,8 +285,14 @@ Never cite chunk IDs that were not supplied.`
 									: "Source",
 							}))
 
+							const content = remapCitationMarkers(
+								parsed.text,
+								parsed.citations,
+								validation.valid,
+							)
+
 							await finalize({
-								content: parsed.text,
+								content,
 								status: "complete",
 								citations: titled,
 							})
