@@ -126,6 +126,29 @@ export const get = query({
   },
 })
 
+export const listChunks = query({
+  args: {
+    sourceId: v.id("sources"),
+  },
+  handler: async (ctx, args) => {
+    await requireSourceOwner(ctx, args.sourceId)
+    const chunks = await ctx.db
+      .query("chunks")
+      .withIndex("by_source_ordinal", (q) => q.eq("sourceId", args.sourceId))
+      .collect()
+
+    return chunks
+      .filter((chunk) => !chunk.deletedAt)
+      .map((chunk) => ({
+        chunkId: chunk._id,
+        text: chunk.text,
+        ordinal: chunk.ordinal,
+        startOffset: chunk.startOffset,
+        endOffset: chunk.endOffset,
+      }))
+  },
+})
+
 export const getNormalizedContent = query({
   args: {
     sourceId: v.id("sources"),
@@ -518,6 +541,9 @@ export const retry = mutation({
     await ctx.db.patch(source._id, {
       processingState: "pending",
       errorCode: undefined,
+      digestStatus: undefined,
+      digestText: undefined,
+      digestCitations: undefined,
       updatedAt: Date.now(),
       selected: true,
     })

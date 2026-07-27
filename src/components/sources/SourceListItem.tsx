@@ -14,6 +14,7 @@ const STATUS_LABEL: Record<string, string> = {
   extracting: "Reading",
   chunking: "Preparing",
   embedding: "Indexing",
+  summarizing: "Summarizing",
   ready: "Ready",
   failed: "Couldn't process",
 }

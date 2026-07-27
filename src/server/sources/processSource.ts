@@ -14,6 +14,7 @@ import {
   extractReadableHtml,
   fetchPublicHtml,
 } from "src/server/sources/fetchHtml"
+import { generateSourceDigest } from "src/server/sources/generateSourceDigest"
 import {
   normalizeBufferToMarkdown,
   normalizeHtmlToMarkdown,
@@ -102,6 +103,93 @@ async function extractMarkdown(
   return { markdown, nextTitle }
 }
 
+async function summarizeSource(args: {
+  client: ConvexHttpClient
+  sourceId: Id<"sources">
+  sourceTitle: string
+  markdown: string
+  chunks: Array<{
+    chunkId: Id<"chunks">
+    text: string
+    ordinal: number
+    startOffset: number
+    endOffset: number
+  }>
+}) {
+  try {
+    await args.client.mutation(api.ingestion.setProcessingState, {
+      sourceId: args.sourceId,
+      processingState: "summarizing",
+    })
+  } catch {
+    // Older deployments may not know "summarizing" yet — still try the digest.
+  }
+
+  try {
+    requireEnv("OPENAI_API_KEY")
+
+    let chunks = args.chunks
+
+    if (!chunks.length) {
+      chunks = await args.client.query(api.sources.listChunks, {
+        sourceId: args.sourceId,
+      })
+    }
+
+    const digest = await generateSourceDigest({
+      sourceTitle: args.sourceTitle,
+      markdown: args.markdown,
+      chunks: chunks.map((chunk) => ({
+        chunkId: String(chunk.chunkId),
+        text: chunk.text,
+        startOffset: chunk.startOffset,
+        endOffset: chunk.endOffset,
+        ordinal: chunk.ordinal,
+      })),
+    })
+
+    if (!digest) {
+      await args.client.mutation(api.ingestion.setDigest, {
+        sourceId: args.sourceId,
+        digestStatus: "failed",
+      })
+      return
+    }
+
+    await args.client.mutation(api.ingestion.setDigest, {
+      sourceId: args.sourceId,
+      digestStatus: "ready",
+      digestText: digest.digestText,
+      digestCitations: digest.citations.flatMap((citation) => {
+        const chunk = chunks.find(
+          (entry) => String(entry.chunkId) === citation.chunkId,
+        )
+
+        if (!chunk) {
+          return []
+        }
+
+        return [
+          {
+            chunkId: chunk.chunkId,
+            quote: citation.quote,
+            locator: citation.locator,
+          },
+        ]
+      }),
+    })
+  } catch {
+    try {
+      await args.client.mutation(api.ingestion.setDigest, {
+        sourceId: args.sourceId,
+        digestStatus: "failed",
+      })
+    } catch {
+      // Digest fields may not be deployed yet; chat still unlocks via markReady.
+    }
+  }
+}
+
 export async function processSourcePipeline(
   sourceId: Id<"sources">,
   token: string,
@@ -165,7 +253,7 @@ export async function processSourcePipeline(
       },
     })
 
-    await client.mutation(api.ingestion.replaceChunks, {
+    const inserted = await client.mutation(api.ingestion.replaceChunks, {
       sourceId,
       chunks: texts.map((text, index) => ({
         text,
@@ -174,6 +262,19 @@ export async function processSourcePipeline(
         endOffset: locators[index]?.endOffset ?? text.length,
         embedding: vectors[index] ?? [],
       })),
+    })
+
+    const chunks =
+      Array.isArray(inserted) && inserted.length
+        ? inserted
+        : await client.query(api.sources.listChunks, { sourceId })
+
+    await summarizeSource({
+      client,
+      sourceId,
+      sourceTitle: nextTitle,
+      markdown,
+      chunks,
     })
 
     await client.mutation(api.ingestion.markReady, {

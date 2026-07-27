@@ -1,5 +1,6 @@
 import { v } from "convex/values"
 import { internal } from "./_generated/api"
+import type { Id } from "./_generated/dataModel"
 import { mutation } from "./_generated/server"
 import { requireSourceOwner } from "./lib/ownership"
 
@@ -8,9 +9,22 @@ const processingState = v.union(
   v.literal("extracting"),
   v.literal("chunking"),
   v.literal("embedding"),
+  v.literal("summarizing"),
   v.literal("ready"),
   v.literal("failed"),
 )
+
+const digestCitation = v.object({
+  chunkId: v.id("chunks"),
+  quote: v.string(),
+  locator: v.optional(
+    v.object({
+      startOffset: v.number(),
+      endOffset: v.number(),
+      ordinal: v.number(),
+    }),
+  ),
+})
 
 export const setProcessingState = mutation({
   args: {
@@ -69,8 +83,16 @@ export const replaceChunks = mutation({
       await ctx.db.delete(chunk._id)
     }
 
+    const inserted: Array<{
+      chunkId: Id<"chunks">
+      text: string
+      ordinal: number
+      startOffset: number
+      endOffset: number
+    }> = []
+
     for (const chunk of args.chunks) {
-      await ctx.db.insert("chunks", {
+      const chunkId = await ctx.db.insert("chunks", {
         ownerId: source.ownerId,
         notebookId: source.notebookId,
         sourceId: source._id,
@@ -81,7 +103,46 @@ export const replaceChunks = mutation({
         endOffset: chunk.endOffset,
         embedding: chunk.embedding,
       })
+
+      inserted.push({
+        chunkId,
+        text: chunk.text,
+        ordinal: chunk.ordinal,
+        startOffset: chunk.startOffset,
+        endOffset: chunk.endOffset,
+      })
     }
+
+    return inserted
+  },
+})
+
+export const setDigest = mutation({
+  args: {
+    sourceId: v.id("sources"),
+    digestStatus: v.union(v.literal("ready"), v.literal("failed")),
+    digestText: v.optional(v.string()),
+    digestCitations: v.optional(v.array(digestCitation)),
+  },
+  handler: async (ctx, args) => {
+    await requireSourceOwner(ctx, args.sourceId)
+
+    if (args.digestStatus === "ready" && args.digestText) {
+      await ctx.db.patch(args.sourceId, {
+        digestStatus: "ready",
+        digestText: args.digestText,
+        digestCitations: args.digestCitations ?? [],
+        updatedAt: Date.now(),
+      })
+      return
+    }
+
+    await ctx.db.patch(args.sourceId, {
+      digestStatus: "failed",
+      digestText: undefined,
+      digestCitations: undefined,
+      updatedAt: Date.now(),
+    })
   },
 })
 

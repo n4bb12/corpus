@@ -342,6 +342,11 @@ function clampQuoteRange(chunkText: string, range: QuoteRange, quote: string) {
   }
 }
 
+/** True when `quote` can be located inside `chunkText` (verbatim / soft match). */
+export function chunkContainsQuote(chunkText: string, quote: string) {
+  return locateQuote(chunkText, quote) !== null
+}
+
 /** Map a verbatim quote inside an evidence chunk to a tight source locator. */
 export function resolveCitationQuote(
   input: CitationQuoteInput,

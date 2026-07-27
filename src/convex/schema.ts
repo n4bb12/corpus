@@ -6,9 +6,28 @@ export const processingState = v.union(
   v.literal("extracting"),
   v.literal("chunking"),
   v.literal("embedding"),
+  v.literal("summarizing"),
   v.literal("ready"),
   v.literal("failed"),
 )
+
+export const digestStatus = v.union(
+  v.literal("pending"),
+  v.literal("ready"),
+  v.literal("failed"),
+)
+
+export const digestCitation = v.object({
+  chunkId: v.id("chunks"),
+  quote: v.string(),
+  locator: v.optional(
+    v.object({
+      startOffset: v.number(),
+      endOffset: v.number(),
+      ordinal: v.number(),
+    }),
+  ),
+})
 
 export const sourceKind = v.union(
   v.literal("url"),
@@ -81,6 +100,9 @@ export default defineSchema({
     processingState: processingState,
     errorCode: v.optional(v.string()),
     characterCount: v.optional(v.number()),
+    digestStatus: v.optional(digestStatus),
+    digestText: v.optional(v.string()),
+    digestCitations: v.optional(v.array(digestCitation)),
     deletedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
