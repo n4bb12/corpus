@@ -1,4 +1,5 @@
 import dns from "node:dns/promises"
+import { load } from "cheerio"
 import { LIMITS } from "src/lib/limits"
 import {
   isBlockedResolvedAddress,
@@ -110,19 +111,19 @@ export async function fetchPublicHtml(url: URL) {
   }
 }
 
+/** Prefer article/main/body inner HTML; strip script/style/noscript. */
 export function extractReadableHtml(html: string) {
-  const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
-  const title = titleMatch?.[1]?.trim() ?? null
-  const articleMatch =
-    html.match(/<article[^>]*>([\s\S]*?)<\/article>/i) ??
-    html.match(/<main[^>]*>([\s\S]*?)<\/main>/i) ??
-    html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+  const $ = load(html)
+  const title = $("title").first().text().trim() || null
 
-  const body = articleMatch?.[1] ?? html
-  const cleaned = body
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
+  $("script, style, noscript").remove()
 
-  return { title, html: cleaned }
+  const main =
+    $("article").first().html() ??
+    $("main").first().html() ??
+    $("body").first().html() ??
+    $.root().html() ??
+    html
+
+  return { title, html: main }
 }
