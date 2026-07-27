@@ -6,8 +6,11 @@ import { v } from "convex/values"
 import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import { MODELS } from "src/lib/limits"
 import {
+  EVIDENCE_CHARACTER_BUDGET,
   mergeRetrievalCandidates,
   selectEvidenceWithinBudget,
+  sourcesExceedEvidenceBudget,
+  tryPackInlineEvidence,
 } from "src/lib/retrieval"
 import { api, internal } from "./_generated/api"
 import { action } from "./_generated/server"
@@ -42,6 +45,35 @@ export const prepareEvidence = action({
         generationId: args.generationId,
         progressLabel,
       })
+    }
+
+    const characterCounts = await ctx.runQuery(
+      internal.retrievalHelpers.listSourceCharacterCounts,
+      {
+        notebookId: args.notebookId,
+        sourceIds: args.sourceIds,
+      },
+    )
+
+    if (
+      !sourcesExceedEvidenceBudget(characterCounts, EVIDENCE_CHARACTER_BUDGET)
+    ) {
+      const chunks = await ctx.runQuery(
+        internal.retrievalHelpers.listChunksForSources,
+        {
+          notebookId: args.notebookId,
+          sourceIds: args.sourceIds,
+        },
+      )
+
+      const inline = tryPackInlineEvidence(chunks, EVIDENCE_CHARACTER_BUDGET)
+
+      if (inline) {
+        return {
+          evidence: inline,
+          insufficient: !inline.length,
+        }
+      }
     }
 
     await setProgress(CHAT_PROGRESS.searching)
@@ -104,7 +136,10 @@ export const prepareEvidence = action({
       }
     }
 
-    const selected = selectEvidenceWithinBudget(ranked, 12_000)
+    const selected = selectEvidenceWithinBudget(
+      ranked,
+      EVIDENCE_CHARACTER_BUDGET,
+    )
 
     return {
       evidence: selected,

@@ -13,6 +13,73 @@ type VectorHit = {
   ordinal: number
 }
 
+export const listSourceCharacterCounts = internalQuery({
+  args: {
+    notebookId: v.id("notebooks"),
+    sourceIds: v.array(v.id("sources")),
+  },
+  handler: async (ctx, args) => {
+    const counts: Array<number | undefined> = []
+
+    for (const sourceId of args.sourceIds) {
+      const source = await ctx.db.get(sourceId)
+
+      if (
+        !source ||
+        source.deletedAt ||
+        source.notebookId !== args.notebookId
+      ) {
+        continue
+      }
+
+      counts.push(source.characterCount)
+    }
+
+    return counts
+  },
+})
+
+export const listChunksForSources = internalQuery({
+  args: {
+    notebookId: v.id("notebooks"),
+    sourceIds: v.array(v.id("sources")),
+  },
+  handler: async (ctx, args) => {
+    const chunks: Array<{
+      chunkId: Id<"chunks">
+      sourceId: Id<"sources">
+      text: string
+      startOffset: number
+      endOffset: number
+      ordinal: number
+    }> = []
+
+    for (const sourceId of args.sourceIds) {
+      const sourceChunks = await ctx.db
+        .query("chunks")
+        .withIndex("by_source_ordinal", (q) => q.eq("sourceId", sourceId))
+        .collect()
+
+      for (const chunk of sourceChunks) {
+        if (chunk.deletedAt || chunk.notebookId !== args.notebookId) {
+          continue
+        }
+
+        chunks.push({
+          chunkId: chunk._id,
+          sourceId: chunk.sourceId,
+          text: chunk.text,
+          startOffset: chunk.startOffset,
+          endOffset: chunk.endOffset,
+          ordinal: chunk.ordinal,
+        })
+      }
+    }
+
+    return chunks
+  },
+})
+
 export const searchText = internalQuery({
   args: {
     notebookId: v.id("notebooks"),

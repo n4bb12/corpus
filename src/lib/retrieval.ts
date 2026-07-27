@@ -1,12 +1,82 @@
+export const EVIDENCE_CHARACTER_BUDGET = 12_000
+
 export type RetrievalCandidate = {
   chunkId: string
   sourceId: string
   text: string
   score: number
-  channel: "vector" | "text" | "both"
+  channel: "vector" | "text" | "both" | "inline"
   startOffset: number
   endOffset: number
   ordinal: number
+}
+
+export type InlineEvidenceChunk = {
+  chunkId: string
+  sourceId: string
+  text: string
+  startOffset: number
+  endOffset: number
+  ordinal: number
+}
+
+/** True when known source sizes already exceed the evidence budget. */
+export function sourcesExceedEvidenceBudget(
+  characterCounts: Array<number | undefined>,
+  maxCharacters: number,
+) {
+  let total = 0
+
+  for (const count of characterCounts) {
+    if (typeof count !== "number") {
+      return false
+    }
+
+    total += count
+
+    if (total > maxCharacters) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * When every selected chunk fits the budget, return them all as evidence and
+ * skip retrieval. Otherwise null so the caller can fall back to hybrid RAG.
+ */
+export function tryPackInlineEvidence(
+  chunks: InlineEvidenceChunk[],
+  maxCharacters: number,
+) {
+  let used = 0
+
+  for (const chunk of chunks) {
+    used += chunk.text.length
+
+    if (used > maxCharacters) {
+      return null
+    }
+  }
+
+  return [...chunks]
+    .sort((a, b) => {
+      const sourceOrder = a.sourceId.localeCompare(b.sourceId)
+
+      if (sourceOrder !== 0) {
+        return sourceOrder
+      }
+
+      return a.ordinal - b.ordinal
+    })
+    .map(
+      (chunk, index): RetrievalCandidate => ({
+        ...chunk,
+        score: 1 / (index + 1),
+        channel: "inline",
+      }),
+    )
 }
 
 /** Union vector+text hits by chunkId; mark channel, keep max score, sort desc. */
