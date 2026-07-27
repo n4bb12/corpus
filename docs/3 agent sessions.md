@@ -8463,3 +8463,24 @@ Created **8 commits** from the uncommitted work:
 
 Working tree is clean.
 
+# Light mode contrast adjustment
+_Exported on 7/28/2026 at 00:22:09 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+"Gather your sources, ask precise questions, and follow every claim back to the passage that supports it." needs sliiightly better contrast in light mode.
+
+---
+
+**Cursor**
+
+I'll find that copy and bump its light-mode contrast slightly.
+
+Checking how muted foreground is defined so we can nudge light-mode contrast without overdoing dark mode.
+
+Nudging that tagline a bit darker in light mode while leaving dark mode alone.
+
+Bumped the sign-in tagline from `text-muted-foreground` to `text-foreground/70` in light mode (dark mode unchanged). Should read a bit clearer without feeling heavy.
+

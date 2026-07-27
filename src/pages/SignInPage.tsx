@@ -24,7 +24,7 @@ export function SignInPage() {
           <h1 className="font-heading text-4xl leading-[1.02] font-semibold tracking-tight text-balance md:text-6xl lg:text-7xl">
             Turn your sources into answers you can trust.
           </h1>
-          <p className="mx-auto max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg lg:mx-0">
+          <p className="mx-auto max-w-xl text-base leading-relaxed text-foreground/70 dark:text-muted-foreground md:text-lg lg:mx-0">
             Gather your sources, ask precise questions, and follow every claim
             back to the passage that supports it.
           </p>
