@@ -2,8 +2,11 @@ import { describe, expect, test } from "bun:test"
 import {
   compactTitle,
   humanizeFilenameTitle,
+  isVerbatimSourcePhrase,
   isWeakTitle,
+  looksLikeDocumentCode,
   looksLikeFilename,
+  looksLikeUrl,
   normalizeTitle,
   titleFromFilename,
   titleFromMarkdown,
@@ -66,8 +69,33 @@ describe("source titles", () => {
       `"Im Rahmen der kontinuierlichen Weiterentwicklung"`,
     )
     expect(isWeakTitle("Wichtiger Hinweis:")).toBe(true)
+    expect(isWeakTitle("Untitled notebook")).toBe(true)
     expect(isWeakTitle("Elternbrief")).toBe(false)
     expect(looksLikeFilename("Elternbrief_Start_Infoportal.pdf")).toBe(true)
     expect(looksLikeFilename("Infoportal start letter")).toBe(false)
+    expect(looksLikeUrl("https://biblebots.de/mission/")).toBe(true)
+    expect(looksLikeUrl("biblebots.de/mission/")).toBe(true)
+    expect(looksLikeUrl("Mission – Biblebots")).toBe(false)
+    expect(looksLikeDocumentCode("32460 004")).toBe(true)
+    expect(looksLikeDocumentCode("Elternbrief Start Infoportal")).toBe(false)
+  })
+
+  test("rejects verbatim source phrases", () => {
+    const markdown =
+      "Liebe Eltern,\n\nMit freundlichen Grüßen\n\nDetails zum Infoportal folgen.\n\nIm Rahmen der kontinuierlichen Weiterentwicklung unserer schulischen Organisation werden wir die Eltern informieren."
+
+    expect(isVerbatimSourcePhrase("Mit freundlichen Grüßen", markdown)).toBe(
+      false,
+    )
+    expect(isVerbatimSourcePhrase("Liebe Eltern", markdown)).toBe(false)
+    expect(isVerbatimSourcePhrase("Infoportal launch letter", markdown)).toBe(
+      false,
+    )
+    expect(
+      isVerbatimSourcePhrase(
+        "Im Rahmen der kontinuierlichen Weiterentwicklung unserer schulischen Organisation werden wir die Eltern informieren",
+        markdown,
+      ),
+    ).toBe(true)
   })
 })

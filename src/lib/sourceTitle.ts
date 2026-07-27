@@ -37,6 +37,29 @@ export function looksLikeFilename(value: string) {
   return /\.[a-z0-9]{1,8}$/i.test(trimmed)
 }
 
+/** True for raw URLs or host/path labels like "biblebots.de/mission/". */
+export function looksLikeUrl(value: string) {
+  const trimmed = value.trim()
+
+  if (!trimmed) {
+    return false
+  }
+
+  if (/^https?:\/\//i.test(trimmed) || /^www\./i.test(trimmed)) {
+    return true
+  }
+
+  // host/path with no spaces — e.g. example.com/docs or example.com/
+  return /^[a-z0-9.-]+\.[a-z]{2,}([/:].*)?$/i.test(trimmed)
+}
+
+/** True when the label is mostly digits/codes with no real words (e.g. "32460 004"). */
+export function looksLikeDocumentCode(value: string) {
+  const letters = value.replace(/[^a-zA-ZÀ-ÿ]+/g, "")
+
+  return letters.length < 3
+}
+
 export function titleFromPastedText(text: string) {
   const line = text
     .split(/\r?\n/)
@@ -88,6 +111,7 @@ export function titleFromSourceLabel(raw: string, fallback = "") {
   return compactTitle(raw, fallback)
 }
 
+/** Empty, trailing-label punctuation, or the untitled placeholder — not topical. */
 export function isWeakTitle(value: string) {
   const trimmed = value.trim()
 
@@ -99,9 +123,45 @@ export function isWeakTitle(value: string) {
     return true
   }
 
-  return /^(hinweis|note|notes|important|untitled|wichtig(er)? hinweis)$/i.test(
-    trimmed,
-  )
+  return /^untitled(\s+notebook)?$/i.test(trimmed)
+}
+
+/**
+ * True when the candidate is copied from a multi-word body sentence rather
+ * than invented as a summary label. Short headings / document titles that also
+ * appear in the source are allowed.
+ */
+export function isVerbatimSourcePhrase(title: string, markdown: string) {
+  const needle = formatTitle(title).toLowerCase()
+
+  if (!needle) {
+    return false
+  }
+
+  const wordCount = needle.split(/\s+/).length
+
+  // Document titles and short topical labels often appear as headings — keep them.
+  if (
+    wordCount <= COMPACT_TITLE_MAX_WORDS &&
+    needle.length <= COMPACT_TITLE_MAX_CHARS
+  ) {
+    return false
+  }
+
+  const lines = markdown
+    .split(/\r?\n/)
+    .map((line) => markdownToPlainText(line).toLowerCase())
+    .filter(Boolean)
+
+  for (const line of lines) {
+    const cleaned = line.replace(/[.!,…:;]+$/g, "").trim()
+
+    if (cleaned === needle || line === needle) {
+      return true
+    }
+  }
+
+  return lines.join(" ").includes(needle)
 }
 
 /** Keep notebook titles short: first N words, soft char cap at a word boundary. */
