@@ -3034,3 +3034,88 @@ The fade-ups were killed by the SSR fix that set `pageEnterInitial = false` on `
 
 Restored them in `Reveal`: opacity/y/blur entrance again (`0 → 1`, `12px` up, blur clear) over the 320ms reveal timing. Library is fine with a real `initial` because it only mounts after `ClientAuthBoundary` on the client — notebook/sign-in shells still use `pageEnterInitial = false` so their SSR HTML stays visible.
 
+# Notebook card logo interactions
+_Exported on 7/27/2026 at 11:45:53 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Remove the logo resize hover on notebook cards. Only keep it on the plus card. I'm thinking which other interaction feedback we could provide.
+
+---
+
+**Cursor**
+
+I'll find the notebook card hover/logo resize logic and limit it to the plus card.
+
+Removing the logo scale/translate hover from notebook cards; leaving it on the plus card.
+
+Done — notebook cards no longer scale/lift the icon on hover; the plus card still does.
+
+What’s left for hover feedback on notebook cards is mainly the menu fade-in. A few options that fit better than icon resize:
+
+1. **Whole-card lift** — slight `translate-y` + stronger pine shadow (reads as “openable surface”)
+2. **Surface wash** — soft `bg-muted/40` like the plus card, but without the dashed border change
+3. **Title tint** — title shifts toward primary on hover (cheap, clear affordance)
+4. **Press feedback** — `active:scale-[0.98]` on the card, matching buttons
+5. **Ring intensify** — outer bezel ring goes from `foreground/5` → `primary/20`
+
+I’d lean toward **1 + 4** for existing notebooks (lift + press), and keep the plus card’s icon bounce as the “create” signal so the two actions stay visually distinct. Want me to try one of those?
+
+---
+
+**User**
+
+give me a switcher to try them out
+
+---
+
+**Cursor**
+
+I'll add a temporary hover-feedback switcher on the library so you can click through the options live.
+
+Wiring a throwaway `?variant=` switcher on the library page so you can flip through the hover options live.
+
+Throwaway hover switcher is on the library page — black pill at the bottom, arrow keys or clicks to cycle.
+
+Variants:
+1. **None** — baseline (menu only)
+2. **Lift + shadow**
+3. **Surface wash**
+4. **Title tint**
+5. **Ring intensify**
+6. **Lift + press** — the combo I’d try first
+
+URL stays in sync (`?variant=lift-press`, etc.). Hidden in production builds. Tell me which one wins and I’ll fold it in and strip the prototype.
+
+---
+
+**User**
+
+6
+
+---
+
+**Cursor**
+
+Folding in lift + press and removing the prototype switcher.
+
+Shipped. Notebook cards now lift + deepen shadow on hover and press-scale on click; prototype switcher is gone.
+
+---
+
+**User**
+
+That's not the lift and press I previewed.
+
+---
+
+**Cursor**
+
+Checking the shipped card against the previewed lift+press classes — likely a Motion layout transform conflict.
+
+Motion’s `layout` was owning `transform` on the same node as the hover/press classes, so the lift and press never actually applied. Moving those onto an inner wrapper to match the preview.
+
+Fixed — Motion’s layout transform was overriding the hover/press CSS on the same node. Lift and press now live on an inner wrapper, so you should get the same `-translate-y-1` + shadow deepen on hover and `scale-[0.98]` on press as in the preview.
+
