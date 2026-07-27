@@ -26,6 +26,7 @@ export type ChatSseHandlers = {
   onText?: (text: string) => void
   onCitations?: (citations: StreamCitation[]) => void
   onInsufficient?: (insufficient: boolean) => void
+  onStatus?: (label: string) => void
   /** When false, stop applying events even if the socket still delivers them. */
   shouldAccept?: () => boolean
   signal?: AbortSignal
@@ -218,6 +219,17 @@ export async function consumeChatSse(
           ) {
             insufficient = data.insufficient
             handlers.onInsufficient?.(data.insufficient)
+            return
+          }
+
+          if (
+            event === "status" &&
+            data &&
+            typeof data === "object" &&
+            "label" in data &&
+            typeof data.label === "string"
+          ) {
+            handlers.onStatus?.(data.label)
             return
           }
 

@@ -9,6 +9,7 @@ import {
   getOptimisticUserPrompt,
   type OptimisticChatSubmission,
 } from "src/lib/chatHistory"
+import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import { consumeChatSse, type StreamCitation } from "src/lib/chatSse"
 import { useHasPendingSources } from "src/lib/pendingSources"
 import { useSignedInQueryArgs } from "src/lib/useSignedIn"
@@ -33,6 +34,8 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   const [streamedInsufficient, setStreamedInsufficient] = useState<
     boolean | null
   >(null)
+  const [progressLabel, setProgressLabel] = useState<string | null>(null)
+  const [retryAssistantId, setRetryAssistantId] = useState<string | null>(null)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
   const abortRef = useRef<AbortController | null>(null)
@@ -63,12 +66,14 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
         ? ("select" as const)
         : ("empty" as const)
 
-  const streaming = entries?.some(
-    (entry) =>
-      entry.kind === "message" &&
-      entry.role === "assistant" &&
-      (entry.status === "pending" || entry.status === "streaming"),
-  )
+  const streaming =
+    !!progressLabel ||
+    !!entries?.some(
+      (entry) =>
+        entry.kind === "message" &&
+        entry.role === "assistant" &&
+        (entry.status === "pending" || entry.status === "streaming"),
+    )
 
   const canRetry = entries ? canRetryLatestAssistant(entries) : false
   const optimisticUserPrompt = getOptimisticUserPrompt(
@@ -77,7 +82,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   )
 
   useEffect(() => {
-    if (!entries?.length && !streamedContent) {
+    if (!entries?.length && !streamedContent && !progressLabel) {
       return
     }
 
@@ -86,7 +91,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     }
 
     scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight
-  }, [entries, streamedContent])
+  }, [entries, streamedContent, progressLabel])
 
   async function markFailed(message: string) {
     setError(message)
@@ -112,6 +117,8 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     streamedContentRef.current = null
     setStreamedCitations([])
     setStreamedInsufficient(null)
+    setProgressLabel(CHAT_PROGRESS.looking)
+    setRetryAssistantId(retryAssistantId ?? null)
 
     if (!retryAssistantId) {
       setOptimisticSubmission({
@@ -157,6 +164,13 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
       const result = await consumeChatSse(response, {
         signal: controller.signal,
         shouldAccept: () => acceptingStreamRef.current,
+        onStatus: (label) => {
+          if (!acceptingStreamRef.current) {
+            return
+          }
+
+          setProgressLabel(label)
+        },
         onText: (text) => {
           if (!acceptingStreamRef.current) {
             return
@@ -164,6 +178,10 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
 
           streamedContentRef.current = text
           setStreamedContent(text)
+
+          if (text.trim()) {
+            setProgressLabel(null)
+          }
         },
         onCitations: (citations) => {
           if (!acceptingStreamRef.current) {
@@ -203,6 +221,8 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
       acceptingStreamRef.current = false
       setSending(false)
       setOptimisticSubmission(null)
+      setProgressLabel(null)
+      setRetryAssistantId(null)
       abortRef.current = null
     }
   }
@@ -211,6 +231,8 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     acceptingStreamRef.current = false
     abortRef.current?.abort()
     abortRef.current = null
+    setProgressLabel(null)
+    setRetryAssistantId(null)
 
     try {
       await cancelGeneration({
@@ -238,6 +260,8 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     streamedContent,
     streamedCitations,
     streamedInsufficient,
+    progressLabel,
+    retryAssistantId,
     canRetry,
     optimisticUserPrompt,
     send,

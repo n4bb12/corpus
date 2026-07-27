@@ -6,9 +6,11 @@ import {
   ChatEmptyPrompt,
   type ChatEmptyPromptState,
 } from "src/components/chat/ChatEmptyPrompt"
+import { ChatProgressLabel } from "src/components/chat/ChatProgressLabel"
 import { ChatSourceBoundary } from "src/components/chat/ChatSourceBoundary"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import type { api } from "src/convex/_generated/api"
+import { shouldShowOptimisticProgress } from "src/lib/chatHistory"
 import type { StreamCitation } from "src/lib/chatSse"
 import { fadeTransition } from "src/lib/motion"
 
@@ -21,6 +23,8 @@ export type ChatMessageListProps = {
   streamedContent: string | null
   streamedCitations: StreamCitation[]
   streamedInsufficient: boolean | null
+  progressLabel: string | null
+  retryAssistantId: string | null
   optimisticUserPrompt: string | null
   emptyPromptState: ChatEmptyPromptState
   canRetry: boolean
@@ -36,6 +40,8 @@ export const ChatMessageList = memo(function ChatMessageList({
   streamedContent,
   streamedCitations,
   streamedInsufficient,
+  progressLabel,
+  retryAssistantId,
   optimisticUserPrompt,
   emptyPromptState,
   canRetry,
@@ -49,6 +55,11 @@ export const ChatMessageList = memo(function ChatMessageList({
     entries !== undefined &&
     !optimisticUserPrompt &&
     !entries.some((entry) => entry.kind === "message")
+  const showOptimisticProgress = shouldShowOptimisticProgress(
+    entries,
+    progressLabel,
+    retryAssistantId,
+  )
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-200 flex-col gap-6 py-4">
@@ -110,12 +121,25 @@ export const ChatMessageList = memo(function ChatMessageList({
               entry={entry}
               entries={entries}
               streamedContent={
-                entry.status === "pending" || entry.status === "streaming"
+                entry.status === "pending" ||
+                entry.status === "streaming" ||
+                entry._id === retryAssistantId
                   ? streamedContent
                   : null
               }
               streamedCitations={streamedCitations}
               streamedInsufficient={streamedInsufficient}
+              progressLabel={
+                entry.status === "pending" ||
+                entry.status === "streaming" ||
+                entry._id === retryAssistantId
+                  ? progressLabel
+                  : null
+              }
+              retrying={entry._id === retryAssistantId}
+              skipProgressEntrance={
+                !showOptimisticProgress && !!progressLabel && !retryAssistantId
+              }
               canRetry={canRetry}
               onCite={onCite}
               onRetry={onRetry}
@@ -126,6 +150,10 @@ export const ChatMessageList = memo(function ChatMessageList({
 
       {optimisticUserPrompt ? (
         <ChatUserMessage content={optimisticUserPrompt} />
+      ) : null}
+
+      {showOptimisticProgress ? (
+        <ChatProgressLabel label={progressLabel} />
       ) : null}
     </div>
   )

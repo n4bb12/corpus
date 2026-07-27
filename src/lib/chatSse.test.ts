@@ -76,11 +76,17 @@ describe("chat sse", () => {
     const updates: string[] = []
     const citationTitles: string[] = []
     const insufficientFlags: boolean[] = []
+    const statusLabels: string[] = []
     const response = new Response(
       new ReadableStream({
         start(controller) {
           const encoder = new TextEncoder()
 
+          controller.enqueue(
+            encoder.encode(
+              'event: status\ndata: {"label":"Looking through your sources…"}\n\n',
+            ),
+          )
           controller.enqueue(
             encoder.encode(
               'event: citations\ndata: {"citations":[{"_id":"chunk-1","chunkId":"chunk-1","liveTitle":"Research notes","excerpt":"Evidence","canNavigate":true}]}\n\n',
@@ -105,6 +111,7 @@ describe("chat sse", () => {
 
     const result = await consumeChatSse(response, {
       onText: (text) => updates.push(text),
+      onStatus: (label) => statusLabels.push(label),
       onCitations: (citations) => {
         citationTitles.push(...citations.map((citation) => citation.liveTitle))
       },
@@ -113,6 +120,11 @@ describe("chat sse", () => {
       },
     })
 
+    expect(statusLabels).toMatchInlineSnapshot(`
+      [
+        "Looking through your sources…",
+      ]
+    `)
     expect(citationTitles).toMatchInlineSnapshot(`
       [
         "Research notes",

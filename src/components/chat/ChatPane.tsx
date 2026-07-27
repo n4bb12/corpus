@@ -51,6 +51,8 @@ export function ChatPane({
           streamedContent={chat.streamedContent}
           streamedCitations={chat.streamedCitations}
           streamedInsufficient={chat.streamedInsufficient}
+          progressLabel={chat.progressLabel}
+          retryAssistantId={chat.retryAssistantId}
           optimisticUserPrompt={chat.optimisticUserPrompt}
           emptyPromptState={chat.emptyPromptState}
           canRetry={chat.canRetry}

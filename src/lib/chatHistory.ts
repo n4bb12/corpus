@@ -28,6 +28,24 @@ export function getOptimisticUserPrompt(
     : submission.content
 }
 
+/** True until Convex publishes a pending/streaming assistant for this turn. */
+export function shouldShowOptimisticProgress(
+  entries: ChatEntryLike[] | undefined,
+  progressLabel: string | null,
+  retryAssistantId?: string | null,
+) {
+  if (!progressLabel || retryAssistantId) {
+    return false
+  }
+
+  return !entries?.some(
+    (entry) =>
+      entry.kind === "message" &&
+      entry.role === "assistant" &&
+      (entry.status === "pending" || entry.status === "streaming"),
+  )
+}
+
 export function latestBoundaryIndex(entries: ChatEntryLike[]) {
   for (let index = entries.length - 1; index >= 0; index -= 1) {
     if (entries[index]?.kind === "sourceBoundary") {

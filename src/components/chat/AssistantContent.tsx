@@ -42,7 +42,7 @@ export function AssistantContent({
     }) as string
 
     return (
-      <div className="space-y-3">
+      <div className="relative space-y-3">
         <div
           className="prose prose-sm dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: html }}
@@ -62,7 +62,7 @@ export function AssistantContent({
   const paragraphs = splitCitedParagraphs(displayContent)
 
   return (
-    <div className="space-y-3">
+    <div className="relative space-y-3">
       {paragraphs.map((paragraph) => {
         const html = paragraph.text
           ? (marked.parse(paragraph.text, { async: false }) as string)

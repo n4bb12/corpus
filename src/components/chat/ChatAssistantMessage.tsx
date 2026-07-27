@@ -1,5 +1,6 @@
 import type { FunctionReturnType } from "convex/server"
 import { AssistantContent } from "src/components/chat/AssistantContent"
+import { ChatProgressLabel } from "src/components/chat/ChatProgressLabel"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import { Button } from "src/components/ui/shadcn/button"
 import type { api } from "src/convex/_generated/api"
@@ -16,6 +17,9 @@ export type ChatAssistantMessageProps = {
   streamedContent: string | null
   streamedCitations: StreamCitation[]
   streamedInsufficient: boolean | null
+  progressLabel: string | null
+  retrying?: boolean
+  skipProgressEntrance?: boolean
   canRetry: boolean
   onCite: (args: ChatCiteArgs) => void
   onRetry: (prompt: string, assistantId: string) => void
@@ -27,6 +31,9 @@ export function ChatAssistantMessage({
   streamedContent,
   streamedCitations,
   streamedInsufficient,
+  progressLabel,
+  retrying = false,
+  skipProgressEntrance = false,
   canRetry,
   onCite,
   onRetry,
@@ -34,7 +41,8 @@ export function ChatAssistantMessage({
   const streamed = streamedContent
     ? resolveStreamedAssistantContent(streamedContent, streamedCitations)
     : null
-  const content = streamed?.content ?? entry.content
+  const content =
+    retrying && !streamedContent ? null : (streamed?.content ?? entry.content)
   const citations = streamed?.citations ?? entry.citations ?? []
   const insufficient =
     streamedContent !== null ? !!streamedInsufficient : !!entry.insufficient
@@ -43,21 +51,23 @@ export function ChatAssistantMessage({
     (entry.status === "failed" ||
       entry.status === "canceled" ||
       (entry.status === "complete" && !entry.content?.trim()))
-  const isStreaming = entry.status === "pending" || entry.status === "streaming"
-  const showProgress = !content && isStreaming && !!entry.progressLabel
+  const isStreaming =
+    entry.status === "pending" || entry.status === "streaming" || retrying
+  const resolvedProgress = progressLabel ?? entry.progressLabel ?? null
+  const showProgress = !content && isStreaming && !!resolvedProgress
   const showStreamingCaret = !!content && isStreaming
   const showFailure =
-    entry.status === "failed" ||
-    entry.status === "canceled" ||
-    (latestFailed && !entry.content?.trim())
+    !retrying &&
+    (entry.status === "failed" ||
+      entry.status === "canceled" ||
+      (latestFailed && !entry.content?.trim()))
 
   return (
     <div className="space-y-3">
-      {showProgress ? (
-        <p className="shimmer text-sm font-medium text-primary" role="status">
-          {entry.progressLabel}
-        </p>
-      ) : null}
+      <ChatProgressLabel
+        label={showProgress ? resolvedProgress : null}
+        skipEntrance={skipProgressEntrance}
+      />
       {content ? (
         <AssistantContent
           content={content}

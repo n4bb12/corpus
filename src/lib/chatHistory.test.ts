@@ -8,6 +8,7 @@ import {
   planSourceBoundaryFromEntries,
   readySelectedSourceIds,
   shouldCreateSourceRevision,
+  shouldShowOptimisticProgress,
   sourceIdsFromSelectionHash,
   successfulPairsAfterBoundary,
 } from "./chatHistory"
@@ -35,6 +36,32 @@ describe("chat history", () => {
         submission,
       ),
     ).toMatchInlineSnapshot(`null`)
+  })
+
+  test("shows optimistic progress until a live assistant appears", () => {
+    expect(
+      shouldShowOptimisticProgress([], "Looking through your sources…"),
+    ).toMatchInlineSnapshot(`true`)
+    expect(
+      shouldShowOptimisticProgress(
+        [
+          {
+            kind: "message",
+            role: "assistant",
+            status: "pending",
+            createdAt: 1,
+          },
+        ],
+        "Looking through your sources…",
+      ),
+    ).toMatchInlineSnapshot(`false`)
+    expect(
+      shouldShowOptimisticProgress(
+        [],
+        "Looking through your sources…",
+        "assistant-1",
+      ),
+    ).toMatchInlineSnapshot(`false`)
   })
 
   test("windows successful pairs and retry eligibility", () => {
