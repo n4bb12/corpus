@@ -3746,3 +3746,66 @@ Pending adds are now shared via a store, so chat can react before the Convex sou
 - **File uploads** — processing shows as soon as the upload placeholder appears  
 - **URL/text** — processing shows from submit until the source shows up in the list
 
+# Chat tab enter animation bug
+_Exported on 7/27/2026 at 15:32:32 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+On mobile, when switching to the chat tab, the chat enter animations play twice.
+
+---
+
+**Cursor**
+
+I'll diagnose the double chat enter animation on mobile by inspecting the chat tab switch and animation code.
+
+The stacked enter animations in `NotebookWorkspace` look suspicious — I'll check how the mobile tab state updates and how motion is configured.
+
+The `key={tab}` + `AnimatePresence` pattern looks like it can run an exit then an enter when the chat section unhides. I'll build a tight repro loop next.
+
+I'll write a harness that counts enter animations on a mobile sources→chat tab switch.
+
+jsdom isn't finishing Motion transitions; I'll force reduced motion so enter/exit complete immediately.
+
+Exit-on-reveal is a solid red signal. Updating the harness to treat that as failure, then ranking hypotheses.
+
+The harness shows an exit firing on sources→chat while the pane unhides — that's the double-motion signature. Extracting a testable policy and wiring a failing unit test next.
+
+Feedback loop is red (`bun test src/components/notebook/chatTabMotion.test.ts`). Ranked hypotheses:
+
+1. **`key={tab}` + `AnimatePresence mode="wait"`** — sources→chat exits the old keyed pane, then enters a new one; on mobile the section unhides in the same update, so both play. Harness already saw `anim-exit` on switch.
+2. **Unhiding `display:none` re-triggers Motion**, then the key change fires a second enter.
+3. **Tab URL updates twice** (default-tab effect + `setTab`).
+4. **ChatPane remount** flashes empty→loaded and looks like a second enter.
+5. **Outer `motion.section`** re-animates when its display class flips.
+
+Testing #1 first by stabilizing the presence key and dropping the exit/remount cycle.
+
+Restoring a small policy helper + test as the regression seam, and wiring it into the workspace.
+
+**Cause:** `NotebookWorkspace` wrapped `ChatPane` in `AnimatePresence` with `key={tab}` and `mode="wait"`. On mobile, switching to Chat unhides the section in the same update, so you saw the old keyed pane **exit**, then a new one **enter** — two motion cycles.
+
+**Fix:** Removed that tab-keyed presence wrapper. Chat stays mounted; mobile show/hide is CSS only (`hidden` / `flex`).
+
+No strong unit-test seam here (it was a React presence wiring bug). Worth a quick glance on a phone/narrow viewport: Sources → Chat should enter once, not twice.
+
+---
+
+**User**
+
+Now we have no animation.
+
+---
+
+**Cursor**
+
+I'll restore a single chat enter on mobile tab switch without the exit+remount cycle that doubled it.
+
+Restoring a single enter by driving `animate` from tab + viewport, with a stable ChatPane (no `key={tab}` remount).
+
+Restored a **single** enter: the chat surface stays mounted and Motion animates `opacity`/`y` from the hidden pose → visible when the mobile tab becomes Chat. Desktop stays on the visible pose always, so tab changes don’t fade chat there.
+
+No more `key={tab}` / `AnimatePresence` remount, so you shouldn’t get the exit+enter double play.
+

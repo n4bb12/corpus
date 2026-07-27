@@ -1,5 +1,6 @@
-import { AnimatePresence, motion, useReducedMotion } from "motion/react"
+import { motion, useReducedMotion } from "motion/react"
 import { ChatPane } from "src/components/chat/ChatPane"
+import { chatTabEnterAnimate } from "src/components/notebook/chatTabMotion"
 import type { SourcePreviewHighlight } from "src/components/sources/SourcePreview"
 import { SourcesPane } from "src/components/sources/SourcesPane"
 import type { Id } from "src/convex/_generated/dataModel"
@@ -8,6 +9,7 @@ import {
   pageEnterInitial,
   respectReducedMotion,
 } from "src/lib/motion"
+import { useMdUp } from "src/lib/useMdUp"
 import { cn } from "src/lib/utils"
 
 export type NotebookWorkspaceProps = {
@@ -36,6 +38,7 @@ export function NotebookWorkspace({
   onHighlight,
 }: NotebookWorkspaceProps) {
   const reduceMotion = useReducedMotion()
+  const mdUp = useMdUp()
 
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -74,48 +77,44 @@ export function NotebookWorkspace({
           delay: 0.04,
         })}
       >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={tab}
-            className="flex min-h-0 flex-1 flex-col overflow-hidden"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={layoutTransition}
-          >
-            <ChatPane
-              notebookId={notebookId as Id<"notebooks">}
-              onOpenSources={() => {
-                onPreviewSource(null)
-                onTabChange("sources")
-              }}
-              onAddSource={() => {
-                onAddSourceOpenChange(true)
-              }}
-              onCite={({
-                sourceId,
-                startOffset,
-                endOffset,
-                excerpt,
-                canNavigate,
-              }) => {
-                if (!canNavigate || !sourceId) {
-                  onExcerptOnly(excerpt)
-                  return
-                }
+        <motion.div
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          initial={false}
+          animate={chatTabEnterAnimate(tab, mdUp)}
+          transition={respectReducedMotion(reduceMotion, layoutTransition)}
+        >
+          <ChatPane
+            notebookId={notebookId as Id<"notebooks">}
+            onOpenSources={() => {
+              onPreviewSource(null)
+              onTabChange("sources")
+            }}
+            onAddSource={() => {
+              onAddSourceOpenChange(true)
+            }}
+            onCite={({
+              sourceId,
+              startOffset,
+              endOffset,
+              excerpt,
+              canNavigate,
+            }) => {
+              if (!canNavigate || !sourceId) {
+                onExcerptOnly(excerpt)
+                return
+              }
 
-                onPreviewSource(sourceId)
-                onHighlight({
-                  start:
-                    typeof startOffset === "number" ? startOffset : undefined,
-                  end: typeof endOffset === "number" ? endOffset : undefined,
-                  excerpt,
-                })
-                onTabChange("sources")
-              }}
-            />
-          </motion.div>
-        </AnimatePresence>
+              onPreviewSource(sourceId)
+              onHighlight({
+                start:
+                  typeof startOffset === "number" ? startOffset : undefined,
+                end: typeof endOffset === "number" ? endOffset : undefined,
+                excerpt,
+              })
+              onTabChange("sources")
+            }}
+          />
+        </motion.div>
       </motion.section>
     </div>
   )
