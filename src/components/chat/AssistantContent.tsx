@@ -18,6 +18,7 @@ export type AssistantContentProps = {
   content: string
   citations: ChatCitation[]
   insufficient?: boolean
+  streaming?: boolean
   onCite: (args: ChatCiteArgs) => void
 }
 
@@ -25,11 +26,15 @@ export function AssistantContent({
   content,
   citations,
   insufficient = false,
+  streaming = false,
   onCite,
 }: AssistantContentProps) {
   const visibleCitations = insufficient ? [] : citations
   const displayContent = insufficient ? stripCitationMarkers(content) : content
   const hasInlineMarkers = /\[\[cite:\d+\]\]/.test(displayContent)
+  const caret = streaming ? (
+    <span className="streaming-caret" aria-hidden="true" />
+  ) : null
 
   if (!visibleCitations.length || !hasInlineMarkers) {
     const html = marked.parse(stripCitationMarkers(displayContent), {
@@ -49,6 +54,7 @@ export function AssistantContent({
             onCite={onCite}
           />
         ) : null}
+        {caret}
       </div>
     )
   }
@@ -81,6 +87,7 @@ export function AssistantContent({
           </div>
         )
       })}
+      {caret}
     </div>
   )
 }

@@ -4119,3 +4119,63 @@ Exact supporting quotes are wired through.
 
 **Finalize** — stores that quote as the excerpt and locator; if the quote doesn’t match, falls back to the whole chunk. A refined `citations` SSE event is emitted before `done` so streaming pills update immediately.
 
+# Response streaming clarity
+_Exported on 7/27/2026 at 15:51:40 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+It is sometimes unclear whether a response has ended because of a brief pause in the stream after a passage. The user thinks it ended, then another paragraphs starts streaming in. Why this delay and can we subtly indicate unfinished responses?
+
+---
+
+**Cursor**
+
+I'll look at how chat streaming works in this app and why pauses can look like the response finished.
+
+This looks like a streaming UX question with a few possible causes — I'll dig into the answer generation path next.
+
+The pause is mostly structural, not network lag.
+
+Answers stream as **structured JSON** (`streamText` + `Output.object`), not free prose. Each paragraph is `{ citations[], text }`, and citations are listed **first** so chunk IDs bind before text. After paragraph N finishes, the model still has to emit the next paragraph’s citation objects (and quotes) before any new text arrives. During that gap the UI looks finished: full paragraphs, citation pills, no caret — while the composer’s Stop control is the only real “still going” cue.
+
+Progress shimmer also disappears once any content exists:
+
+```46:50:src/components/chat/ChatAssistantMessage.tsx
+  const showProgress =
+    !content &&
+    (entry.status === "pending" || entry.status === "streaming") &&
+    !!entry.progressLabel
+```
+
+So mid-answer pauses feel like completion.
+
+Yes — we can indicate unfinished responses subtly. Good options:
+
+1. **Trailing caret / shimmer ellipsis** on the active assistant message while `status === "streaming"` (ChatGPT-style; clearest, still quiet).
+2. **Keep a soft “Writing…” under the message** after text starts (reuse existing shimmer, not only pre-TTFT).
+3. **Hold citation pills** until the stream ends or the next paragraph starts, so end-of-paragraph pills don’t read as “done.”
+
+I’d lean toward **1** — a thin blinking caret (or shimmer `…`) after the last streamed paragraph. Want me to add that?
+
+---
+
+**User**
+
+1
+
+---
+
+**Cursor**
+
+I'll add a trailing caret on the active assistant message while it's still streaming.
+
+Checking that the CSS edit landed cleanly, and tightening caret placement so it sits under the message.
+
+Moving the caret into `AssistantContent` so it picks up the same spacing as paragraphs.
+
+Done. While an assistant message is `pending`/`streaming` and has content, a thin blinking caret sits under the answer and clears when the turn finishes.
+
+It respects `prefers-reduced-motion` (steady, no blink).
+

@@ -43,10 +43,9 @@ export function ChatAssistantMessage({
     (entry.status === "failed" ||
       entry.status === "canceled" ||
       (entry.status === "complete" && !entry.content?.trim()))
-  const showProgress =
-    !content &&
-    (entry.status === "pending" || entry.status === "streaming") &&
-    !!entry.progressLabel
+  const isStreaming = entry.status === "pending" || entry.status === "streaming"
+  const showProgress = !content && isStreaming && !!entry.progressLabel
+  const showStreamingCaret = !!content && isStreaming
   const showFailure =
     entry.status === "failed" ||
     entry.status === "canceled" ||
@@ -64,6 +63,7 @@ export function ChatAssistantMessage({
           content={content}
           citations={citations}
           insufficient={insufficient}
+          streaming={showStreamingCaret}
           onCite={onCite}
         />
       ) : null}
