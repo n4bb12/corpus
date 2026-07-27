@@ -1,62 +1,46 @@
 import { v } from "convex/values"
-import { LIMITS, UNTITLED_NOTEBOOK } from "src/lib/limits"
+import {
+  clampLibraryPage,
+  libraryBrowseLimit,
+  libraryBrowseOffset,
+  libraryBrowsePageCount,
+  librarySearchOffset,
+  librarySearchPageCount,
+} from "src/lib/libraryPagination"
+import { LIMITS } from "src/lib/limits"
+import { notebookMatchesSearch } from "src/lib/notebookSearch"
 import { normalizeTitle } from "src/lib/sourceTitle"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
 import { requireNotebookOwner, requireUser } from "./lib/ownership"
 
-function searchMatchesUntitled(search: string) {
-  return UNTITLED_NOTEBOOK.toLowerCase().includes(search.toLowerCase())
-}
-
 export const list = query({
   args: {
     search: v.optional(v.string()),
-    cursor: v.optional(v.string()),
-    limit: v.optional(v.number()),
+    page: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx)
-    const limit = Math.min(
-      args.limit ?? LIMITS.libraryPageSize,
-      LIMITS.libraryPageSize,
-    )
+    const requestedPage =
+      typeof args.page === "number" && args.page > 0 ? Math.floor(args.page) : 1
     const search = args.search?.trim()
 
     if (search) {
-      const results = await ctx.db
+      const all = await ctx.db
         .query("notebooks")
-        .withSearchIndex("search_title", (q) =>
-          q.search("title", search).eq("ownerId", user._id),
-        )
-        .take(limit + 1)
+        .withIndex("by_owner_lastUsedAt", (q) => q.eq("ownerId", user._id))
+        .order("desc")
+        .collect()
 
-      const byId = new Map(
-        results
-          .filter((notebook) => !notebook.deletedAt)
-          .map((notebook) => [notebook._id, notebook]),
+      const visible = all.filter(
+        (notebook) =>
+          !notebook.deletedAt && notebookMatchesSearch(notebook.title, search),
       )
-
-      if (searchMatchesUntitled(search)) {
-        const untitled = await ctx.db
-          .query("notebooks")
-          .withIndex("by_owner_title", (q) =>
-            q.eq("ownerId", user._id).eq("title", ""),
-          )
-          .collect()
-
-        for (const notebook of untitled) {
-          if (!notebook.deletedAt) {
-            byId.set(notebook._id, notebook)
-          }
-        }
-      }
-
-      const visible = [...byId.values()].sort(
-        (left, right) => right.lastUsedAt - left.lastUsedAt,
-      )
-      const page = visible.slice(0, limit)
-      const hasMore = visible.length > limit
+      const totalCount = visible.length
+      const pageCount = librarySearchPageCount(totalCount)
+      const pageIndex = clampLibraryPage(requestedPage, pageCount)
+      const start = librarySearchOffset(pageIndex)
+      const page = visible.slice(start, start + LIMITS.libraryPageSize)
       const enriched = await Promise.all(
         page.map(async (notebook) => {
           const sources = await ctx.db
@@ -75,8 +59,10 @@ export const list = query({
 
       return {
         page: enriched,
-        continueCursor: hasMore ? page.at(-1)?._id : null,
-        isDone: !hasMore,
+        pageIndex,
+        pageCount,
+        totalCount,
+        isDone: pageIndex >= pageCount,
       }
     }
 
@@ -87,15 +73,11 @@ export const list = query({
       .collect()
 
     const visible = all.filter((notebook) => !notebook.deletedAt)
-    let start = 0
-
-    if (args.cursor) {
-      const index = visible.findIndex(
-        (notebook) => notebook._id === args.cursor,
-      )
-      start = index >= 0 ? index + 1 : 0
-    }
-
+    const totalCount = visible.length
+    const pageCount = libraryBrowsePageCount(totalCount)
+    const pageIndex = clampLibraryPage(requestedPage, pageCount)
+    const start = libraryBrowseOffset(pageIndex)
+    const limit = libraryBrowseLimit(pageIndex)
     const page = visible.slice(start, start + limit)
     const enriched = await Promise.all(
       page.map(async (notebook) => {
@@ -113,12 +95,12 @@ export const list = query({
       }),
     )
 
-    const isDone = start + limit >= visible.length
-
     return {
       page: enriched,
-      continueCursor: isDone ? null : (page.at(-1)?._id ?? null),
-      isDone,
+      pageIndex,
+      pageCount,
+      totalCount,
+      isDone: pageIndex >= pageCount,
     }
   },
 })

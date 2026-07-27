@@ -6,7 +6,7 @@ import { z } from "zod"
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
     q: z.string().optional(),
-    cursor: z.string().optional(),
+    page: z.coerce.number().int().positive().optional(),
   }),
   component: LibraryRoute,
 })
