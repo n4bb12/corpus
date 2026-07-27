@@ -10,6 +10,8 @@ export type AddSourceMainPanelProps = {
   url: string
   error: string | null
   pending: boolean
+  disabled?: boolean
+  quotaMessage?: string | null
   urlRef: RefObject<HTMLInputElement | null>
   fileRef: RefObject<HTMLInputElement | null>
   onUrlChange: (value: string) => void
@@ -32,6 +34,8 @@ export function AddSourceMainPanel({
   url,
   error,
   pending,
+  disabled = false,
+  quotaMessage = null,
   urlRef,
   fileRef,
   onUrlChange,
@@ -48,6 +52,16 @@ export function AddSourceMainPanel({
       transition={layoutTransition}
       className="flex h-full min-h-0 flex-col gap-4"
     >
+      {quotaMessage ? (
+        <motion.p
+          className="shrink-0 text-sm text-destructive"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          {quotaMessage}
+        </motion.p>
+      ) : null}
+
       <form
         className="flex shrink-0 gap-2"
         onSubmit={async (event) => {
@@ -61,12 +75,13 @@ export function AddSourceMainPanel({
           onChange={(event) => onUrlChange(event.target.value)}
           placeholder="https://example.com/article"
           className="rounded-xl"
+          disabled={disabled || pending}
         />
 
         <Button
           type="submit"
           className="rounded-full"
-          disabled={pending || !url.trim()}
+          disabled={disabled || pending || !url.trim()}
         >
           <PendingLabel pending={pending} pendingLabel="Adding source">
             Add
@@ -76,7 +91,11 @@ export function AddSourceMainPanel({
 
       <OrSeparator />
 
-      <AddSourceFileDropzone fileRef={fileRef} onFiles={onFiles} />
+      <AddSourceFileDropzone
+        fileRef={fileRef}
+        disabled={disabled || pending}
+        onFiles={onFiles}
+      />
 
       <OrSeparator />
 
@@ -84,12 +103,13 @@ export function AddSourceMainPanel({
         type="button"
         variant="ghost"
         className="w-full shrink-0 rounded-full"
+        disabled={disabled || pending}
         onClick={onPasteText}
       >
         Paste text
       </Button>
 
-      {error ? (
+      {!quotaMessage && error ? (
         <motion.p
           className="shrink-0 text-sm text-destructive"
           initial={{ opacity: 0 }}

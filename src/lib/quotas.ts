@@ -2,12 +2,12 @@ export function utcDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10)
 }
 
-export function quotaResetMessage(
-  kind: "ingestion" | "generation",
-  dateKey: string,
-) {
-  const label = kind === "ingestion" ? "source additions" : "chat answers"
-  return `Daily ${label} limit reached. It resets after ${dateKey} UTC.`
+export function quotaResetMessage(kind: "ingestion" | "generation") {
+  if (kind === "ingestion") {
+    return "You've reached today's limit for adding sources. Try again tomorrow."
+  }
+
+  return "You've reached today's chat limit. Try again tomorrow."
 }
 
 export function remainingQuota(used: number, limit: number) {

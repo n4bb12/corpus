@@ -43,6 +43,8 @@ export function AddSourceDialog({
                 url={dialog.url}
                 error={dialog.error}
                 pending={dialog.pending}
+                disabled={dialog.quotaExhausted}
+                quotaMessage={dialog.quotaMessage}
                 urlRef={dialog.urlRef}
                 fileRef={dialog.fileRef}
                 onUrlChange={dialog.setUrl}
@@ -55,6 +57,8 @@ export function AddSourceDialog({
                 text={dialog.text}
                 error={dialog.error}
                 pending={dialog.pending}
+                disabled={dialog.quotaExhausted}
+                quotaMessage={dialog.quotaMessage}
                 textRef={dialog.textRef}
                 onTextChange={dialog.setText}
                 onBack={() => dialog.setMode("main")}

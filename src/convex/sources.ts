@@ -1,7 +1,7 @@
 import { v } from "convex/values"
 import { shouldCreateSourceRevision } from "src/lib/chatHistory"
 import { LIMITS } from "src/lib/limits"
-import { quotaResetMessage, utcDateKey } from "src/lib/quotas"
+import { quotaResetMessage, remainingQuota, utcDateKey } from "src/lib/quotas"
 import {
   normalizeTitle,
   titleFromFilename,
@@ -58,9 +58,33 @@ async function assertIngestionQuota(ctx: { db: any }, userId: string) {
     .unique()
 
   if ((existing?.ingestions ?? 0) >= LIMITS.ingestionsPerDay) {
-    throw new Error(quotaResetMessage("ingestion", dateKey))
+    throw new Error(quotaResetMessage("ingestion"))
   }
 }
+
+export const getIngestionQuota = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx)
+    const dateKey = utcDateKey()
+    const existing = await ctx.db
+      .query("dailyUsage")
+      .withIndex("by_user_date", (q) =>
+        q.eq("userId", user._id).eq("dateKey", dateKey),
+      )
+      .unique()
+
+    const used = existing?.ingestions ?? 0
+    const limit = LIMITS.ingestionsPerDay
+
+    return {
+      used,
+      limit,
+      remaining: remainingQuota(used, limit),
+      exhausted: used >= limit,
+    }
+  },
+})
 
 async function countVisibleSources(ctx: { db: any }, notebookId: string) {
   const sources = await ctx.db

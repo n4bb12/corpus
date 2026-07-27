@@ -92,7 +92,7 @@ export const prepareGeneration = mutation({
       .unique()
 
     if ((usage?.generations ?? 0) >= LIMITS.generationsPerDay) {
-      throw new Error(quotaResetMessage("generation", dateKey))
+      throw new Error(quotaResetMessage("generation"))
     }
 
     const entries = await ctx.db

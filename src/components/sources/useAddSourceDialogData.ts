@@ -1,4 +1,6 @@
+import { useQuery } from "convex/react"
 import { useEffect, useRef, useState } from "react"
+import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { startSourceIngest } from "src/lib/ingestClient"
 import {
@@ -6,6 +8,7 @@ import {
   completeCreatingSource,
   failCreatingSource,
 } from "src/lib/pendingSources"
+import { quotaResetMessage } from "src/lib/quotas"
 
 export function useAddSourceDialogData({
   open,
@@ -26,6 +29,9 @@ export function useAddSourceDialogData({
   const urlRef = useRef<HTMLInputElement>(null)
   const textRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const quota = useQuery(api.sources.getIngestionQuota, open ? {} : "skip")
+  const quotaExhausted = quota?.exhausted === true
+  const quotaMessage = quotaExhausted ? quotaResetMessage("ingestion") : null
 
   useEffect(() => {
     if (!open) {
@@ -40,6 +46,10 @@ export function useAddSourceDialogData({
     }
 
     const handle = window.setTimeout(() => {
+      if (quotaExhausted) {
+        return
+      }
+
       if (mode === "main") {
         urlRef.current?.focus()
       } else {
@@ -48,9 +58,14 @@ export function useAddSourceDialogData({
     }, 10)
 
     return () => window.clearTimeout(handle)
-  }, [open, mode, pending])
+  }, [open, mode, pending, quotaExhausted])
 
   async function submitUrl() {
+    if (quotaExhausted) {
+      setError(quotaResetMessage("ingestion"))
+      return
+    }
+
     setPending(true)
     setError(null)
     const submittedUrl = url
@@ -78,6 +93,11 @@ export function useAddSourceDialogData({
   }
 
   async function submitText() {
+    if (quotaExhausted) {
+      setError(quotaResetMessage("ingestion"))
+      return
+    }
+
     setPending(true)
     setError(null)
     const submittedText = text
@@ -105,6 +125,11 @@ export function useAddSourceDialogData({
   }
 
   async function submitFiles(files: File[]) {
+    if (quotaExhausted) {
+      setError(quotaResetMessage("ingestion"))
+      return
+    }
+
     onOpenChange(false)
     await onFiles(files)
   }
@@ -118,6 +143,8 @@ export function useAddSourceDialogData({
     setText,
     error,
     pending,
+    quotaMessage,
+    quotaExhausted,
     urlRef,
     textRef,
     fileRef,
