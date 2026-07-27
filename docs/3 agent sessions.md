@@ -7704,3 +7704,26 @@ Implemented.
 Citations resolving to the same source passage now produce one pill whose popover excerpt expands to include all cited text between the matching quotes. Navigation uses the merged locator.
 
 Verified with citation tests, TypeScript, and lint checks.
+
+# Sign-in page text mismatch
+_Exported on 7/27/2026 at 22:46:51 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+For non-repeat users, the sign-in page card texts don't match. They should read welcome or sign up, not welcome back.
+
+---
+
+**Cursor**
+
+The cause is direct: `SignInCard` hardcodes “Welcome back” even when no prior sign-in method exists. I’ll make all three card lines conditional so first-time users see signup-oriented copy while returning users keep the current wording.
+
+Updated `SignInCard` copy:
+
+- New users: “Sign up” / “Welcome”
+- Returning users: “Sign in” / “Welcome back”
+
+Type-check and formatting checks pass.
+

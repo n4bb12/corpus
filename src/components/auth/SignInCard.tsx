@@ -11,6 +11,7 @@ import {
 
 export function SignInCard() {
   const lastMethod = useLastSignInMethod()
+  const hasSignedInBefore = !!lastMethod
   const [email, setEmail] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
@@ -69,12 +70,16 @@ export function SignInCard() {
   return (
     <div className="flex h-full flex-col justify-center space-y-6 md:space-y-7">
       <div className="space-y-3">
-        <Eyebrow tone="muted">Sign in</Eyebrow>
+        <Eyebrow tone="muted">
+          {hasSignedInBefore ? "Sign in" : "Sign up"}
+        </Eyebrow>
         <h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
-          Welcome back
+          {hasSignedInBefore ? "Welcome back" : "Welcome"}
         </h2>
         <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
-          Sign in to open your notebooks.
+          {hasSignedInBefore
+            ? "Sign in to open your notebooks."
+            : "Sign up to create your first notebook."}
         </p>
       </div>
 
