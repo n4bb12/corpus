@@ -4,6 +4,7 @@ export type ChunkLocator = {
   endOffset: number
 }
 
+/** Walk chunks left-to-right in `fullText`; emit start/end offsets per ordinal. */
 export function deriveChunkLocators(chunks: string[], fullText: string) {
   const locators: ChunkLocator[] = []
   let searchFrom = 0

@@ -20,6 +20,7 @@ export type UrlValidationResult =
   | { ok: true; url: URL }
   | { ok: false; error: string }
 
+/** Accept public http(s) URLs only — no credentials, localhost, or private nets. */
 export function validatePublicHttpUrl(raw: string): UrlValidationResult {
   let url: URL
 

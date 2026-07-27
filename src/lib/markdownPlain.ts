@@ -1,3 +1,4 @@
+/** Strip common markdown syntax down to a single-line plain string. */
 export function markdownToPlainText(markdown: string) {
   return markdown
     .replace(/```[\s\S]*?```/g, " ")

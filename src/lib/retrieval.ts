@@ -9,6 +9,7 @@ export type RetrievalCandidate = {
   ordinal: number
 }
 
+/** Union vector+text hits by chunkId; mark channel, keep max score, sort desc. */
 export function mergeRetrievalCandidates(
   vectorHits: Array<Omit<RetrievalCandidate, "channel">>,
   textHits: Array<Omit<RetrievalCandidate, "channel">>,
@@ -37,6 +38,7 @@ export function mergeRetrievalCandidates(
   return [...byId.values()].sort((a, b) => b.score - a.score)
 }
 
+/** Greedy pack of candidates until character budget is exhausted. */
 export function selectEvidenceWithinBudget(
   candidates: RetrievalCandidate[],
   maxCharacters: number,

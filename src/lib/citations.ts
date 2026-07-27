@@ -6,6 +6,7 @@ export type CitationRef = {
 const CITATION_PATTERN = /\[\[cite:([^\]]+)\]\]/g
 const NUMBERED_CITATION_PATTERN = /\[\[cite:(\d+)\]\]/g
 
+/** Collect `[[cite:id,…]]` markers → numbered `[[cite:n]]` + ordered refs. */
 export function parseCitationMarkers(text: string) {
   const refs: CitationRef[] = []
   const cleaned = text.replace(CITATION_PATTERN, (_match, rawIds: string) => {
@@ -48,6 +49,7 @@ export function stripCitationMarkers(text: string) {
     .trim()
 }
 
+/** Drop invalid numbered cites; renumber survivors to a dense 1…n sequence. */
 export function remapCitationMarkers(
   text: string,
   citations: CitationRef[],
@@ -76,6 +78,7 @@ export function remapCitationMarkers(
     .trim()
 }
 
+/** Split on blank lines; peel trailing `[[cite:n]]` indexes off each paragraph. */
 export function splitCitedParagraphs(markdown: string) {
   const paragraphs = markdown.split(/\n\n+/)
 
@@ -114,6 +117,7 @@ export function validateCitations(
   return { valid, invalid }
 }
 
+/** Append rotating `[[cite:chunkId]]` to substantial prose paragraphs. */
 export function attachParagraphCitations(
   markdown: string,
   orderedChunkIds: string[],

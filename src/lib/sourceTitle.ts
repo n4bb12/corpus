@@ -29,6 +29,7 @@ export function decodeHtmlEntities(value: string) {
     })
 }
 
+/** Decode entities, collapse whitespace, truncate to 100 chars (or fallback). */
 export function normalizeTitle(raw: string, fallback: string) {
   const collapsed = decodeHtmlEntities(raw).replace(/\s+/g, " ").trim()
 
@@ -84,6 +85,7 @@ export function titleFromFilename(filename: string) {
   return normalizeTitle(filename, "Uploaded file")
 }
 
+/** Prefer a ≥4-word plain line’s first sentence; else first line / fallback. */
 export function titleFromMarkdown(markdown: string, fallback = "") {
   const lines = markdown
     .split(/\r?\n/)

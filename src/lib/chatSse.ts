@@ -42,6 +42,7 @@ function isStreamCitation(value: unknown): value is StreamCitation {
   )
 }
 
+/** Parse mid-stream cites against the catalog; remap to validated numbered markers. */
 export function resolveStreamedAssistantContent(
   text: string,
   catalog: StreamCitation[],
@@ -70,6 +71,7 @@ export function resolveStreamedAssistantContent(
   }
 }
 
+/** Drain complete SSE frames from `buffer`; return the unparsed remainder. */
 export function parseSseChunk(
   buffer: string,
   onEvent: (event: string, data: unknown) => void,
@@ -108,6 +110,7 @@ export function parseSseChunk(
   return rest
 }
 
+/** Read a chat SSE body; accumulate text and forward citation/status events. */
 export async function consumeChatSse(
   response: Response,
   handlers: ChatSseHandlers = {},

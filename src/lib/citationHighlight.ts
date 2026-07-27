@@ -49,6 +49,7 @@ function findExcerptRange(
   return null
 }
 
+/** Prefer locator offsets; else search excerpt variants in the markdown. */
 export function resolveCitationOffsets(
   markdown: string,
   locator?: CitationOffsetRange | null,

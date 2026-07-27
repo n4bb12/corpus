@@ -38,6 +38,7 @@ export function latestBoundaryIndex(entries: ChatEntryLike[]) {
   return -1
 }
 
+/** Complete user/assistant pairs after the latest source boundary, capped. */
 export function successfulPairsAfterBoundary(
   entries: ChatEntryLike[],
   maxPairs: number,
@@ -132,6 +133,7 @@ export type SourceBoundaryPlan =
   | { type: "update"; selectionHash: string; activeSourceCount: number }
   | { type: "remove"; selectionHash: string }
 
+/** Decide insert/update/remove/none for a source-boundary chat entry. */
 export function planSourceBoundary(args: {
   previousIds: string[]
   nextIds: string[]

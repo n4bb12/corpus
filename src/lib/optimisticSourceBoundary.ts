@@ -15,6 +15,7 @@ type SourceList = NonNullable<
   FunctionReturnType<typeof api.sources.listByNotebook>
 >
 
+/** Optimistically insert/update/remove a source-boundary row when selection changes. */
 export function patchChatEntriesForSourceSelection({
   entries,
   previousSources,
