@@ -7024,3 +7024,371 @@ That explains why I sometimes felt like the first token took weirdly long to sho
 
 Exactly — with citations first, the model had to emit the whole first citation block (including quotes) before any answer text reached the UI. Schema field order is generation order for structured streaming, so put the user-visible fields first when you care about TTFT.
 
+# Skip-RAG source fallback
+_Exported on 7/27/2026 at 20:47:00 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Do we already have a skip-RAG full inline source fallback for cases with short sources?
+
+---
+
+**Cursor**
+
+I'll check the codebase for any skip-RAG / full-inline short-source fallback.
+
+**No.** Every chat turn always runs full hybrid RAG.
+
+`prepareEvidence` always embeds the prompt, runs vector + text search, merges, optionally reranks with Voyage, then packs into a 12k-character budget via `selectEvidenceWithinBudget`. There’s no path that checks whether selected sources are short enough to skip retrieval and pass all chunks (or full source text) inline.
+
+Closest related piece is only the post-retrieval character budget packer — not a short-source bypass.
+
+---
+
+**User**
+
+Add it.
+
+---
+
+**Cursor**
+
+I'll add a short-source skip-RAG path that inlines all chunks when they fit the evidence budget. Checking the retrieval flow and chunk access patterns first.
+
+Implementing a budget check that inlines all chunks when they fit, and only runs hybrid RAG when they don't.
+
+Done. `prepareEvidence` now skips hybrid RAG when selected sources fit the 12k evidence budget.
+
+**Behavior**
+1. Sum known `characterCount`s — if they already exceed the budget, go straight to RAG.
+2. Otherwise load all selected-source chunks; if they fit, return them all as `channel: "inline"` evidence (no embed / search / rerank).
+3. If chunks overflow (e.g. overlap), fall back to the existing hybrid path.
+
+Helpers live in `src/lib/retrieval.ts`; chunk/count loaders are in `src/convex/retrievalHelpers.ts`.
+
+# Mobile add source modal clipping
+_Exported on 7/27/2026 at 20:48:45 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+On mobile, the add source modal is clipped.
+
+---
+
+**Cursor**
+
+I'll find the Add source modal and fix the mobile clipping.
+
+The `aspect-3/2` + `overflow-hidden` combo is forcing a short height on narrow screens. I'll relax that on mobile and cap height to the viewport.
+
+Confirmed: `aspect-3/2` with `overflow-hidden` is cutting off the bottom. Applying the fix.
+
+Giving the dialog a mobile min-height so the text panel and dropzone still have room without the aspect ratio.
+
+The dialog used `aspect-3/2` on all breakpoints, so on a narrow phone the height was forced too short and `overflow-hidden` clipped the second “or” and **Paste text**.
+
+On small screens it now sizes with a viewport-bounded min/max height, and the 3:2 aspect ratio only applies from `sm` up.
+
+# Broad citation ranges
+_Exported on 7/27/2026 at 21:03:55 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Citation ranges are still too broad. See the last paragraph. It essentially just mentions the shut down date. But the citation spans multiple paragraphs, including unrelated ones.
+
+---
+
+**Cursor**
+
+Citation highlights spanning multiple unrelated paragraphs — I'll trace how citation ranges are computed and applied in the document viewer.
+
+I'll check how failed quote resolution falls back to full-chunk ranges, and how the highlight UI uses those locators.
+
+Bold markdown in the source is a likely match-breaker — checking how chunk text is stored versus what the model quotes.
+
+---
+
+**User**
+
+Implement the plan as specified, it is attached for your reference. Do NOT edit the plan file itself.
+
+To-do's from the plan have already been created. Do not create them again. Mark them as in_progress as you work, starting with the first one. Don't stop until you have completed all the to-dos.
+
+---
+
+**Cursor**
+
+Implementing the plan: starting with plain-text quote matching in `resolveCitationQuote`.
+
+
+Adding failing tests, then implementing plain-text matching and shared offset mapping.
+
+
+Fixing lint warnings for non-null assertions.
+
+
+Citation highlights should stay on the sentence about the shutdown date instead of swallowing the whole chunk.
+
+### What changed
+
+1. **Plain-text quote matching** ([`src/lib/markdownPlainMap.ts`](src/lib/markdownPlainMap.ts), [`src/lib/citationQuote.ts`](src/lib/citationQuote.ts))  
+   Quotes are matched after stripping markdown (`**bold**`, links, headings, etc.) with offsets mapped back to the source. That covers cases like `Wichtiger Hinweis:` without `**`.
+
+2. **Oversized match clamping** ([`src/lib/citationQuote.ts`](src/lib/citationQuote.ts))  
+   If a match spans multiple paragraphs or exceeds ~280 characters, it’s reduced to the single paragraph that best overlaps the quote.
+
+3. **No whole-chunk fallback** ([`src/server/chat/handleChatPost.ts`](src/server/chat/handleChatPost.ts))  
+   On resolve failure we keep the model’s quote as the excerpt and **omit** `locator`, instead of highlighting the full retrieval chunk.
+
+4. **Client excerpt search** ([`src/lib/citationHighlight.ts`](src/lib/citationHighlight.ts))  
+   When there’s no locator, `SourcePreview` can still find plain-text excerpts inside markdown.
+
+### Tests
+
+New coverage in `citationQuote.test.ts` and `citationHighlight.test.ts`. All 50 tests pass; `bun fix` is clean.
+
+Re-run the Schulmanager question on an existing notebook — no re-ingest needed. The shutdown paragraph should highlight alone, not the closing paragraphs.
+
+---
+
+**User**
+
+Not quite yet. We're now missing sources. See last paragraph. Smaller chunks might be the way to go. Any more ideas?
+
+---
+
+**Cursor**
+
+Investigating why citations disappear after tightening and whether chunk size or other factors are involved.
+
+
+Identifying the issue: citations are deduped by `chunkId`, so one chunk with two facts (form deadline + shutdown) collapses to a single pill and one highlight. Implementing per-quote citation slots, smaller chunks for new ingests, and a prompt nudge.
+
+
+Implementing per-quote citation slots and smaller chunks.
+
+
+You were hitting a **design limit**, not just loose highlights.
+
+### Why the last paragraph looked like it was “missing” a source
+
+That paragraph combines **two facts** (form by **10.07.2026** and Schulmanager shutdown **31.07.2026**) that often live in **one retrieval chunk**. The pipeline used to:
+
+1. **Deduplicate citations by `chunkId`** — only the first quote/locator was kept.
+2. Emit **one pill** even when the model listed two cites to the same chunk.
+3. Highlight **one** span (usually the first match — the form block), so the shutdown sentence looked uncited.
+
+Tighter quote matching helped, but it couldn’t fix “two facts, one chunk, one slot.”
+
+### What we changed just now
+
+1. **One citation slot per model cite** — duplicate `chunkId`s are allowed; final markdown uses `[[cite:1]] [[cite:2]]` with separate excerpts/locators.
+2. **Prompt** — separate citation + quote per distinct fact, even from the same chunk.
+3. **Smaller chunks for new ingests** — `maxChunkSize` **1200 → 500**, `minChunkSize` **200 → 80** so paragraphs split more often at retrieval time.
+
+### What you need to do
+
+**Re-ingest** (or re-upload) sources that were chunked at 1200 chars. Existing notebooks still use the old big chunks until then; new uploads get the smaller pieces.
+
+### Other levers (if you want to go further)
+
+| Idea | Effect |
+|------|--------|
+| **One claim per answer paragraph** (prompt) | Fewer merged pills; model cites each fact cleanly |
+| **Sub-chunk retrieval** (sentence/paragraph index inside a chunk) | Finer highlights without re-chunking everything |
+| **Split combined answer paragraphs** (post-process) | Two sentences → two paragraphs with cites each |
+| **Don’t pack paragraphs in `chunkMarkdown`** | One markdown paragraph ≈ one chunk (more chunks, higher embed cost) |
+
+After re-ingest, ask the same question again: the last paragraph should show **two pills** (e.g. `2` and `3`), each jumping to the right passage.
+
+---
+
+**User**
+
+Better. In this test, citation 9 wasn't matched. And we have quite a few pills now. Probably the better tradeoff though.
+
+---
+
+**Cursor**
+
+Investigating why short quotes like "sämtliche dort" fail to match in the source viewer.
+
+
+Identifying likely causes: first-match wins on short quotes, and locators that don't align with the stored excerpt. Improving matching with normalization, longest-phrase fallbacks, and locator validation.
+
+
+Yeah — that’s the tradeoff we wanted, with one real bug on top.
+
+### Why citation 9 looked “unmatched”
+
+The popover can show the right German sentence while the **source highlight** fails. Typical causes in your screenshot:
+
+1. **First-match wins** — phrases like *“sämtliche dort”* can appear more than once in a chunk. We took the first hit, which often isn’t the shutdown sentence.
+2. **Locator vs excerpt mismatch** — a tight locator for a short fragment didn’t align with the longer excerpt in the pill, so the viewer didn’t trust the offset and gave up.
+
+### What we just tightened
+
+- **Pick the best occurrence** (word overlap with the full quote), not the first `indexOf`.
+- **Phrase fallbacks** — try longest word runs from the quote when the full string doesn’t match.
+- **Unicode / typography normalization** (NFC, soft hyphens, curly quotes).
+- **Highlight fallback** — if stored offsets don’t line up with the excerpt (~60% word overlap), search the source text again instead of highlighting the wrong span.
+
+There’s a regression test for the duplicate *“sämtliche dort”* case.
+
+### On the pill count
+
+More pills is expected when each cite gets its own quote/locator. If it gets noisy later, low-risk options:
+
+- Prompt: one cite per sentence unless facts are genuinely inseparable.
+- UI: collapse adjacent pills that share the same locator.
+- Retrieval: smaller chunks (already on for **new** ingests) so the model doesn’t spray many quotes from one block.
+
+Re-run the same question (re-ingest if this source is still on old 1200-char chunks). Citation 9 should land on the shutdown paragraph, not the earlier *“sämtliche dort”*.
+
+---
+
+**User**
+
+After the last word, more citations appear from nowhere.
+
+---
+
+**Cursor**
+
+Tracing the streaming vs. finalize citation path — pills likely appear when we swap chunk-ID markers for the full numbered citation list.
+
+
+Aligning streaming with finalize: use numbered markers and the answer citation catalog during streaming instead of chunk-ID markers plus the evidence catalog (which dedupes pills until finalize adds more).
+
+
+That “extra” batch at the end was a **streaming vs. finalize mismatch**, not the model adding cites after the fact.
+
+### What was happening
+
+While the answer streamed we used:
+
+- **Text** with `[[cite:chunkId]]` markers (duplicate chunk IDs collapsed to one numbered pill)
+- **Catalog** = whole evidence chunks (one row per chunk)
+
+On finalize we switched to:
+
+- **Text** with `[[cite:1]]` … `[[cite:11]]` (one slot per model citation)
+- **Catalog** = full answer citations (many rows can share a chunk)
+
+So the last paragraph could show a few pills live, then **more pills appeared when the stream finished** — same text, different marker/catalog rules.
+
+### Fix
+
+Streaming now uses the **same path as finalize**:
+
+1. Numbered markers during the whole stream (`[[cite:1]]`, `[[cite:2]]`, …)
+2. Answer-level citation catalog updated as cites arrive (not the evidence chunk catalog)
+3. No duplicate `emitText` at the end unless the text actually changed
+4. Final pass only **refines locators/excerpts**; pill count should stay stable
+
+You should see pills grow only as the model’s `citations` array grows in the structured stream (still after each paragraph’s text, because of text-then-citations ordering), not a surprise pile-on when `done` fires.
+
+Try the same question again — the last paragraph shouldn’t sprout 8–11 out of nowhere at the end.
+
+---
+
+**User**
+
+Can we also have the LLM only cite the same source paragraph once per response paragraph? We sometimes have multiple pills referring to the same source passage mutliple times on the same exact response paragraph.
+
+---
+
+**Cursor**
+
+Deduplicating duplicate cites within each answer paragraph (same chunk + overlapping quote) and adding a brief prompt nudge.
+
+
+Yes. Two layers:
+
+### 1. Server-side dedupe (`buildCitedMarkdown`)
+Before markers are built, each answer paragraph runs through `dedupeParagraphCitations`. Citations with the **same `chunkId`** and **the same or overlapping quote** (normalized text, substring, or ≥85% word overlap) collapse to **one pill**. When duplicates disagree, we keep the **longer** quote.
+
+Different facts from the same chunk in one paragraph (e.g. form deadline vs. shutdown date) still get **separate** pills when the quotes don’t overlap enough.
+
+### 2. Prompt
+The system prompt now says: within one answer paragraph, cite each source passage at most once—don’t repeat the same chunk with the same or overlapping quote.
+
+This applies during streaming and on finalize, since both use `buildCitedMarkdown`. Re-run a question; repeated pills on the same passage in one paragraph should be gone.
+
+---
+
+**User**
+
+Response paragraph 1, pill 1 and 2 link to the same source paragraph. And pill 3 and 4 both link to another same paragraph.
+
+---
+
+**Cursor**
+
+Quotes differ but resolve to the same source paragraph. Tightening dedupe to one cite per chunk per answer paragraph (keeping the longest quote).
+
+
+Deduping by source paragraph within each chunk (not just overlapping quotes). Passing chunk text into `buildCitedMarkdown` so we can locate which paragraph each quote belongs to.
+
+
+The earlier dedupe only merged **overlapping quotes**. Pills 1–2 and 3–4 used **different quotes from the same source paragraph** in the same chunk, so they still showed up twice.
+
+### Change
+Within each **answer paragraph**, we now collapse citations that resolve to the **same passage inside a chunk**:
+
+1. Locate each quote in the chunk text (same logic as highlight resolution).
+2. Map it to a **blank-line paragraph index** inside that chunk.
+3. Dedupe key = `chunkId:paragraphIndex` (fallback: `chunkId` only if the quote can’t be located).
+4. When duplicates merge, keep the **longest** quote.
+
+`handleChatPost` passes `chunkTextById` into every `buildCitedMarkdown` call (stream + finalize).
+
+### Your example
+Four model cites (two about Infoportal, two about Schulmanager) from one chunk with **two source paragraphs** → **two pills** (`[[cite:1]] [[cite:2]]`).
+
+Different paragraphs in the **same chunk** in one answer paragraph (e.g. form deadline vs. shutdown) can still be **two pills** when the quotes land in different source paragraphs.
+
+Re-run that question; paragraph 1 should show **2 pills**, not 4.
+
+---
+
+**User**
+
+Pills that are later deduped show up intermittently. The very last pill somtimes flickers and it's possible it gets added and ends up removed. This all happens after a whole paragraph was streamed and during receiving citations.
+
+---
+
+**Cursor**
+
+Deferring citation markers for the in-progress (last) paragraph until the next paragraph starts or the stream finishes, so dedupe won't add/remove pills while citations are still streaming.
+
+
+Empty placeholder paragraphs in the partial JSON were closing the previous paragraph early, so cites and dedupe ran while citations were still streaming. Fixing trailing-paragraph detection to ignore text-empty placeholders.
+
+
+That flicker came from how we decided which paragraph was still “open” for citations.
+
+### Cause
+Structured streaming often emits a **next paragraph shell** (`{ text: "", citations: [...] }`) while citations for the current paragraph are still arriving. We treated “trailing” as **last array slot**, not **last paragraph with text**.
+
+So paragraph 1 looked “closed” too early: markers and pills updated on every partial cite, dedupe added/removed slots, and the last pill flickered.
+
+### Fix
+`holdTrailingParagraphCitations` now holds the **last paragraph that actually has text**, and ignores empty placeholder rows at the end.
+
+While citations stream for the current paragraph:
+- **No pills** on that paragraph yet  
+- **No catalog churn** from dedupe reshuffling  
+
+Pills for that paragraph appear once the **next paragraph’s text** starts (or at `done` for the final one)—same rule as before, but without the empty-shell false trigger.
+
+Regression test: `ignores empty trailing paragraph shells while citations stream`.
+
+Try another answer—the last paragraph shouldn’t strobe pills while cites are still loading.
+
