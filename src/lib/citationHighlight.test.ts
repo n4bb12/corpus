@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { resolveCitationOffsets } from "./citationHighlight"
+import { resolveCitationQuote } from "./citationQuote"
 
 describe("citation highlight", () => {
   test("resolves citation offsets from locator or excerpt fallback", () => {
@@ -41,7 +42,7 @@ describe("citation highlight", () => {
     ).toMatchInlineSnapshot(`
       {
         "end": 59,
-        "start": 30,
+        "start": 9,
       }
     `)
   })
@@ -62,5 +63,50 @@ describe("citation highlight", () => {
         "start": 30,
       }
     `)
+  })
+
+  test("server quote locator and client highlight agree for the same quote", () => {
+    const prefix = "Intro line\n\n"
+    const chunkText = "**Wichtiger Hinweis:** Schulmanager Ende 31.07.2026."
+    const suffix = "\n\nOutro"
+    const markdown = `${prefix}${chunkText}${suffix}`
+    const quote = "Wichtiger Hinweis: Schulmanager Ende 31.07.2026."
+
+    const resolved = resolveCitationQuote({
+      chunkText,
+      startOffset: prefix.length,
+      endOffset: prefix.length + chunkText.length,
+      ordinal: 0,
+      quote,
+    })
+
+    expect(resolved).not.toBeNull()
+
+    if (!resolved) {
+      return
+    }
+
+    const offsets = resolveCitationOffsets(
+      markdown,
+      {
+        start: resolved.locator.startOffset,
+        end: resolved.locator.endOffset,
+      },
+      resolved.excerpt,
+    )
+
+    expect(offsets).toMatchInlineSnapshot(`
+      {
+        "end": 64,
+        "start": 14,
+      }
+    `)
+
+    expect(offsets).toEqual({
+      start: resolved.locator.startOffset,
+      end: resolved.locator.endOffset,
+    })
+
+    expect(markdown.slice(offsets?.start, offsets?.end)).toBe(resolved.excerpt)
   })
 })

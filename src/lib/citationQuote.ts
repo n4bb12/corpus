@@ -142,7 +142,8 @@ function collectCollapsedMatches(
   return pickBestRange(chunkText, quote, candidates)
 }
 
-function locateQuote(chunkText: string, quote: string) {
+/** Locate a quote inside a text span (chunk or full Source markdown). */
+export function locateQuote(text: string, quote: string) {
   const trimmed = normalizeCitationText(quote)
 
   if (!trimmed) {
@@ -152,8 +153,8 @@ function locateQuote(chunkText: string, quote: string) {
   const exactCandidates: QuoteRange[] = []
   let searchFrom = 0
 
-  while (searchFrom < chunkText.length) {
-    const index = chunkText.indexOf(trimmed, searchFrom)
+  while (searchFrom < text.length) {
+    const index = text.indexOf(trimmed, searchFrom)
 
     if (index < 0) {
       break
@@ -163,18 +164,18 @@ function locateQuote(chunkText: string, quote: string) {
     searchFrom = index + 1
   }
 
-  const exact = pickBestRange(chunkText, quote, exactCandidates)
+  const exact = pickBestRange(text, quote, exactCandidates)
 
   if (exact) {
     return exact
   }
 
-  const collapsedChunk = collapseWithMap(chunkText)
+  const collapsedText = collapseWithMap(text)
   const collapsedQuote = trimmed.replace(/\s+/g, " ")
   const collapsed = collectCollapsedMatches(
-    collapsedChunk,
+    collapsedText,
     collapsedQuote,
-    chunkText,
+    text,
     quote,
   )
 
@@ -182,22 +183,36 @@ function locateQuote(chunkText: string, quote: string) {
     return collapsed
   }
 
-  const plainChunk = collapseMappedSpan(stripMarkdownWithMap(chunkText))
+  const plainText = collapseMappedSpan(stripMarkdownWithMap(text))
 
   for (const needle of excerptSearchNeedles(quote)) {
-    const located = collectCollapsedMatches(
-      plainChunk,
-      needle,
-      chunkText,
-      quote,
-    )
+    const located = collectCollapsedMatches(plainText, needle, text, quote)
 
     if (located) {
       return located
     }
   }
 
-  return locateInMappedSpan(plainChunk, trimmed)
+  return locateInMappedSpan(plainText, trimmed)
+}
+
+/**
+ * Ground a quote in a text span: locate, clamp multi-paragraph spans, return
+ * excerpt + local range. Shared by Citation catalog and Source preview.
+ */
+export function groundQuoteInText(text: string, quote: string) {
+  const located = locateQuote(text, quote)
+
+  if (!located) {
+    return null
+  }
+
+  const range = clampQuoteRange(text, located, quote)
+
+  return {
+    excerpt: text.slice(range.start, range.end),
+    range,
+  }
 }
 
 function splitParagraphs(text: string) {
@@ -351,22 +366,21 @@ export function chunkContainsQuote(chunkText: string, quote: string) {
 export function resolveCitationQuote(
   input: CitationQuoteInput,
 ): CitationQuoteResult | null {
-  const located = locateQuote(input.chunkText, input.quote)
+  const grounded = groundQuoteInText(input.chunkText, input.quote)
 
-  if (!located) {
+  if (!grounded) {
     return null
   }
 
-  const range = clampQuoteRange(input.chunkText, located, input.quote)
-  const startOffset = input.startOffset + range.start
-  const endOffset = input.startOffset + range.end
+  const startOffset = input.startOffset + grounded.range.start
+  const endOffset = input.startOffset + grounded.range.end
 
   if (endOffset > input.endOffset || startOffset < input.startOffset) {
     return null
   }
 
   return {
-    excerpt: input.chunkText.slice(range.start, range.end),
+    excerpt: grounded.excerpt,
     locator: {
       startOffset,
       endOffset,

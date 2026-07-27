@@ -1,11 +1,7 @@
-import {
-  excerptSearchNeedles,
-  normalizeCitationText,
-} from "src/lib/citationMatch"
-import { markdownToPlainText } from "src/lib/markdownPlain"
+import { normalizeCitationText } from "src/lib/citationMatch"
+import { groundQuoteInText } from "src/lib/citationQuote"
 import {
   collapseMappedSpan,
-  locateInMappedSpan,
   stripMarkdownWithMap,
 } from "src/lib/markdownPlainMap"
 
@@ -71,53 +67,7 @@ function locatorAlignsWithExcerpt(
   return hits / excerptWords.length >= 0.6
 }
 
-function findExcerptRange(
-  markdown: string,
-  excerpt: string,
-): CitationOffsetRange | null {
-  const needles = [
-    ...excerptSearchNeedles(excerpt),
-    markdownToPlainText(excerpt),
-  ]
-
-  const seen = new Set<string>()
-
-  for (const needle of needles) {
-    if (!needle || seen.has(needle)) {
-      continue
-    }
-
-    seen.add(needle)
-    const index = markdown.indexOf(needle)
-
-    if (index >= 0) {
-      return {
-        start: index,
-        end:
-          index +
-          Math.min(needle.length, excerpt.trim().length || needle.length),
-      }
-    }
-  }
-
-  const plainMarkdown = collapseMappedSpan(stripMarkdownWithMap(markdown))
-
-  for (const needle of needles) {
-    if (!needle?.trim()) {
-      continue
-    }
-
-    const located = locateInMappedSpan(plainMarkdown, needle)
-
-    if (located) {
-      return located
-    }
-  }
-
-  return null
-}
-
-/** Prefer locator offsets; else search excerpt variants in the markdown. */
+/** Prefer locator offsets; else ground the excerpt in the markdown. */
 export function resolveCitationOffsets(
   markdown: string,
   locator?: CitationOffsetRange | null,
@@ -143,7 +93,16 @@ export function resolveCitationOffsets(
   }
 
   if (typeof excerpt === "string" && excerpt.trim()) {
-    return findExcerptRange(markdown, excerpt)
+    const grounded = groundQuoteInText(markdown, excerpt)
+
+    if (!grounded) {
+      return null
+    }
+
+    return {
+      start: grounded.range.start,
+      end: grounded.range.end,
+    }
   }
 
   return null
