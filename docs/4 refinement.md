@@ -3313,7 +3313,7 @@ Send / Sending / Stop now share the same control.
 Send can still be larger with the arrow; Sending and Stop should feel the same.
 
 # Source selection separators
-_Exported on 7/27/2026 at 13:10:09 GMT+2 from Cursor (3.13.10)_
+_Exported on 7/27/2026 at 13:23:07 GMT+2 from Cursor (3.13.10)_
 
 ---
 
@@ -3350,6 +3350,60 @@ The `_id` key remounts when the optimistic row is replaced by the server id — 
 The flicker came from React keys changing whenever the optimistic row was swapped for the server row (`_id`) or the selection hash changed — `AnimatePresence` treated each swap as leave + enter, so rows stacked and collapsed.
 
 The trailing separator now keeps a fixed key (`trailing-source-boundary`), the optimistic id is stable, and the count text updates in place without a crossfade.
+
+---
+
+**User**
+
+Did we lose the animation now?
+
+---
+
+**Cursor**
+
+Checking what's left of the separator animations.
+
+Appear/disappear fade is still there; only the count text crossfade was removed. Restoring that now — it’s safe with the stable row key.
+
+Yes — the count crossfade was dropped; it’s back now.
+
+Still in place:
+1. **Row fade** — separator fades in/out when it appears or is removed
+2. **Count crossfade** — text fades when the selected count changes (same row, no second separator)
+
+---
+
+**User**
+
+We're note animating the height though
+
+---
+
+**Cursor**
+
+I'll add a height animation on the separator so it expands and collapses instead of only fading.
+
+Compensating for the list `gap-6` so space doesn't pop in before the height animation runs.
+
+The separator now animates **height** (0 ↔ auto) along with opacity, and the list gap is folded into that motion so space doesn’t pop. `popLayout` keeps siblings from stacking during exit.
+
+---
+
+**User**
+
+It's not animating height
+
+---
+
+**Cursor**
+
+I'll dig into why the height animation isn't running — likely a Motion `height: "auto"` or layout issue.
+
+Flex items default to `min-height: auto`, which blocks `height: 0` from collapsing. Adding `min-h-0` so the height animation can run.
+
+The height animation was reverted — I'll reapply it with `min-h-0` so it actually works in the flex column.
+
+Flex children default to `min-height: auto`, so `height: 0` never collapsed. Switched to a `grid-template-rows: 0fr → 1fr` open/close (more reliable than `height: auto`) and fold the list gap into that motion.
 
 # Response streaming sources issue
 _Exported on 7/27/2026 at 13:17:47 GMT+2 from Cursor (3.13.10)_

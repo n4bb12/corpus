@@ -63,15 +63,31 @@ export const ChatMessageList = memo(function ChatMessageList({
             return (
               <motion.div
                 key={isTrailing ? "trailing-source-boundary" : entry._id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{
+                  opacity: 0,
+                  gridTemplateRows: "0fr",
+                  marginTop: "-1.5rem",
+                }}
+                animate={{
+                  opacity: 1,
+                  gridTemplateRows: "1fr",
+                  marginTop: 0,
+                }}
+                exit={{
+                  opacity: 0,
+                  gridTemplateRows: "0fr",
+                  marginTop: "-1.5rem",
+                }}
                 transition={fadeTransition}
-                className="flex items-center gap-3 py-2 text-muted-foreground"
+                className="grid"
               >
-                <ChatSourceBoundary
-                  activeSourceCount={entry.activeSourceCount ?? 0}
-                />
+                <div className="min-h-0 overflow-hidden">
+                  <div className="flex items-center gap-3 py-2 text-muted-foreground">
+                    <ChatSourceBoundary
+                      activeSourceCount={entry.activeSourceCount ?? 0}
+                    />
+                  </div>
+                </div>
               </motion.div>
             )
           }
