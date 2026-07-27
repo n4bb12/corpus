@@ -132,6 +132,9 @@
 
 	html {
 		@apply font-sans antialiased;
+		/* Document never scrolls — panes use shadcn ScrollArea. */
+		overflow: hidden;
+		height: 100%;
 	}
 
 	h1,
@@ -146,12 +149,38 @@
 	body {
 		@apply bg-background text-foreground;
 		font-feature-settings: "tnum" 1;
+		overflow: hidden;
+		height: 100%;
 	}
 
 	button,
 	[role="button"] {
 		cursor: pointer;
 	}
+}
+
+/*
+  Kill native scrollbar chrome everywhere. Radix ScrollArea sets inline
+  overflow:scroll on its viewport (which paints classic empty rails on
+  Windows/Linux); override to auto + hide the native bar. Visible thumbs
+  come only from shadcn ScrollBar.
+*/
+* {
+	scrollbar-width: none !important;
+	-ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+	display: none !important;
+	width: 0 !important;
+	height: 0 !important;
+	background: transparent !important;
+}
+
+[data-radix-scroll-area-viewport],
+[data-slot="scroll-area-viewport"] {
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
 }
 
 .atmosphere {

@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "motion/react"
-import type { ReactNode } from "react"
+import { type ReactNode, useState } from "react"
 import { respectReducedMotion, revealTransition } from "src/lib/motion"
 import { cn } from "src/lib/utils"
 
@@ -9,30 +9,29 @@ export type RevealProps = {
   delay?: number
 }
 
-const revealHidden = { opacity: 0, y: 12, filter: "blur(4px)" }
-const revealVisible = {
-  opacity: 1,
-  y: 0,
-  filter: "blur(0px)",
-  // Drop identity blur after enter — blur(0px) still creates a compositor
-  // effect layer that can ghost shadows during scroll.
-  transitionEnd: { filter: "none" },
-}
+const revealHidden = { opacity: 0, y: 12 }
+const revealVisible = { opacity: 1, y: 0 }
 
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
   const reduceMotion = useReducedMotion()
+  // Clip only while the enter translate is active so it cannot grow the
+  // document scrollbar; release afterward so card shadows are not cropped.
+  const [clipOverflow, setClipOverflow] = useState(true)
 
   return (
-    <motion.div
-      className={cn(className)}
-      initial={revealHidden}
-      animate={revealVisible}
-      transition={respectReducedMotion(reduceMotion, {
-        ...revealTransition,
-        delay,
-      })}
-    >
-      {children}
-    </motion.div>
+    <div className={cn(clipOverflow && "overflow-clip")}>
+      <motion.div
+        className={cn(className)}
+        initial={revealHidden}
+        animate={revealVisible}
+        transition={respectReducedMotion(reduceMotion, {
+          ...revealTransition,
+          delay,
+        })}
+        onAnimationComplete={() => setClipOverflow(false)}
+      >
+        {children}
+      </motion.div>
+    </div>
   )
 }

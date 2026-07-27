@@ -112,7 +112,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
         <ThemeScript />
       </head>
-      <body className="min-h-dvh bg-background text-foreground">
+      <body className="h-dvh overflow-hidden bg-background text-foreground">
         {children}
         <Scripts />
       </body>
