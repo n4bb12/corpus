@@ -89,7 +89,8 @@ export function SignInEmailForm({
               <Mail aria-hidden />
               <AlertDescription>
                 Check your inbox for a sign-in link. It expires in a few
-                minutes.
+                minutes.{" "}
+                <span className="font-semibold">Check spam too.</span>
               </AlertDescription>
             </Alert>
           </motion.div>

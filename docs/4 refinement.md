@@ -5925,3 +5925,22 @@ Oh wow, that's a bummer. But good to know.
 
 Yeah — it’s one of the sharper differences vs Next on Vercel. The lazy imports and SPA/static split still help, but they can’t give you per-route isolation the way App Router does.
 
+# Email sign-in spam note
+_Exported on 7/27/2026 at 19:55:02 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Add a bold very short note to the email sign-in saying to check the spam folder. 
+
+---
+
+**Cursor**
+
+I'll add a short bold spam-folder note on the email sign-in UI. Checking the current sign-in copy first.
+
+Adding a short bold spam-folder note to the post-send message.
+
+Added a bold **Check spam too.** note to the email-sent alert in `SignInEmailForm`.
+
