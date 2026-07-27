@@ -3,14 +3,14 @@ import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useRef, useState } from "react"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
-import { formatChatError } from "src/lib/chat_errors"
+import { formatChatError } from "src/lib/chatErrors"
 import {
   canRetryLatestAssistant,
   getOptimisticUserPrompt,
   type OptimisticChatSubmission,
-} from "src/lib/chat_history"
-import { consumeChatSse, type StreamCitation } from "src/lib/chat_sse"
-import { useSignedInQueryArgs } from "src/lib/use-signed-in"
+} from "src/lib/chatHistory"
+import { consumeChatSse, type StreamCitation } from "src/lib/chatSse"
+import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 export function useChatPane(notebookId: Id<"notebooks">) {
   const notebookArgs = useSignedInQueryArgs({ notebookId })

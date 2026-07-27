@@ -5,7 +5,7 @@ import { SourcesPaneDialogs } from "src/components/sources/SourcesPaneDialogs"
 import { SourcesPaneHeader } from "src/components/sources/SourcesPaneHeader"
 import { useSourcesPane } from "src/components/sources/useSourcesPane"
 import type { Id } from "src/convex/_generated/dataModel"
-import { useEventCallback } from "src/lib/use-event-callback"
+import { useEventCallback } from "src/lib/useEventCallback"
 
 export type SourcesPaneProps = {
   notebookId: Id<"notebooks">

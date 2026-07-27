@@ -4,10 +4,10 @@ import type { ConvexHttpClient } from "convex/browser"
 import semantic from "semantic-chunker"
 import { api } from "src/convex/_generated/api"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
-import { deriveChunkLocators } from "src/lib/chunk_locators"
+import { deriveChunkLocators } from "src/lib/chunkLocators"
 import { requireEnv } from "src/lib/env"
 import { LIMITS, MODELS } from "src/lib/limits"
-import { titleFromUrl } from "src/lib/source_title"
+import { titleFromUrl } from "src/lib/sourceTitle"
 import { createAuthedConvexClient } from "src/server/convexClient"
 import {
   assertSafeUrl,

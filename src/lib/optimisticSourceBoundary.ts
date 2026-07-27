@@ -7,7 +7,7 @@ import {
   readySelectedSourceIds,
   type SourceBoundaryPlan,
   shouldCreateSourceRevision,
-} from "src/lib/chat_history"
+} from "src/lib/chatHistory"
 
 type ChatList = NonNullable<FunctionReturnType<typeof api.chat.list>>
 type ChatListEntry = ChatList[number]

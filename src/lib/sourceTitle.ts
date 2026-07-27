@@ -1,4 +1,4 @@
-import { markdownToPlainText } from "src/lib/markdown_plain"
+import { markdownToPlainText } from "src/lib/markdownPlain"
 
 const NAMED_ENTITIES: Record<string, string> = {
   amp: "&",

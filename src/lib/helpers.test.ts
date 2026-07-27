@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { formatChatError } from "./chat_errors"
+import { formatChatError } from "./chatErrors"
 import {
   applySourceBoundaryPlan,
   canRetryLatestAssistant,
@@ -10,22 +10,22 @@ import {
   readySelectedSourceIds,
   shouldCreateSourceRevision,
   successfulPairsAfterBoundary,
-} from "./chat_history"
+} from "./chatHistory"
 import {
   consumeChatSse,
   parseSseChunk,
   resolveStreamedAssistantContent,
-} from "./chat_sse"
-import { deriveChunkLocators } from "./chunk_locators"
-import { resolveCitationOffsets } from "./citation_highlight"
+} from "./chatSse"
+import { deriveChunkLocators } from "./chunkLocators"
+import { resolveCitationOffsets } from "./citationHighlight"
 import {
   parseCitationMarkers,
   splitCitedParagraphs,
   validateCitations,
 } from "./citations"
-import { describeRejectedFile, isAcceptedUpload } from "./file_types"
-import { markdownToPlainText } from "./markdown_plain"
-import { cleanPdfText, isUsefulPdfText } from "./pdf_text"
+import { describeRejectedFile, isAcceptedUpload } from "./fileTypes"
+import { markdownToPlainText } from "./markdownPlain"
+import { cleanPdfText, isUsefulPdfText } from "./pdfText"
 import { remainingQuota, utcDateKey } from "./quotas"
 import {
   mergeRetrievalCandidates,
@@ -38,13 +38,13 @@ import {
   titleFromMarkdown,
   titleFromPastedText,
   titleFromUrl,
-} from "./source_title"
+} from "./sourceTitle"
 import {
   markUploadingSourceCreated,
   removeUploadingSource,
   visibleUploadingSources,
-} from "./uploading_sources"
-import { isBlockedResolvedAddress, validatePublicHttpUrl } from "./url_safety"
+} from "./uploadingSources"
+import { isBlockedResolvedAddress, validatePublicHttpUrl } from "./urlSafety"
 
 describe("source titles", () => {
   test("normalizes and truncates", () => {

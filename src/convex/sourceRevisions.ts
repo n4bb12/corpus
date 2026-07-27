@@ -1,5 +1,5 @@
 import { v } from "convex/values"
-import { shouldCreateSourceRevision } from "src/lib/chat_history"
+import { shouldCreateSourceRevision } from "src/lib/chatHistory"
 import { internalMutation } from "./_generated/server"
 import {
   applySourceSelectionBoundary,

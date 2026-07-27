@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import type { Id } from "src/convex/_generated/dataModel"
-import { startSourceIngest } from "src/lib/ingest-client"
+import { startSourceIngest } from "src/lib/ingestClient"
 
 export function useAddSourceDialog({
   open,

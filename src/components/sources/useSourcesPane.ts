@@ -6,16 +6,16 @@ import { uploadSourceFiles } from "src/components/sources/uploadSourceFiles"
 import { useSourcePreviewMarkdown } from "src/components/sources/useSourcePreviewMarkdown"
 import { api } from "src/convex/_generated/api"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
-import { startSourceIngest } from "src/lib/ingest-client"
-import { patchChatEntriesForSourceSelection } from "src/lib/optimistic_source_boundary"
+import { startSourceIngest } from "src/lib/ingestClient"
+import { patchChatEntriesForSourceSelection } from "src/lib/optimisticSourceBoundary"
 import {
   markUploadingSourceCreated,
   removeUploadingSource,
   type UploadingSource,
   visibleUploadingSources,
-} from "src/lib/uploading_sources"
-import { useEventCallback } from "src/lib/use-event-callback"
-import { useSignedInQueryArgs } from "src/lib/use-signed-in"
+} from "src/lib/uploadingSources"
+import { useEventCallback } from "src/lib/useEventCallback"
+import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 function patchSourceSelected(
   sources: Doc<"sources">[],

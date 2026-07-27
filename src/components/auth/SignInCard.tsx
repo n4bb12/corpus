@@ -3,11 +3,11 @@ import { GoogleSignInButton } from "src/components/auth/GoogleSignInButton"
 import { SignInEmailForm } from "src/components/auth/SignInEmailForm"
 import { Eyebrow } from "src/components/ui/Eyebrow"
 import { Separator } from "src/components/ui/shadcn/separator"
-import { authClient } from "src/lib/auth-client"
+import { authClient } from "src/lib/authClient"
 import {
   setLastSignInMethod,
   useLastSignInMethod,
-} from "src/lib/last-sign-in-method"
+} from "src/lib/lastSignInMethod"
 
 export function SignInCard() {
   const lastMethod = useLastSignInMethod()

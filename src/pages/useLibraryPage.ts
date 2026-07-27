@@ -3,10 +3,10 @@ import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useState } from "react"
 import { api } from "src/convex/_generated/api"
-import { authClient } from "src/lib/auth-client"
+import { authClient } from "src/lib/authClient"
 import { LIMITS } from "src/lib/limits"
-import { normalizeTitle } from "src/lib/source_title"
-import { useSignedInQueryArgs } from "src/lib/use-signed-in"
+import { normalizeTitle } from "src/lib/sourceTitle"
+import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 const routeApi = getRouteApi("/")
 

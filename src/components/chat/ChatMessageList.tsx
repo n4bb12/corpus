@@ -6,7 +6,7 @@ import { ChatEmptyPrompt } from "src/components/chat/ChatEmptyPrompt"
 import { ChatSourceBoundary } from "src/components/chat/ChatSourceBoundary"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import type { api } from "src/convex/_generated/api"
-import type { StreamCitation } from "src/lib/chat_sse"
+import type { StreamCitation } from "src/lib/chatSse"
 import { fadeTransition } from "src/lib/motion"
 
 export type { ChatCiteArgs }

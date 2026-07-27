@@ -1,6 +1,6 @@
 import { v } from "convex/values"
 import { LIMITS, UNTITLED_NOTEBOOK } from "src/lib/limits"
-import { normalizeTitle } from "src/lib/source_title"
+import { normalizeTitle } from "src/lib/sourceTitle"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
 import { requireNotebookOwner, requireUser } from "./lib/ownership"

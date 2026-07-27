@@ -6,7 +6,7 @@ import type { api } from "src/convex/_generated/api"
 import {
   resolveStreamedAssistantContent,
   type StreamCitation,
-} from "src/lib/chat_sse"
+} from "src/lib/chatSse"
 
 type ChatListEntry = FunctionReturnType<typeof api.chat.list>[number]
 

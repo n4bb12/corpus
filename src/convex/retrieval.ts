@@ -3,7 +3,7 @@
 import { voyage } from "@ai-sdk/voyage"
 import { embed, rerank } from "ai"
 import { v } from "convex/values"
-import { CHAT_PROGRESS } from "src/lib/chat_progress"
+import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import { MODELS } from "src/lib/limits"
 import {
   mergeRetrievalCandidates,

@@ -2,7 +2,7 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { generateText } from "ai"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
-import { cleanPdfText, isUsefulPdfText } from "src/lib/pdf_text"
+import { cleanPdfText, isUsefulPdfText } from "src/lib/pdfText"
 
 async function loadPdfJs() {
   const { ensureDomMatrix } = await import("src/server/polyfills/dommatrix")

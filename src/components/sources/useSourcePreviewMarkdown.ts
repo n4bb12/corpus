@@ -2,7 +2,7 @@ import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useState } from "react"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
-import { useSignedInQueryArgs } from "src/lib/use-signed-in"
+import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 export function useSourcePreviewMarkdown(previewSourceId?: string | null) {
   const previewUrl = useQuery(

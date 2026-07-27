@@ -7,9 +7,9 @@ import {
   fetchAuthMutation,
   fetchAuthQuery,
   getToken,
-} from "src/lib/auth-server"
-import { formatChatError } from "src/lib/chat_errors"
-import { CHAT_PROGRESS } from "src/lib/chat_progress"
+} from "src/lib/authServer"
+import { formatChatError } from "src/lib/chatErrors"
+import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import {
   parseCitationMarkers,
   remapCitationMarkers,

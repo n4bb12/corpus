@@ -6,8 +6,8 @@ import { ScrollArea } from "src/components/ui/shadcn/scroll-area"
 import {
   type CitationOffsetRange,
   resolveCitationOffsets,
-} from "src/lib/citation_highlight"
-import { formatTitle } from "src/lib/source_title"
+} from "src/lib/citationHighlight"
+import { formatTitle } from "src/lib/sourceTitle"
 import { cn } from "src/lib/utils"
 
 export type SourcePreviewHighlight = {

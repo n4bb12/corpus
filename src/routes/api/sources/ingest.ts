@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
-import { fetchAuthMutation, getToken } from "src/lib/auth-server"
+import { fetchAuthMutation, getToken } from "src/lib/authServer"
 import { scheduleBackground } from "src/server/scheduleBackground"
 import { processSourcePipeline } from "src/server/sources/processSource"
 import { z } from "zod"

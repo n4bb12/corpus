@@ -3,8 +3,8 @@ import {
   canRetryLatestAssistant,
   hashSourceSelection,
   successfulPairsAfterBoundary,
-} from "src/lib/chat_history"
-import { CHAT_PROGRESS } from "src/lib/chat_progress"
+} from "src/lib/chatHistory"
+import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import { LIMITS } from "src/lib/limits"
 import { quotaResetMessage, utcDateKey } from "src/lib/quotas"
 import { mutation, query } from "./_generated/server"

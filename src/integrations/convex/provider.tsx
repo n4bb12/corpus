@@ -5,7 +5,7 @@ import {
 import { ConvexReactClient } from "convex/react"
 import { ConvexQueryCacheProvider } from "convex-helpers/react/cache"
 import type { ReactNode } from "react"
-import { authClient } from "src/lib/auth-client"
+import { authClient } from "src/lib/authClient"
 import { requireViteEnv } from "src/lib/env"
 
 const convexUrl = requireViteEnv("VITE_CONVEX_URL")

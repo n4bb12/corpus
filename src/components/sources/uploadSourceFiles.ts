@@ -1,9 +1,9 @@
 import { nanoid } from "nanoid"
 import type { Id } from "src/convex/_generated/dataModel"
-import { describeRejectedFile, isAcceptedUpload } from "src/lib/file_types"
-import { startSourceIngest } from "src/lib/ingest-client"
-import { titleFromFilename } from "src/lib/source_title"
-import type { UploadingSource } from "src/lib/uploading_sources"
+import { describeRejectedFile, isAcceptedUpload } from "src/lib/fileTypes"
+import { startSourceIngest } from "src/lib/ingestClient"
+import { titleFromFilename } from "src/lib/sourceTitle"
+import type { UploadingSource } from "src/lib/uploadingSources"
 
 export type UploadSourceFilesArgs = {
   files: File[]

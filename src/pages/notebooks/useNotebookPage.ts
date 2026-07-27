@@ -4,9 +4,9 @@ import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useState } from "react"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
-import { authClient } from "src/lib/auth-client"
-import { normalizeTitle } from "src/lib/source_title"
-import { useIsSignedIn, useSignedInQueryArgs } from "src/lib/use-signed-in"
+import { authClient } from "src/lib/authClient"
+import { normalizeTitle } from "src/lib/sourceTitle"
+import { useIsSignedIn, useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 const routeApi = getRouteApi("/notebooks/$notebookId")
 

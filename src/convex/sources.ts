@@ -1,5 +1,5 @@
 import { v } from "convex/values"
-import { shouldCreateSourceRevision } from "src/lib/chat_history"
+import { shouldCreateSourceRevision } from "src/lib/chatHistory"
 import { LIMITS } from "src/lib/limits"
 import { quotaResetMessage, utcDateKey } from "src/lib/quotas"
 import {
@@ -7,7 +7,7 @@ import {
   titleFromFilename,
   titleFromPastedText,
   titleFromUrl,
-} from "src/lib/source_title"
+} from "src/lib/sourceTitle"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
 import {

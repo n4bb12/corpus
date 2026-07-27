@@ -10,8 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "src/components/ui/shadcn/dropdown-menu"
-import { authClient } from "src/lib/auth-client"
-import { beginSignOut } from "src/lib/use-signed-in"
+import { authClient } from "src/lib/authClient"
+import { beginSignOut } from "src/lib/useSignedIn"
 
 export type AccountMenuProps = {
   email?: string | null

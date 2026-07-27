@@ -3,7 +3,7 @@ import { LIMITS } from "src/lib/limits"
 import {
   isBlockedResolvedAddress,
   validatePublicHttpUrl,
-} from "src/lib/url_safety"
+} from "src/lib/urlSafety"
 
 export async function assertSafeUrl(raw: string) {
   const validated = validatePublicHttpUrl(raw)

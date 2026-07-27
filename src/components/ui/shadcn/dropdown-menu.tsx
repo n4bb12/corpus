@@ -1,7 +1,7 @@
 import { CheckIcon, ChevronRightIcon } from "lucide-react"
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 import { type ComponentProps, useId } from "react"
-import { closeMenu, openMenu, useIsMenuOpen } from "src/lib/open-menu"
+import { closeMenu, openMenu, useIsMenuOpen } from "src/lib/openMenu"
 import { cn } from "src/lib/utils.ts"
 
 function DropdownMenu({

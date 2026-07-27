@@ -17,7 +17,7 @@ import {
 } from "src/components/ui/shadcn/dropdown-menu"
 import { Label } from "src/components/ui/shadcn/label"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
-import { formatTitle } from "src/lib/source_title"
+import { formatTitle } from "src/lib/sourceTitle"
 import { cn } from "src/lib/utils"
 
 const STATUS_LABEL: Record<string, string> = {

@@ -2,7 +2,7 @@ import { Navigate } from "@tanstack/react-router"
 import { useConvexAuth } from "convex/react"
 import { type ReactNode, useEffect, useState } from "react"
 import { AppPending } from "src/components/layout/AppPending"
-import { useIsSigningOut } from "src/lib/use-signed-in"
+import { useIsSigningOut } from "src/lib/useSignedIn"
 
 export type ClientAuthBoundaryProps = {
   children: ReactNode

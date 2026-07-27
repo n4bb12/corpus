@@ -1,4 +1,4 @@
-import { hashSourceSelection, planSourceBoundary } from "src/lib/chat_history"
+import { hashSourceSelection, planSourceBoundary } from "src/lib/chatHistory"
 
 export async function getReadySelectedIds(
   ctx: { db: any },

@@ -8,8 +8,8 @@ import {
 import { useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { CitationPill } from "src/components/chat/CitationPill"
-import { markdownToPlainText } from "src/lib/markdown_plain"
-import { formatTitle } from "src/lib/source_title"
+import { markdownToPlainText } from "src/lib/markdownPlain"
+import { formatTitle } from "src/lib/sourceTitle"
 
 export type ChatCiteArgs = {
   sourceId?: string

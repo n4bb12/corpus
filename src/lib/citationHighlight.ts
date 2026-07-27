@@ -1,4 +1,4 @@
-import { markdownToPlainText } from "src/lib/markdown_plain"
+import { markdownToPlainText } from "src/lib/markdownPlain"
 
 export type CitationOffsetRange = {
   start: number

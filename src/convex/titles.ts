@@ -9,7 +9,7 @@ import {
   looksLikeFilename,
   normalizeTitle,
   titleFromMarkdown,
-} from "src/lib/source_title"
+} from "src/lib/sourceTitle"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
 
