@@ -35,11 +35,30 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
   const abortRef = useRef<AbortController | null>(null)
+  const acceptingStreamRef = useRef(false)
+  const streamedContentRef = useRef<string | null>(null)
 
   const readySelected =
     sources?.filter(
       (source) => source.selected && source.processingState === "ready",
     ) ?? []
+
+  const hasSources = !!sources?.length
+  const hasSelectedProcessing =
+    sources?.some(
+      (source) =>
+        source.selected &&
+        source.processingState !== "ready" &&
+        source.processingState !== "failed",
+    ) ?? false
+
+  const emptyPromptState = readySelected.length
+    ? ("ready" as const)
+    : hasSelectedProcessing
+      ? ("processing" as const)
+      : hasSources
+        ? ("select" as const)
+        : ("empty" as const)
 
   const streaming = entries?.some(
     (entry) =>
@@ -87,6 +106,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     setSending(true)
     setError(null)
     setStreamedContent(null)
+    streamedContentRef.current = null
     setStreamedCitations([])
     setStreamedInsufficient(null)
 
@@ -100,6 +120,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
 
     const controller = new AbortController()
     abortRef.current = controller
+    acceptingStreamRef.current = true
 
     try {
       const response = await fetch("/api/chat", {
@@ -131,10 +152,35 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
 
       setPrompt("")
       const result = await consumeChatSse(response, {
-        onText: setStreamedContent,
-        onCitations: setStreamedCitations,
-        onInsufficient: setStreamedInsufficient,
+        signal: controller.signal,
+        shouldAccept: () => acceptingStreamRef.current,
+        onText: (text) => {
+          if (!acceptingStreamRef.current) {
+            return
+          }
+
+          streamedContentRef.current = text
+          setStreamedContent(text)
+        },
+        onCitations: (citations) => {
+          if (!acceptingStreamRef.current) {
+            return
+          }
+
+          setStreamedCitations(citations)
+        },
+        onInsufficient: (insufficient) => {
+          if (!acceptingStreamRef.current) {
+            return
+          }
+
+          setStreamedInsufficient(insufficient)
+        },
       })
+
+      if (result.canceled || controller.signal.aborted) {
+        return
+      }
 
       if (result.error) {
         await markFailed(formatChatError(result.error))
@@ -145,12 +191,13 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
         await markFailed("The answer stopped before it finished. Try again.")
       }
     } catch (err) {
-      if ((err as Error).name === "AbortError") {
+      if ((err as Error).name === "AbortError" || controller.signal.aborted) {
         return
       }
 
       await markFailed(formatChatError(err))
     } finally {
+      acceptingStreamRef.current = false
       setSending(false)
       setOptimisticSubmission(null)
       abortRef.current = null
@@ -158,8 +205,18 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   }
 
   async function stop() {
+    acceptingStreamRef.current = false
     abortRef.current?.abort()
-    await cancelGeneration({ notebookId })
+    abortRef.current = null
+
+    try {
+      await cancelGeneration({
+        notebookId,
+        content: streamedContentRef.current ?? undefined,
+      })
+    } catch {
+      // Server may already have finalized the turn.
+    }
   }
 
   return {
@@ -173,6 +230,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     scrollerRef,
     stickToBottom,
     readySelected,
+    emptyPromptState,
     streaming,
     streamedContent,
     streamedCitations,

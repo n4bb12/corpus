@@ -3671,3 +3671,32 @@ The mid-stream path was emitting already-numbered `[[cite:1]]` markers, while th
 
 **Fix:** stream `[[cite:chunkId]]` again (resolver can match them), renumber only when saving, and put `chunkIds` before `text` in the schema so cites bind earlier while text streams.
 
+# Response cancellation process
+_Exported on 7/27/2026 at 15:10:42 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Cancelling a response should halt the response server-side. No more accepted chunks on the client. No more generation on the server. Also cancel any upstream stream, e.g. the answer LLM stream.
+
+---
+
+**Cursor**
+
+I'll look at how streaming and cancel work today so we can halt generation on both client and server, including upstream LLM streams.
+
+Cancel already aborts the fetch and marks the message canceled; next I'll check whether the server still keeps generating or overwriting that status.
+
+Main gaps: canceled messages can be revived by `appendAssistantText`, `finalizeAssistant` can overwrite cancel with complete, and the client keeps applying stream chunks after Stop. Fixing those next.
+
+Implementing mutation guards so canceled generations stay canceled, aborting upstream LLM calls, and ignoring client chunks after Stop.
+
+Stop now fully tears down generation end-to-end.
+
+**Client** — Stop flips an accept flag, aborts the fetch, cancels the SSE reader, and ignores any further chunks. Partial text is passed into `cancelGeneration` so the DB keeps what you saw.
+
+**Server** — Request abort and stream `cancel()` both abort the generation controller, which is wired into `streamText` and the citation `generateText` retry. Mid-loop checks stop emit/persist after cancel.
+
+**Convex** — `appendAssistantText` / `setProgressLabel` no-op once the turn is no longer active (and return `false` so the route aborts). `finalizeAssistant` will not resurrect a canceled answer as complete/failed.
+

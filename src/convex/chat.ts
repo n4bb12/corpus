@@ -262,6 +262,10 @@ export const prepareGeneration = mutation({
   },
 })
 
+function isActiveAssistantStatus(status: string | undefined) {
+  return status === "pending" || status === "streaming"
+}
+
 export const setProgressLabel = mutation({
   args: {
     messageId: v.id("chatEntries"),
@@ -272,17 +276,19 @@ export const setProgressLabel = mutation({
     const message = await ctx.db.get(args.messageId)
 
     if (!message || message.generationId !== args.generationId) {
-      return
+      return false
     }
 
-    if (message.status !== "pending" && message.status !== "streaming") {
-      return
+    if (!isActiveAssistantStatus(message.status)) {
+      return false
     }
 
     await requireNotebookOwner(ctx, message.notebookId)
     await ctx.db.patch(message._id, {
       progressLabel: args.progressLabel,
     })
+
+    return true
   },
 })
 
@@ -296,7 +302,11 @@ export const appendAssistantText = mutation({
     const message = await ctx.db.get(args.messageId)
 
     if (!message || message.generationId !== args.generationId) {
-      return
+      return false
+    }
+
+    if (!isActiveAssistantStatus(message.status)) {
+      return false
     }
 
     await requireNotebookOwner(ctx, message.notebookId)
@@ -305,6 +315,8 @@ export const appendAssistantText = mutation({
       status: "streaming",
       progressLabel: undefined,
     })
+
+    return true
   },
 })
 
@@ -343,10 +355,28 @@ export const finalizeAssistant = mutation({
     const message = await ctx.db.get(args.messageId)
 
     if (!message || message.generationId !== args.generationId) {
-      return
+      return false
     }
 
     await requireNotebookOwner(ctx, message.notebookId)
+
+    // Cancel wins: never resurrect a stopped answer as complete/failed.
+    if (message.status === "canceled") {
+      if (args.status !== "canceled") {
+        return false
+      }
+
+      await ctx.db.patch(message._id, {
+        content: args.content,
+        progressLabel: undefined,
+      })
+
+      return true
+    }
+
+    if (!isActiveAssistantStatus(message.status)) {
+      return false
+    }
 
     const existing = await ctx.db
       .query("citations")
@@ -397,12 +427,15 @@ export const finalizeAssistant = mutation({
         })
       }
     }
+
+    return true
   },
 })
 
 export const cancelGeneration = mutation({
   args: {
     notebookId: v.id("notebooks"),
+    content: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { notebook } = await requireNotebookOwner(ctx, args.notebookId)
@@ -419,7 +452,7 @@ export const cancelGeneration = mutation({
         (entry) =>
           entry.kind === "message" &&
           entry.role === "assistant" &&
-          (entry.status === "pending" || entry.status === "streaming"),
+          isActiveAssistantStatus(entry.status),
       )
 
     if (!active) {
@@ -429,6 +462,7 @@ export const cancelGeneration = mutation({
     await ctx.db.patch(active._id, {
       status: "canceled",
       progressLabel: undefined,
+      ...(typeof args.content === "string" ? { content: args.content } : {}),
     })
 
     return active.generationId ?? null

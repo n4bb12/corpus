@@ -131,10 +131,101 @@ describe("chat sse", () => {
     `)
     expect(result).toMatchInlineSnapshot(`
       {
+        "canceled": false,
         "done": true,
         "error": null,
         "insufficient": false,
         "text": "Hello world",
+      }
+    `)
+  })
+
+  test("stops accepting chunks after shouldAccept turns false", async () => {
+    const updates: string[] = []
+    let accept = true
+    const response = new Response(
+      new ReadableStream({
+        start(controller) {
+          const encoder = new TextEncoder()
+
+          controller.enqueue(
+            encoder.encode('event: text\ndata: {"text":"partial"}\n\n'),
+          )
+          controller.enqueue(
+            encoder.encode('event: text\ndata: {"text":"ignored"}\n\n'),
+          )
+          controller.enqueue(encoder.encode("event: done\ndata: {}\n\n"))
+          controller.close()
+        },
+      }),
+    )
+
+    const result = await consumeChatSse(response, {
+      shouldAccept: () => accept,
+      onText: (text) => {
+        updates.push(text)
+        accept = false
+      },
+    })
+
+    expect(updates).toMatchInlineSnapshot(`
+      [
+        "partial",
+      ]
+    `)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "canceled": false,
+        "done": false,
+        "error": null,
+        "insufficient": null,
+        "text": "partial",
+      }
+    `)
+  })
+
+  test("cancels the reader when the abort signal fires", async () => {
+    const updates: string[] = []
+    const abort = new AbortController()
+    let cancelCalled = false
+    const response = new Response(
+      new ReadableStream({
+        start(controller) {
+          const encoder = new TextEncoder()
+
+          controller.enqueue(
+            encoder.encode('event: text\ndata: {"text":"before"}\n\n'),
+          )
+        },
+        cancel() {
+          cancelCalled = true
+        },
+      }),
+    )
+
+    const pending = consumeChatSse(response, {
+      signal: abort.signal,
+      onText: (text) => {
+        updates.push(text)
+        abort.abort()
+      },
+    })
+
+    const result = await pending
+
+    expect(updates).toMatchInlineSnapshot(`
+      [
+        "before",
+      ]
+    `)
+    expect(cancelCalled).toBe(true)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "canceled": true,
+        "done": false,
+        "error": null,
+        "insufficient": null,
+        "text": "before",
       }
     `)
   })

@@ -9,6 +9,7 @@ export type ChatSseResult = {
   error: string | null
   text: string
   insufficient: boolean | null
+  canceled: boolean
 }
 
 export type StreamCitation = {
@@ -25,6 +26,9 @@ export type ChatSseHandlers = {
   onText?: (text: string) => void
   onCitations?: (citations: StreamCitation[]) => void
   onInsufficient?: (insufficient: boolean) => void
+  /** When false, stop applying events even if the socket still delivers them. */
+  shouldAccept?: () => boolean
+  signal?: AbortSignal
 }
 
 function isStreamCitation(value: unknown): value is StreamCitation {
@@ -125,6 +129,7 @@ export async function consumeChatSse(
       error: "No answer came back. Try again.",
       text: "",
       insufficient: null,
+      canceled: false,
     }
   }
 
@@ -134,72 +139,122 @@ export async function consumeChatSse(
   let error: string | null = null
   let text = ""
   let insufficient: boolean | null = null
+  let canceled = false
 
-  while (true) {
-    const { done: streamDone, value } = await reader.read()
+  const accepting = () =>
+    !canceled &&
+    !handlers.signal?.aborted &&
+    (handlers.shouldAccept?.() ?? true)
 
-    if (streamDone) {
-      break
-    }
+  const onAbort = () => {
+    canceled = true
+    void reader.cancel().catch(() => undefined)
+  }
 
-    buffer = parseSseChunk(
-      buffer + decoder.decode(value, { stream: true }),
-      (event, data) => {
-        if (event === "done") {
-          done = true
-          return
-        }
+  handlers.signal?.addEventListener("abort", onAbort, { once: true })
 
-        if (event === "error") {
-          const message =
-            data &&
-            typeof data === "object" &&
-            "message" in data &&
-            typeof data.message === "string"
-              ? data.message
-              : "Couldn't generate an answer."
-          error = message
-          return
-        }
+  if (handlers.signal?.aborted) {
+    onAbort()
+  }
 
+  try {
+    while (accepting()) {
+      let streamDone: boolean
+      let value: Uint8Array | undefined
+
+      try {
+        ;({ done: streamDone, value } = await reader.read())
+      } catch (err) {
         if (
-          event === "insufficient" &&
-          data &&
-          typeof data === "object" &&
-          "insufficient" in data &&
-          typeof data.insufficient === "boolean"
+          handlers.signal?.aborted ||
+          (err as Error).name === "AbortError" ||
+          canceled
         ) {
-          insufficient = data.insufficient
-          handlers.onInsufficient?.(data.insufficient)
-          return
+          canceled = true
+          break
         }
 
-        if (
-          event === "citations" &&
-          data &&
-          typeof data === "object" &&
-          "citations" in data &&
-          Array.isArray(data.citations)
-        ) {
-          handlers.onCitations?.(data.citations.filter(isStreamCitation))
-          return
-        }
+        throw err
+      }
 
-        if (event === "text" && data && typeof data === "object") {
-          if ("text" in data && typeof data.text === "string") {
-            text = data.text
-            handlers.onText?.(text)
+      if (streamDone) {
+        break
+      }
+
+      if (!accepting() || !value) {
+        break
+      }
+
+      buffer = parseSseChunk(
+        buffer + decoder.decode(value, { stream: true }),
+        (event, data) => {
+          if (!accepting()) {
             return
           }
 
-          if ("delta" in data && typeof data.delta === "string") {
-            text += data.delta
-            handlers.onText?.(text)
+          if (event === "done") {
+            done = true
+            return
           }
-        }
-      },
-    )
+
+          if (event === "error") {
+            const message =
+              data &&
+              typeof data === "object" &&
+              "message" in data &&
+              typeof data.message === "string"
+                ? data.message
+                : "Couldn't generate an answer."
+            error = message
+            return
+          }
+
+          if (
+            event === "insufficient" &&
+            data &&
+            typeof data === "object" &&
+            "insufficient" in data &&
+            typeof data.insufficient === "boolean"
+          ) {
+            insufficient = data.insufficient
+            handlers.onInsufficient?.(data.insufficient)
+            return
+          }
+
+          if (
+            event === "citations" &&
+            data &&
+            typeof data === "object" &&
+            "citations" in data &&
+            Array.isArray(data.citations)
+          ) {
+            handlers.onCitations?.(data.citations.filter(isStreamCitation))
+            return
+          }
+
+          if (event === "text" && data && typeof data === "object") {
+            if ("text" in data && typeof data.text === "string") {
+              text = data.text
+              handlers.onText?.(text)
+              return
+            }
+
+            if ("delta" in data && typeof data.delta === "string") {
+              text += data.delta
+              handlers.onText?.(text)
+            }
+          }
+        },
+      )
+    }
+  } finally {
+    handlers.signal?.removeEventListener("abort", onAbort)
+
+    if (canceled || handlers.signal?.aborted) {
+      canceled = true
+      await reader.cancel().catch(() => undefined)
+    }
   }
 
-  return { done, error, text, insufficient }
+  return { done, error, text, insufficient, canceled }
 }
