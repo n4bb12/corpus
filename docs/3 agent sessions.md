@@ -7637,3 +7637,50 @@ Reusing the existing theme preference guard and checking lints.
 
 The theme menu now uses radio items, so the active preference (Light / Dark / System) shows a checkmark.
 
+# Buffalo meat product extraction
+_Exported on 7/27/2026 at 22:15:45 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+I added https://bueffelherz.com/  as source which has multiple products but we only extract 
+
+Büffel-Fleisch gewürfelt natur 1000g, durchwachsenes Wasserbüffel-Muskelfleisch zum BARFen
+Büffel-Fleisch gewürfelt, natur 1000g
+von 1390 (1390 /per kg)
+
+In den Warenkorb
+
+---
+
+**Cursor**
+
+Only one product is being pulled from that shop page — I'll trace how source extraction works for multi-product pages.
+
+Likely cause: we take the first `<article>`/`<main>` only — I'll inspect that shop's HTML to confirm.
+
+Confirmed: each product is its own `<article>`, and we only take `.first()`. Checking tests, then fixing extraction to prefer `<main>` (or all articles).
+
+Root cause: `$("article").first()` — this Shopify page wraps each product in its own `<article>`, so we drop the rest. Preferring `<main>` (and handling multiple articles) next.
+
+Root cause: [bueffelherz.com](https://bueffelherz.com/) wraps each product card in its own `<article>`, and extraction used `$("article").first()` — so only the first product survived.
+
+**Fix:** Prefer `<main>` when present; otherwise use a single article, or concatenate all articles if there are several.
+
+Verified against the live homepage HTML — all four Produktempfehlungen products are now included. Re-add or retry that source so it re-ingests with the new logic.
+
+---
+
+**User**
+
+Probably safer to avoid article in general. A landing page could show a single product or use it for other reasons, resulting in a lot of content being disregarded.
+
+---
+
+**Cursor**
+
+Agreed — dropping the `<article>` preference so we don't discard the rest of the page.
+
+Done. Extraction is now `<main>` → `<body>` only — no `<article>` narrowing.
+

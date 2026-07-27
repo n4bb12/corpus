@@ -110,7 +110,12 @@ export async function fetchPublicHtml(url: URL) {
   }
 }
 
-/** Prefer article/main/body inner HTML; strip script/style/noscript. */
+/**
+ * Prefer `<main>` when present, otherwise `<body>`.
+ *
+ * Do not narrow to `<article>`: product cards, teasers, and other page regions
+ * commonly use it, and selecting one (or only articles) can drop most of the page.
+ */
 export async function extractReadableHtml(html: string) {
   const { load } = await import("cheerio")
   const $ = load(html)
@@ -119,7 +124,6 @@ export async function extractReadableHtml(html: string) {
   $("script, style, noscript").remove()
 
   const main =
-    $("article").first().html() ??
     $("main").first().html() ??
     $("body").first().html() ??
     $.root().html() ??
