@@ -3474,3 +3474,26 @@ Fixed. The card’s press scale was on the outer wrapper via `active:scale-[0.98
 
 It’s now `has-[a:active]:scale-[0.98]`, so the scale only runs when the notebook link is pressed — not when opening the menu.
 
+# Checkbox misalignment
+_Exported on 7/27/2026 at 14:30:40 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Slight checkbox misalignment.
+
+---
+
+**Cursor**
+
+I'll find the stacked checkboxes in the UI and fix the horizontal misalignment.
+
+The screenshot looks like the sources list — I'll compare those row layouts next.
+
+Padding and the menu-button spacer look like the culprits — checking those sizes against the select-all row.
+
+Select-all uses `px-2` while list rows use `px-2.5` — aligning that padding.
+
+The select-all row used `px-2` while source rows used `px-2.5`, so the checkboxes sat 2px apart. Both now use `px-2.5`.
+

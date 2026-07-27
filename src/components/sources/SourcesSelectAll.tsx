@@ -32,7 +32,7 @@ export function SourcesSelectAll({
   const someSelected = displaySelected > 0 && !allSelected
 
   return (
-    <div className="flex items-center justify-end gap-2 px-2 py-1.5 text-sm">
+    <div className="flex items-center justify-end gap-2 px-2.5 py-1.5 text-sm">
       <label
         htmlFor="select-all-sources"
         className="cursor-pointer tabular-nums text-muted-foreground"
