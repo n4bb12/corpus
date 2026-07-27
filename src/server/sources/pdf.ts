@@ -2,7 +2,12 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { generateText } from "ai"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
-import { cleanPdfText, isUsefulPdfText } from "src/lib/pdfText"
+import {
+  cleanPdfText,
+  isUsefulPdfText,
+  type PdfTextItem,
+  textFromPdfContentItems,
+} from "src/lib/pdfText"
 
 async function loadPdfJs() {
   const { ensureDomMatrix } = await import("src/server/polyfills/dommatrix")
@@ -12,26 +17,35 @@ async function loadPdfJs() {
   return import("pdfjs-dist/legacy/build/pdf.mjs")
 }
 
-function textFromContentItems(
-  items: Array<{ str?: string; hasEOL?: boolean } | { type: string }>,
+function pdfTextItemsFromContent(
+  items: Array<
+    | {
+        str?: string
+        hasEOL?: boolean
+        transform?: number[]
+        height?: number
+        width?: number
+      }
+    | { type: string }
+  >,
 ) {
-  let text = ""
+  const result: PdfTextItem[] = []
 
   for (const item of items) {
     if (!("str" in item) || typeof item.str !== "string") {
       continue
     }
 
-    text += item.str
-
-    if (item.hasEOL) {
-      text += "\n"
-    } else {
-      text += " "
-    }
+    result.push({
+      str: item.str,
+      hasEOL: item.hasEOL,
+      transform: item.transform,
+      height: item.height,
+      width: item.width,
+    })
   }
 
-  return text
+  return result
 }
 
 async function extractPdfTextLayer(buffer: Buffer) {
@@ -46,10 +60,12 @@ async function extractPdfTextLayer(buffer: Buffer) {
       const page = await doc.getPage(pageNumber)
       const content = await page.getTextContent()
 
-      pages.push(textFromContentItems(content.items))
+      pages.push(
+        textFromPdfContentItems(pdfTextItemsFromContent(content.items)),
+      )
     }
 
-    return cleanPdfText(pages.join("\n"))
+    return cleanPdfText(pages.join("\n\n"))
   } finally {
     await doc.destroy()
   }
@@ -68,7 +84,7 @@ async function extractPdfViaVision(buffer: Buffer) {
         content: [
           {
             type: "text",
-            text: "Extract all readable text from this PDF as clean markdown. Preserve headings, lists, and paragraphs. Do not invent content. Return only the extracted text.",
+            text: "Extract all readable text from this PDF as clean markdown. Preserve headings, lists, and paragraph breaks (blank lines between paragraphs). Do not invent content. Return only the extracted text.",
           },
           {
             type: "file",
