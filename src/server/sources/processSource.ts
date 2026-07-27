@@ -139,8 +139,8 @@ export async function processSourcePipeline(
     })
 
     const texts = chunkMarkdown(markdown, {
-      maxChunkSize: 1200,
-      minChunkSize: 200,
+      maxChunkSize: 500,
+      minChunkSize: 80,
     })
 
     if (!texts.length) {
