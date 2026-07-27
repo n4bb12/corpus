@@ -6016,3 +6016,79 @@ Updated the sign-in description to:
 
 Same value props, without the “calm place” framing — and aligned with the library page’s “gather sources” language.
 
+# Signout server error
+_Exported on 7/27/2026 at 20:07:33 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+One more signout issue:
+
+[CONVEX Q(notebooks:list)] [Request ID: 1cd1350d7dbe0e81] Server Error
+  Called by client
+
+---
+
+**Cursor**
+
+I'll dig into the `notebooks:list` query and the sign-out flow to see why that client call fails after logout.
+
+The soft sign-out path may remount signed-in children while auth is mid-clear. Checking that race next.
+
+Checking whether `AccountMenu` unmounts mid–sign-out when the boundary swaps to `AppPending`.
+
+Root cause: leftover `notebooks:list` watches re-run after the session/JWT is cleared. I'll tear them down after React passive cleanups, and keep the auth boundary from remounting the library while auth is settling.
+
+`requireUser` is still needed in `notebooks.ts` — fixing that import.
+
+Fixed. Sign-out was clearing the token while a `notebooks:list` watch was still alive, so Convex re-ran it unauthenticated and threw.
+
+What changed:
+
+1. **Teardown order** — unmount first, wait for React passive cleanups (`rAF` + `setTimeout`), *then* clear the convex-helpers cache, *then* call `signOut`. Clearing before those cleanups let idle watches come back.
+2. **Auth boundary** — once the session is gone, signed-in routes redirect immediately instead of remounting the library while Convex auth is still settling.
+3. **Idle cache** — `maxIdleEntries={0}` so unmounts unsubscribe immediately.
+4. **Safety net** — `notebooks:list` returns an empty page when there’s no user, instead of throwing `Unauthenticated`.
+
+Try signing out again; the `notebooks:list` server error should be gone.
+
+---
+
+**User**
+
+We also still have a flicker during sign-out. On / for example:
+
+click sign-out -> empty page -> page with header but no data -> sign-in page.
+
+can we get
+
+sign-out -> sign-in page
+
+---
+
+**Cursor**
+
+I'll trace the sign-out → redirect path to find what's painting those intermediate empty/header frames.
+
+The empty frame is `AppPending`, and the header flash is the library remounting after `endSignOut` before the redirect. I'll navigate to sign-in while still signing out and only clear that flag once the session is gone.
+
+`<Navigate>` renders `null` until its layout effect runs — that's the empty frame. I'll paint the sign-in page immediately and navigate imperatively.
+
+I'll navigate to `/sign-in` from the menu so we don't paint `SignInPage` on `/` and remount it.
+
+Removing `flushSync` so we don't force an intermediate paint before the route change.
+
+Fixed. The flicker came from two things:
+
+1. **`<Navigate>` renders `null`** until its layout effect runs → empty atmosphere frame  
+2. **`endSignOut` too early** → library remounted (header, no data) before the session had settled
+
+Sign-out now:
+
+1. Sets the signing-out flag and navigates to `/sign-in` immediately  
+2. Paints `SignInPage` right away (no null redirect)  
+3. Clears the flag only after the session is actually gone  
+
+You should get: sign-out → sign-in, with no empty or library flash in between.
+

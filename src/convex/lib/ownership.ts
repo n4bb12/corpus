@@ -4,8 +4,13 @@ import { authComponent } from "../auth"
 
 type Ctx = QueryCtx | MutationCtx
 
+export async function getUserOrNull(ctx: Ctx) {
+  const user = await authComponent.safeGetAuthUser(ctx)
+  return user ?? null
+}
+
 export async function requireUser(ctx: Ctx) {
-  const user = await authComponent.getAuthUser(ctx)
+  const user = await getUserOrNull(ctx)
 
   if (!user) {
     throw new Error("You need to sign in to continue.")

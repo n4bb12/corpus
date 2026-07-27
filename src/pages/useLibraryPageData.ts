@@ -122,8 +122,7 @@ export function useLibraryPageData() {
   )
   // Keep empty / no-match from the last published display so skipping the query
   // while typing does not blank the results pane.
-  const isEmpty =
-    hasResolvedOnce.current && !displaySearchTerm && !page.length
+  const isEmpty = hasResolvedOnce.current && !displaySearchTerm && !page.length
   const noMatches =
     hasResolvedOnce.current && !!displaySearchTerm && !page.length
   const currentPage = displayResult?.pageIndex ?? pageIndex

@@ -12,7 +12,11 @@ import { notebookMatchesSearch } from "src/lib/notebookSearch"
 import { normalizeTitle } from "src/lib/sourceTitle"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
-import { requireNotebookOwner, requireUser } from "./lib/ownership"
+import {
+  getUserOrNull,
+  requireNotebookOwner,
+  requireUser,
+} from "./lib/ownership"
 
 export const list = query({
   args: {
@@ -20,7 +24,20 @@ export const list = query({
     page: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx)
+    const user = await getUserOrNull(ctx)
+
+    // Sign-out can clear the session while a watch is still draining — return
+    // empty instead of throwing so the client does not log a Server Error.
+    if (!user) {
+      return {
+        page: [],
+        pageIndex: 1,
+        pageCount: 0,
+        totalCount: 0,
+        isDone: true,
+      }
+    }
+
     const requestedPage =
       typeof args.page === "number" && args.page > 0 ? Math.floor(args.page) : 1
     const search = args.search?.trim()

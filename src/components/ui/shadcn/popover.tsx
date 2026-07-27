@@ -5,7 +5,9 @@ import type { ComponentProps } from "react"
 
 import { cn } from "src/lib/utils.ts"
 
-export function Popover({ ...props }: ComponentProps<typeof PopoverPrimitive.Root>) {
+export function Popover({
+  ...props
+}: ComponentProps<typeof PopoverPrimitive.Root>) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }
 
@@ -63,7 +65,10 @@ export function PopoverTitle({ className, ...props }: ComponentProps<"h2">) {
   )
 }
 
-export function PopoverDescription({ className, ...props }: ComponentProps<"p">) {
+export function PopoverDescription({
+  className,
+  ...props
+}: ComponentProps<"p">) {
   return (
     <p
       data-slot="popover-description"
@@ -72,4 +77,3 @@ export function PopoverDescription({ className, ...props }: ComponentProps<"p">)
     />
   )
 }
-

@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router"
 import { LogOut, User } from "lucide-react"
 import { useState } from "react"
 import { PendingLabel } from "src/components/ui/PendingLabel"
@@ -11,7 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "src/components/ui/shadcn/dropdown-menu"
 import { authClient } from "src/lib/authClient"
-import { beginSignOut, endSignOut } from "src/lib/useSignedIn"
+import {
+  beginSignOut,
+  endSignOut,
+  settleSignOutQueries,
+} from "src/lib/useSignedIn"
 
 export type AccountMenuProps = {
   email?: string | null
@@ -19,25 +24,21 @@ export type AccountMenuProps = {
 }
 
 export function AccountMenu({ email, name }: AccountMenuProps) {
+  const navigate = useNavigate()
   const [pending, setPending] = useState(false)
 
   async function onSignOut() {
     setPending(true)
 
-    // Skip queries, flush unmounts, and clear the convex-helpers cache first.
+    // Flag first so the sign-in boundary won't bounce us back to `/`, then
+    // navigate before token clear. ClientAuthBoundary paints SignInPage on the
+    // signed-in route only as a fallback if this navigate is slow.
     beginSignOut()
-
-    // Let React finish useQuery cleanups before Better Auth clears the token.
-    await new Promise<void>((resolve) => {
-      window.setTimeout(resolve, 0)
-    })
+    await navigate({ to: "/sign-in", replace: true })
+    await settleSignOutQueries()
 
     await authClient.signOut({
       fetchOptions: {
-        onSuccess: () => {
-          // Session is cleared; drop the flag so ClientAuthBoundary can soft-redirect.
-          endSignOut()
-        },
         onError: () => {
           endSignOut()
           setPending(false)

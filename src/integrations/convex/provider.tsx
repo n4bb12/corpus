@@ -74,7 +74,7 @@ export function AppConvexProvider({ children }: AppConvexProviderProps) {
       client={convexClient}
       authClient={authClient as unknown as AuthClient}
     >
-      <ConvexQueryCacheProvider>
+      <ConvexQueryCacheProvider maxIdleEntries={0}>
         <ConvexQueryCacheRegistryBridge />
         {children}
       </ConvexQueryCacheProvider>

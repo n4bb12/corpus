@@ -211,7 +211,10 @@ export function DropdownMenuSeparator({
   )
 }
 
-export function DropdownMenuShortcut({ className, ...props }: ComponentProps<"span">) {
+export function DropdownMenuShortcut({
+  className,
+  ...props
+}: ComponentProps<"span">) {
   return (
     <span
       data-slot="dropdown-menu-shortcut"
@@ -269,4 +272,3 @@ export function DropdownMenuSubContent({
     />
   )
 }
-
