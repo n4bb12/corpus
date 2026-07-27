@@ -6,6 +6,8 @@ import { SourcesPane } from "src/components/sources/SourcesPane"
 import type { Id } from "src/convex/_generated/dataModel"
 import {
   layoutTransition,
+  pageEnterAnimate,
+  pageEnterAnimateAside,
   pageEnterInitial,
   respectReducedMotion,
 } from "src/lib/motion"
@@ -48,7 +50,7 @@ export function NotebookWorkspace({
           tab === "sources" ? "flex" : "hidden md:flex",
         )}
         initial={pageEnterInitial}
-        animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+        animate={pageEnterAnimateAside}
         transition={respectReducedMotion(reduceMotion, layoutTransition)}
       >
         <SourcesPane
@@ -71,7 +73,7 @@ export function NotebookWorkspace({
           tab === "chat" ? "flex" : "hidden md:flex",
         )}
         initial={pageEnterInitial}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        animate={pageEnterAnimate}
         transition={respectReducedMotion(reduceMotion, {
           ...layoutTransition,
           delay: 0.04,

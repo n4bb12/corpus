@@ -10,7 +10,14 @@ export type RevealProps = {
 }
 
 const revealHidden = { opacity: 0, y: 12, filter: "blur(4px)" }
-const revealVisible = { opacity: 1, y: 0, filter: "blur(0px)" }
+const revealVisible = {
+  opacity: 1,
+  y: 0,
+  filter: "blur(0px)",
+  // Drop identity blur after enter — blur(0px) still creates a compositor
+  // effect layer that can ghost shadows during scroll.
+  transitionEnd: { filter: "none" },
+}
 
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
   const reduceMotion = useReducedMotion()

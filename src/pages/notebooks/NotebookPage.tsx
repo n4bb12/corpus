@@ -6,6 +6,7 @@ import { NotebookMobileTabs } from "src/components/notebook/NotebookMobileTabs"
 import { NotebookWorkspace } from "src/components/notebook/NotebookWorkspace"
 import {
   layoutTransition,
+  pageEnterAnimate,
   pageEnterInitial,
   respectReducedMotion,
 } from "src/lib/motion"
@@ -23,7 +24,7 @@ export function NotebookPage() {
         notebookTitle={
           <motion.div
             initial={pageEnterInitial}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            animate={pageEnterAnimate}
             transition={respectReducedMotion(reduceMotion, layoutTransition)}
           >
             <InlineNotebookTitle

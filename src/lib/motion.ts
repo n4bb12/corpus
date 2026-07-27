@@ -35,8 +35,17 @@ export const revealTransition = {
  * `initial={{ opacity: 0 }}` paints a blank first frame (and static HTML) until
  * JS hydrates and animates — it reads as “not statically rendered” / multiple paints.
  * Keep `initial` animations for client-only mounts (dialogs, list rows, tab swaps).
+ *
+ * Do not put `filter: blur(0px)` on page-shell `animate` — identity blur still
+ * creates a compositor effect layer and can ghost box-shadows during scroll
+ * (e.g. chat stick-to-bottom after sending a message).
  */
 export const pageEnterInitial = false
+
+/** Settled page-shell pose — opacity/translate only, never residual filter. */
+export const pageEnterAnimate = { opacity: 1, y: 0 } as const
+
+export const pageEnterAnimateAside = { opacity: 1, x: 0 } as const
 
 /**
  * Keep Motion `initial` identical on server and client.

@@ -5,6 +5,7 @@ import { Bezel } from "src/components/ui/Bezel"
 import { Eyebrow } from "src/components/ui/Eyebrow"
 import {
   layoutTransition,
+  pageEnterAnimate,
   pageEnterInitial,
   respectReducedMotion,
 } from "src/lib/motion"
@@ -18,7 +19,7 @@ export function SignInPage() {
         <motion.div
           className="space-y-6 text-center lg:text-left"
           initial={pageEnterInitial}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          animate={pageEnterAnimate}
           transition={respectReducedMotion(reduceMotion, layoutTransition)}
         >
           <Eyebrow>Grounded research</Eyebrow>
@@ -34,7 +35,7 @@ export function SignInPage() {
         <motion.div
           className="mx-auto w-full max-w-88 sm:max-w-104 md:max-w-120 lg:mx-0 lg:max-w-none"
           initial={pageEnterInitial}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          animate={pageEnterAnimate}
           transition={respectReducedMotion(reduceMotion, {
             ...layoutTransition,
             delay: 0.1,
