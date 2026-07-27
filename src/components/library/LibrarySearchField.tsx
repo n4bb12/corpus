@@ -33,7 +33,7 @@ export function LibrarySearchField({
       {value ? (
         <button
           type="button"
-          className="absolute top-1/2 right-2.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-all duration-(--duration-hover) ease-spring hover:bg-muted hover:text-foreground"
+          className="absolute top-1/2 right-2.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="Clear search"
           onClick={onClear}
         >

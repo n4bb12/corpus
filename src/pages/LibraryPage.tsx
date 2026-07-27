@@ -45,13 +45,11 @@ export function LibraryPage() {
           </Reveal>
 
           {library.showSearch ? (
-            <Reveal delay={0.03}>
-              <LibrarySearchField
-                value={library.draft}
-                onChange={library.setDraft}
-                onClear={library.clearSearch}
-              />
-            </Reveal>
+            <LibrarySearchField
+              value={library.draft}
+              onChange={library.setDraft}
+              onClear={library.clearSearch}
+            />
           ) : null}
 
           {library.isLoading ? (
@@ -70,9 +68,9 @@ export function LibraryPage() {
           ) : null}
 
           {library.noMatches ? (
-            <Reveal delay={0.05} className="space-y-4">
+            <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                No notebooks match “{library.search.q}”
+                No notebooks match “{library.searchTerm}”
               </p>
               <Button
                 variant="outline"
@@ -81,42 +79,30 @@ export function LibraryPage() {
               >
                 Clear search
               </Button>
-            </Reveal>
+            </div>
           ) : null}
 
           {!library.isLoading && !library.isEmpty && !library.noMatches ? (
-            <Reveal delay={0.05}>
-              <LibraryNotebookGrid
-                page={library.page}
-                searchQuery={library.search.q}
-                creating={library.creating}
-                showPagination={library.showPagination}
-                canGoPrevious={!!library.search.cursor}
-                canGoNext={!library.result?.isDone}
-                onCreate={() => void library.onCreate()}
-                onPrevious={() =>
-                  void library.navigate({
-                    to: "/",
-                    search: { q: library.search.q, cursor: undefined },
-                  })
-                }
-                onNext={() =>
-                  void library.navigate({
-                    to: "/",
-                    search: {
-                      q: library.search.q,
-                      cursor: library.result?.continueCursor ?? undefined,
-                    },
-                  })
-                }
-                onRename={async (notebookId, title) => {
-                  await library.renameNotebook({ notebookId, title })
-                }}
-                onDelete={async (notebookId) => {
-                  await library.removeNotebook({ notebookId })
-                }}
-              />
-            </Reveal>
+            <LibraryNotebookGrid
+              page={library.page}
+              searchQuery={library.searchTerm}
+              isFirstPage={library.currentPage <= 1}
+              creating={library.creating}
+              showPagination={library.showPagination}
+              currentPage={library.currentPage}
+              pageCount={library.pageCount}
+              canGoPrevious={library.currentPage > 1}
+              canGoNext={library.currentPage < library.pageCount}
+              onCreate={() => void library.onCreate()}
+              onPrevious={() => library.goToPage(library.currentPage - 1)}
+              onNext={() => library.goToPage(library.currentPage + 1)}
+              onRename={async (notebookId, title) => {
+                await library.renameNotebook({ notebookId, title })
+              }}
+              onDelete={async (notebookId) => {
+                await library.removeNotebook({ notebookId })
+              }}
+            />
           ) : null}
         </main>
       </div>
