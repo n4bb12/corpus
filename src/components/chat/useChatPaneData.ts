@@ -38,9 +38,28 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   const [retryAssistantId, setRetryAssistantId] = useState<string | null>(null)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
+  const [atBottom, setAtBottom] = useState(true)
   const abortRef = useRef<AbortController | null>(null)
   const acceptingStreamRef = useRef(false)
   const streamedContentRef = useRef<string | null>(null)
+
+  function updateStickToBottom(node: HTMLDivElement) {
+    const next = node.scrollHeight - node.scrollTop - node.clientHeight < 80
+    stickToBottom.current = next
+    setAtBottom(next)
+  }
+
+  function scrollToBottom() {
+    const node = scrollerRef.current
+
+    if (!node) {
+      return
+    }
+
+    node.scrollTop = node.scrollHeight
+    stickToBottom.current = true
+    setAtBottom(true)
+  }
 
   const hasPendingSources = useHasPendingSources(notebookId)
 
@@ -91,6 +110,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     }
 
     scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight
+    setAtBottom(true)
   }, [entries, streamedContent, progressLabel])
 
   async function markFailed(message: string) {
@@ -253,7 +273,9 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     setClearOpen,
     error,
     scrollerRef,
-    stickToBottom,
+    atBottom,
+    updateStickToBottom,
+    scrollToBottom,
     readySelected,
     emptyPromptState,
     streaming,

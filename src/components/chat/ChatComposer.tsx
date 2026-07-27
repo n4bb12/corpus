@@ -32,11 +32,14 @@ export function ChatComposer({
   const remaining = LIMITS.maxPromptCharacters - prompt.length
 
   return (
-    <div className="pointer-events-none bg-linear-to-t from-background via-background/95 to-transparent px-4 pt-10 pb-4">
+    <div className="pointer-events-none bg-background px-4 pb-4">
       <div className="pointer-events-auto mx-auto w-full max-w-200 space-y-2">
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-        <Bezel className="shadow-(--shadow-pine)" innerClassName="p-3.5 md:p-4">
+        <Bezel
+          className="bg-background shadow-(--shadow-pine)"
+          innerClassName="p-3.5 md:p-4"
+        >
           <Textarea
             value={prompt}
             onChange={(event) =>
@@ -58,7 +61,6 @@ export function ChatComposer({
             disabled={!readySourceCount || sending}
             className="min-h-24 max-h-60 resize-none border-0 bg-transparent p-1 text-base shadow-none focus-visible:ring-0 md:text-base"
           />
-
           <div className="mt-3 flex items-center justify-between gap-3">
             <div className="text-xs text-muted-foreground tabular-nums">
               {remaining <= 200 ? `${remaining} left` : null}

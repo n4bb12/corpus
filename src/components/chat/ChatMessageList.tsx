@@ -62,7 +62,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   )
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-200 flex-col gap-6 py-4">
+    <div className="mx-auto flex min-h-full w-full max-w-200 flex-col gap-6 pt-4 pb-72">
       {empty ? (
         <ChatEmptyPrompt
           state={emptyPromptState}

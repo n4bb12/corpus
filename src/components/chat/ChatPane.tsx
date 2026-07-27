@@ -3,6 +3,7 @@ import {
   type ChatCiteArgs,
   ChatMessageList,
 } from "src/components/chat/ChatMessageList"
+import { ChatScrollAffordance } from "src/components/chat/ChatScrollAffordance"
 import { ClearChatDialog } from "src/components/chat/ClearChatDialog"
 import { useChatPaneData } from "src/components/chat/useChatPaneData"
 import { Button } from "src/components/ui/shadcn/button"
@@ -39,11 +40,9 @@ export function ChatPane({
 
       <ScrollArea
         viewportRef={chat.scrollerRef}
-        className="min-h-0 flex-1 overflow-hidden px-4 pb-72"
+        className="min-h-0 flex-1 overflow-hidden px-4"
         onViewportScroll={(event) => {
-          const node = event.currentTarget
-          chat.stickToBottom.current =
-            node.scrollHeight - node.scrollTop - node.clientHeight < 80
+          chat.updateStickToBottom(event.currentTarget)
         }}
       >
         <ChatMessageList
@@ -67,6 +66,10 @@ export function ChatPane({
       </ScrollArea>
 
       <div className="absolute inset-x-0 bottom-0 z-10">
+        <ChatScrollAffordance
+          visible={!chat.atBottom}
+          onScrollToBottom={chat.scrollToBottom}
+        />
         <ChatComposer
           prompt={chat.prompt}
           error={chat.error}
