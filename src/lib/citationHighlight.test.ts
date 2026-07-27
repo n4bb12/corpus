@@ -27,4 +27,40 @@ describe("citation highlight", () => {
       resolveCitationOffsets(markdown, null, "missing excerpt"),
     ).toMatchInlineSnapshot(`null`)
   })
+
+  test("finds plain excerpt text inside markdown when locator is missing", () => {
+    const markdown =
+      "Intro\n\n**Wichtiger Hinweis:** Schulmanager Ende 31.07.2026.\n\nOutro"
+
+    expect(
+      resolveCitationOffsets(
+        markdown,
+        null,
+        "Wichtiger Hinweis: Schulmanager Ende 31.07.2026.",
+      ),
+    ).toMatchInlineSnapshot(`
+      {
+        "end": 59,
+        "start": 30,
+      }
+    `)
+  })
+
+  test("falls back to excerpt search when locator does not match excerpt", () => {
+    const markdown =
+      "Intro\n\nAb dem 31.07.2026 sind sämtliche dort gespeicherten Daten gelöscht.\n\nOutro"
+
+    expect(
+      resolveCitationOffsets(
+        markdown,
+        { start: 0, end: 5 },
+        "sämtliche dort gespeicherten Daten gelöscht",
+      ),
+    ).toMatchInlineSnapshot(`
+      {
+        "end": 73,
+        "start": 30,
+      }
+    `)
+  })
 })

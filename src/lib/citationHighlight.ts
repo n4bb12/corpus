@@ -1,8 +1,23 @@
+import {
+  excerptSearchNeedles,
+  normalizeCitationText,
+} from "src/lib/citationMatch"
 import { markdownToPlainText } from "src/lib/markdownPlain"
+import {
+  collapseMappedSpan,
+  locateInMappedSpan,
+  stripMarkdownWithMap,
+} from "src/lib/markdownPlainMap"
 
 export type CitationOffsetRange = {
   start: number
   end: number
+}
+
+function plainSpan(markdown: string) {
+  return normalizeCitationText(
+    collapseMappedSpan(stripMarkdownWithMap(markdown)).text,
+  )
 }
 
 function rangeOverlapsVisibleText(
@@ -15,15 +30,54 @@ function rangeOverlapsVisibleText(
   return /\S/.test(slice)
 }
 
+function locatorAlignsWithExcerpt(
+  markdown: string,
+  start: number,
+  end: number,
+  excerpt: string,
+) {
+  const excerptPlain = plainSpan(excerpt)
+
+  if (!excerptPlain) {
+    return true
+  }
+
+  const slicePlain = plainSpan(markdown.slice(start, end))
+
+  if (!slicePlain) {
+    return false
+  }
+
+  if (slicePlain.includes(excerptPlain) || excerptPlain.includes(slicePlain)) {
+    return true
+  }
+
+  const excerptWords = excerptPlain
+    .split(/\s+/)
+    .filter((word) => word.length > 1)
+
+  if (!excerptWords.length) {
+    return true
+  }
+
+  let hits = 0
+
+  for (const word of excerptWords) {
+    if (slicePlain.includes(word)) {
+      hits += 1
+    }
+  }
+
+  return hits / excerptWords.length >= 0.6
+}
+
 function findExcerptRange(
   markdown: string,
   excerpt: string,
 ): CitationOffsetRange | null {
   const needles = [
-    excerpt,
-    excerpt.trim(),
+    ...excerptSearchNeedles(excerpt),
     markdownToPlainText(excerpt),
-    excerpt.trim().slice(0, 96),
   ]
 
   const seen = new Set<string>()
@@ -46,6 +100,20 @@ function findExcerptRange(
     }
   }
 
+  const plainMarkdown = collapseMappedSpan(stripMarkdownWithMap(markdown))
+
+  for (const needle of needles) {
+    if (!needle?.trim()) {
+      continue
+    }
+
+    const located = locateInMappedSpan(plainMarkdown, needle)
+
+    if (located) {
+      return located
+    }
+  }
+
   return null
 }
 
@@ -54,7 +122,7 @@ export function resolveCitationOffsets(
   markdown: string,
   locator?: CitationOffsetRange | null,
   excerpt?: string | null,
-): CitationOffsetRange | null {
+) {
   if (
     locator &&
     typeof locator.start === "number" &&
@@ -64,7 +132,12 @@ export function resolveCitationOffsets(
     const start = Math.max(0, locator.start)
     const end = Math.min(markdown.length, locator.end)
 
-    if (end > start && rangeOverlapsVisibleText(markdown, start, end)) {
+    if (
+      end > start &&
+      rangeOverlapsVisibleText(markdown, start, end) &&
+      (!excerpt?.trim() ||
+        locatorAlignsWithExcerpt(markdown, start, end, excerpt))
+    ) {
       return { start, end }
     }
   }
