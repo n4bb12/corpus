@@ -9,15 +9,19 @@ import {
 } from "src/lib/authServer"
 import { formatChatError } from "src/lib/chatErrors"
 import { CHAT_PROGRESS } from "src/lib/chatProgress"
-import { resolveCitationQuote } from "src/lib/citationQuote"
 import {
   type AnswerParagraph,
   buildCitedMarkdown,
   joinParagraphText,
+  normalizeNumberedCitedMarkdown,
   parseCitationMarkers,
 } from "src/lib/citations"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
+import {
+  mapAnswerCitations,
+  toStreamCitationCatalog,
+} from "src/server/chat/answerCitationCatalog"
 import { z } from "zod"
 
 const answerSchema = z.object({
@@ -318,6 +322,8 @@ Return a structured object with:
 - insufficient: true when the evidence cannot answer the question; false when it can.
 - paragraphs: ordered answer paragraphs. Each has text (markdown, no [[cite:…]] markers) then citations (evidence used by that paragraph).
 Each citation must include chunkId and quote. The quote must be a short verbatim span copied from that chunk—ideally one sentence or less—that actually supports the paragraph.
+When one paragraph draws on multiple distinct facts, include a separate citation (with its own quote) for each fact—even when they come from the same chunk.
+Within a single answer paragraph, cite each source passage at most once per evidence chunk (do not list the same chunk twice when the quotes come from the same passage).
 When insufficient is true, use one clear paragraph and leave every citations array empty.
 When insufficient is false, every substantive factual paragraph must list the citations it relies on.
 Do not invent facts from general knowledge.
@@ -364,29 +370,7 @@ Never invent or paraphrase quotes; copy them from the evidence.`
         const sourcesById = new Map(
           sources.map(({ sourceId, source }) => [sourceId, source]),
         )
-        const citationCatalog = evidencePack.evidence.map(
-          (item: (typeof evidencePack.evidence)[number]) => {
-            const source = sourcesById.get(item.sourceId)
 
-            return {
-              _id: String(item.chunkId),
-              chunkId: String(item.chunkId),
-              sourceId: item.sourceId,
-              liveTitle: source?.title || item.text.slice(0, 48) || "Source",
-              excerpt: item.text.slice(0, 400),
-              canNavigate: !!source && !source.deletedAt,
-              locator: {
-                startOffset: item.startOffset,
-                endOffset: item.endOffset,
-                ordinal: item.ordinal,
-              },
-            }
-          },
-        )
-
-        streamController.enqueue(
-          encodeSse("citations", { citations: citationCatalog }),
-        )
         await emitStatus(CHAT_PROGRESS.writing)
 
         const allowed = new Set(
@@ -395,6 +379,22 @@ Never invent or paraphrase quotes; copy them from the evidence.`
               String(item.chunkId),
           ),
         )
+        const chunkTextById = new Map(
+          evidencePack.evidence.map(
+            (item: (typeof evidencePack.evidence)[number]) => [
+              String(item.chunkId),
+              item.text,
+            ],
+          ),
+        )
+        const citeOptions = {
+          markerStyle: "numbered" as const,
+          chunkTextById,
+        }
+        const streamingCiteOptions = {
+          ...citeOptions,
+          holdTrailingParagraphCitations: true,
+        }
 
         const result = streamText({
           model: openai(MODELS.chat),
@@ -405,6 +405,7 @@ Never invent or paraphrase quotes; copy them from the evidence.`
         })
 
         let latestAnswer: AnswerObject | null = null
+        let lastStreamedCitationSignature = ""
 
         for await (const partial of result.partialOutputStream) {
           throwIfCanceled()
@@ -414,12 +415,46 @@ Never invent or paraphrase quotes; copy them from the evidence.`
           }
 
           const paragraphs = normalizeParagraphs(partial.paragraphs)
-          const nextText =
-            typeof partial.insufficient === "boolean" && partial.insufficient
-              ? joinParagraphText(paragraphs)
-              : buildCitedMarkdown(paragraphs, allowed).content
 
-          emitText(nextText)
+          if (
+            typeof partial.insufficient === "boolean" &&
+            partial.insufficient
+          ) {
+            emitText(joinParagraphText(paragraphs))
+          } else {
+            const built = buildCitedMarkdown(
+              paragraphs,
+              allowed,
+              streamingCiteOptions,
+            )
+
+            emitText(normalizeNumberedCitedMarkdown(built.content))
+
+            const citationSignature = JSON.stringify(
+              built.citations.map((citation) => [
+                citation.chunkId,
+                citation.quote ?? "",
+              ]),
+            )
+
+            if (citationSignature !== lastStreamedCitationSignature) {
+              lastStreamedCitationSignature = citationSignature
+
+              const streamingCatalog = toStreamCitationCatalog(
+                mapAnswerCitations({
+                  citations: built.citations,
+                  evidence: evidencePack.evidence,
+                  sourcesById,
+                  resolveQuotes: false,
+                }),
+                sourcesById,
+              )
+
+              streamController.enqueue(
+                encodeSse("citations", { citations: streamingCatalog }),
+              )
+            }
+          }
 
           const now = Date.now()
 
@@ -441,7 +476,7 @@ Never invent or paraphrase quotes; copy them from the evidence.`
 
         let paragraphs = normalizeParagraphs(latestAnswer.paragraphs)
         let insufficient = latestAnswer.insufficient
-        let built = buildCitedMarkdown(paragraphs, allowed)
+        let built = buildCitedMarkdown(paragraphs, allowed, citeOptions)
 
         if (!insufficient && built.invalid.length) {
           const retry = await generateText({
@@ -460,7 +495,7 @@ Never invent or paraphrase quotes; copy them from the evidence.`
           latestAnswer = retry.output
           paragraphs = normalizeParagraphs(latestAnswer.paragraphs)
           insufficient = latestAnswer.insufficient
-          built = buildCitedMarkdown(paragraphs, allowed)
+          built = buildCitedMarkdown(paragraphs, allowed, citeOptions)
         }
 
         throwIfCanceled()
@@ -505,80 +540,37 @@ Never invent or paraphrase quotes; copy them from the evidence.`
           return
         }
 
-        const numbered = parseCitationMarkers(built.content)
-        emitText(built.content)
+        const content = normalizeNumberedCitedMarkdown(built.content)
 
-        const citations = built.citations.map((citation, order) => {
-          const evidence = evidencePack.evidence.find(
-            (item: (typeof evidencePack.evidence)[number]) =>
-              String(item.chunkId) === citation.chunkId,
-          )
+        if (content !== fullText.trim()) {
+          emitText(content)
+        }
 
-          const wholeChunkLocator =
-            evidence &&
-            typeof evidence.startOffset === "number" &&
-            typeof evidence.endOffset === "number" &&
-            typeof evidence.ordinal === "number"
-              ? {
-                  startOffset: evidence.startOffset,
-                  endOffset: evidence.endOffset,
-                  ordinal: evidence.ordinal,
-                }
-              : undefined
-
-          const resolved =
-            evidence && typeof citation.quote === "string"
-              ? resolveCitationQuote({
-                  chunkText: evidence.text,
-                  startOffset: evidence.startOffset,
-                  endOffset: evidence.endOffset,
-                  ordinal: evidence.ordinal,
-                  quote: citation.quote,
-                })
-              : null
-
-          return {
-            sourceId: evidence?.sourceId as never,
-            chunkId: citation.chunkId as never,
-            sourceTitleSnapshot: "Source",
-            excerpt: resolved?.excerpt || evidence?.text.slice(0, 400) || "",
-            locator: resolved?.locator ?? wholeChunkLocator,
-            order,
-          }
+        const titled = mapAnswerCitations({
+          citations: built.citations,
+          evidence: evidencePack.evidence,
+          sourcesById,
+          resolveQuotes: true,
         })
 
-        const titled = citations.map((citation) => ({
-          ...citation,
-          sourceTitleSnapshot:
-            sourcesById.get(String(citation.sourceId))?.title ||
-            citation.excerpt.slice(0, 48) ||
-            "Source",
-        }))
-
-        const refinedCatalog = titled.map((citation) => {
-          const source = sourcesById.get(String(citation.sourceId))
-
-          return {
-            _id: String(citation.chunkId),
-            chunkId: String(citation.chunkId),
-            sourceId: citation.sourceId,
-            liveTitle:
-              source?.title || citation.excerpt.slice(0, 48) || "Source",
-            excerpt: citation.excerpt,
-            canNavigate: !!source && !source.deletedAt,
-            locator: citation.locator,
-          }
-        })
+        const refinedCatalog = toStreamCitationCatalog(titled, sourcesById)
 
         streamController.enqueue(
           encodeSse("citations", { citations: refinedCatalog }),
         )
 
         await finalize({
-          content: numbered.text,
+          content,
           status: "complete",
           insufficient: false,
-          citations: titled,
+          citations: titled.map((citation) => ({
+            sourceId: citation.sourceId as never,
+            chunkId: citation.chunkId as never,
+            sourceTitleSnapshot: citation.sourceTitleSnapshot,
+            excerpt: citation.excerpt,
+            locator: citation.locator,
+            order: citation.order,
+          })),
         })
 
         streamController.enqueue(encodeSse("done", {}))
