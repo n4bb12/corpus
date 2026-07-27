@@ -3,7 +3,7 @@ import type { ComponentProps } from "react"
 
 import { cn } from "src/lib/utils.ts"
 
-function TooltipProvider({
+export function TooltipProvider({
   delayDuration = 0,
   ...props
 }: ComponentProps<typeof TooltipPrimitive.Provider>) {
@@ -16,17 +16,19 @@ function TooltipProvider({
   )
 }
 
-function Tooltip({ ...props }: ComponentProps<typeof TooltipPrimitive.Root>) {
+export function Tooltip({
+  ...props
+}: ComponentProps<typeof TooltipPrimitive.Root>) {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
 }
 
-function TooltipTrigger({
+export function TooltipTrigger({
   ...props
 }: ComponentProps<typeof TooltipPrimitive.Trigger>) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
 }
 
-function TooltipContent({
+export function TooltipContent({
   className,
   sideOffset = 0,
   children,
@@ -49,5 +51,3 @@ function TooltipContent({
     </TooltipPrimitive.Portal>
   )
 }
-
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }

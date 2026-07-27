@@ -3,7 +3,7 @@ import type { ComponentProps } from "react"
 
 import { cn } from "src/lib/utils.ts"
 
-function Label({
+export function Label({
   className,
   ...props
 }: ComponentProps<typeof LabelPrimitive.Root>) {
@@ -18,5 +18,3 @@ function Label({
     />
   )
 }
-
-export { Label }

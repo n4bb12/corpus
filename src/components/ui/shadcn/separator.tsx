@@ -5,7 +5,7 @@ import type { ComponentProps } from "react"
 
 import { cn } from "src/lib/utils.ts"
 
-function Separator({
+export function Separator({
   className,
   orientation = "horizontal",
   decorative = true,
@@ -24,5 +24,3 @@ function Separator({
     />
   )
 }
-
-export { Separator }

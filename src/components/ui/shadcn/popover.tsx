@@ -5,17 +5,17 @@ import type { ComponentProps } from "react"
 
 import { cn } from "src/lib/utils.ts"
 
-function Popover({ ...props }: ComponentProps<typeof PopoverPrimitive.Root>) {
+export function Popover({ ...props }: ComponentProps<typeof PopoverPrimitive.Root>) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }
 
-function PopoverTrigger({
+export function PopoverTrigger({
   ...props
 }: ComponentProps<typeof PopoverPrimitive.Trigger>) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
 }
 
-function PopoverContent({
+export function PopoverContent({
   className,
   align = "center",
   sideOffset = 4,
@@ -37,13 +37,13 @@ function PopoverContent({
   )
 }
 
-function PopoverAnchor({
+export function PopoverAnchor({
   ...props
 }: ComponentProps<typeof PopoverPrimitive.Anchor>) {
   return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
 }
 
-function PopoverHeader({ className, ...props }: ComponentProps<"div">) {
+export function PopoverHeader({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="popover-header"
@@ -53,7 +53,7 @@ function PopoverHeader({ className, ...props }: ComponentProps<"div">) {
   )
 }
 
-function PopoverTitle({ className, ...props }: ComponentProps<"h2">) {
+export function PopoverTitle({ className, ...props }: ComponentProps<"h2">) {
   return (
     <div
       data-slot="popover-title"
@@ -63,7 +63,7 @@ function PopoverTitle({ className, ...props }: ComponentProps<"h2">) {
   )
 }
 
-function PopoverDescription({ className, ...props }: ComponentProps<"p">) {
+export function PopoverDescription({ className, ...props }: ComponentProps<"p">) {
   return (
     <p
       data-slot="popover-description"
@@ -73,12 +73,3 @@ function PopoverDescription({ className, ...props }: ComponentProps<"p">) {
   )
 }
 
-export {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverDescription,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-}

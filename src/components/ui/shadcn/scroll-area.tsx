@@ -30,7 +30,7 @@ function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
   ref.current = value
 }
 
-function ScrollArea({
+export function ScrollArea({
   className,
   children,
   viewportRef,
@@ -86,7 +86,7 @@ function ScrollArea({
   )
 }
 
-function ScrollBar({
+export function ScrollBar({
   className,
   orientation = "vertical",
   ...props
@@ -110,5 +110,3 @@ function ScrollBar({
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   )
 }
-
-export { ScrollArea, ScrollBar }
