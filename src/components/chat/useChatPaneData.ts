@@ -143,17 +143,20 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
       return
     }
 
-    const keepPinned = () => {
-      if (!stickToBottom.current) {
-        return
+    const onResize = () => {
+      if (stickToBottom.current) {
+        viewport.scrollTop = viewport.scrollHeight
       }
 
-      viewport.scrollTop = viewport.scrollHeight
-      setAtBottom(true)
+      const next =
+        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 80
+      stickToBottom.current = next
+      setAtBottom(next)
     }
 
-    const observer = new ResizeObserver(keepPinned)
+    const observer = new ResizeObserver(onResize)
     observer.observe(content)
+    observer.observe(viewport)
 
     return () => observer.disconnect()
   }, [])

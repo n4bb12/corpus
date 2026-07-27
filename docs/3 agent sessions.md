@@ -8484,3 +8484,28 @@ Nudging that tagline a bit darker in light mode while leaving dark mode alone.
 
 Bumped the sign-in tagline from `text-muted-foreground` to `text-foreground/70` in light mode (dark mode unchanged). Should read a bit clearer without feeling heavy.
 
+# Message thread resizing updates
+_Exported on 7/28/2026 at 00:27:08 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Resizing musst trigger message thread shadow and scroll-down updates.
+
+---
+
+**Cursor**
+
+I'll find how message-thread shadows and scroll-down state are updated, then wire resize so they refresh too.
+
+The ResizeObserver only watches content and skips updates when not pinned — viewport resizes never refresh `atBottom`. Checking related layout and recent notes.
+
+Updating the ResizeObserver so viewport size changes always recompute stick-to-bottom (shadow + scroll-down), not only when content grows while pinned.
+
+Inlining the bottom check so the effect stays self-contained and clears the lint.
+
+Resize now refreshes the thread shadow and scroll-down control.
+
+The chat `ResizeObserver` only watched content height and bailed when you weren’t pinned, so viewport resizes (composer growth, pane/window size) never updated `atBottom`. It now observes both the content and the viewport, and always recomputes stick-to-bottom after optionally re-pinning.
+
