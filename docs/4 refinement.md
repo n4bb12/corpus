@@ -3119,3 +3119,77 @@ Motion’s `layout` was owning `transform` on the same node as the hover/press c
 
 Fixed — Motion’s layout transform was overriding the hover/press CSS on the same node. Lift and press now live on an inner wrapper, so you should get the same `-translate-y-1` + shadow deepen on hover and `scale-[0.98]` on press as in the preview.
 
+# CitationPills positioning issue
+_Exported on 7/27/2026 at 12:04:57 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+CitationPills use custom calculation. This can lead to offscreen clipping. Replace this with a library that calculates positioning dynamically and taks into account viewport edges. Apart from that, I want the same behavior: Large offset to the right so it less likely covers pills from other paragraphs.
+
+---
+
+**Cursor**
+
+I'll inspect `CitationPills` and how positioning is done today, then swap the custom math for a viewport-aware positioning library while keeping the large right offset.
+
+The current file already uses Popover with a fixed anchor; I'll check related components and recent docs for the intended large-right offset behavior.
+
+Replacing the `getBoundingClientRect` fixed-anchor snapshot with Radix’s Floating UI `virtualRef` (live measurement + viewport collision), and applying a large right `alignOffset`.
+
+Replaced the snapshot `getBoundingClientRect` + fixed fake anchor with Radix’s `PopoverAnchor virtualRef`, which uses Floating UI’s live measurement, flip, and shift against the viewport.
+
+Preferred placement is still above the pill with an **80px rightward** `alignOffset` (`align="start"`). Near edges, collision handling pulls it back so it doesn’t clip offscreen.
+
+---
+
+**User**
+
+Looks good from the code but the 80px rightward offset isn't working. I checked setting sideOffset to 80 and that does work (vertically). Something seems to be combatting the rightward offset.
+
+---
+
+**Cursor**
+
+I'll dig into how `PopoverContent` applies offsets and what might be overriding the horizontal `alignOffset`.
+
+Root cause: Radix’s default `sticky="partial"` runs Floating UI `limitShift()`, which clamps the popover to the tiny pill’s width and cancels the 80px `alignOffset`. Setting `sticky="always"` disables that limiter so the rightward offset can stick.
+
+Radix defaults to `sticky="partial"`, which runs Floating UI’s `limitShift()`. That clamps the card’s X position to the pill’s tiny width, so the 80px `alignOffset` was effectively cancelled. Vertical `sideOffset` was never clamped the same way.
+
+Set `sticky="always"` so the rightward offset sticks. Flip/shift still handle top/bottom viewport edges.
+
+---
+
+**User**
+
+Great. Now lets vertically center the tooltip on the pill + slightly more x offset.
+
+---
+
+**Cursor**
+
+I'll switch the popover to the right of the pill (vertically centered) and bump the horizontal offset.
+
+Placed on `side="right"` with `align="center"`, and bumped the gap to **96px**.
+
+---
+
+**User**
+
+When space is narrow, the popovers get positioned to the left and clipped at the screen edge. Instead, place them obove or below or reduce offset in that case. Use framework mechanisms.
+
+---
+
+**Cursor**
+
+Radix’s flip only mirrors left/right and can’t fall back to top/bottom. Switching citation hover positioning to Floating UI with `fallbackAxisSideDirection` and `shift`.
+
+Radix only flips left↔right, so in a narrow chat pane it stuck on the left and kept the large offset — hence the clip.
+
+Positioning now uses Floating UI directly:
+- Prefer **right** with the 96px gap
+- `flip({ fallbackAxisSideDirection: "start" })` falls back to **top/bottom** when neither side fits
+- `shift` slides it in (effectively reducing the offset) so it stays in the viewport
+

@@ -1,10 +1,13 @@
-import { useRef, useState } from "react"
-import { CitationPill } from "src/components/chat/CitationPill"
 import {
-	Popover,
-	PopoverAnchor,
-	PopoverContent,
-} from "src/components/ui/popover"
+	autoUpdate,
+	flip,
+	offset,
+	shift,
+	useFloating,
+} from "@floating-ui/react-dom"
+import { useRef, useState } from "react"
+import { createPortal } from "react-dom"
+import { CitationPill } from "src/components/chat/CitationPill"
 import { markdownToPlainText } from "src/lib/markdown_plain"
 import { formatTitle } from "src/lib/source_title"
 
@@ -25,16 +28,14 @@ type ChatCitation = {
 	locator?: { startOffset?: number; endOffset?: number } | null
 }
 
-type HoverState = {
-	index: number
-	rect: DOMRect
-}
-
 export type CitationPillsProps = {
 	citations: ChatCitation[]
 	indexes: number[]
 	onCite: (args: ChatCiteArgs) => void
 }
+
+const CITATION_SIDE_OFFSET = 96
+const CITATION_COLLISION_PADDING = 8
 
 export function CitationPills({
 	citations,
@@ -42,15 +43,32 @@ export function CitationPills({
 	onCite,
 }: CitationPillsProps) {
 	const uniqueIndexes = [...new Set(indexes)]
-	const [hover, setHover] = useState<HoverState | null>(null)
+	const [hoverIndex, setHoverIndex] = useState<number | null>(null)
 	const closeTimer = useRef<number | null>(null)
-	const activeCitation = hover ? citations[hover.index - 1] : null
+	const activeCitation = hoverIndex !== null ? citations[hoverIndex - 1] : null
+	const open = hoverIndex !== null && !!activeCitation
 	const displayTitle = activeCitation
 		? formatTitle(activeCitation.liveTitle)
 		: ""
 	const plainExcerpt = activeCitation
 		? markdownToPlainText(activeCitation.excerpt)
 		: ""
+
+	const { refs, floatingStyles } = useFloating({
+		open,
+		placement: "right",
+		strategy: "fixed",
+		whileElementsMounted: autoUpdate,
+		middleware: [
+			offset(CITATION_SIDE_OFFSET),
+			flip({
+				padding: CITATION_COLLISION_PADDING,
+				crossAxis: "alignment",
+				fallbackAxisSideDirection: "start",
+			}),
+			shift({ padding: CITATION_COLLISION_PADDING }),
+		],
+	})
 
 	function clearCloseTimer() {
 		if (closeTimer.current !== null) {
@@ -61,23 +79,21 @@ export function CitationPills({
 
 	function showCitation(index: number, element: HTMLButtonElement) {
 		clearCloseTimer()
-		setHover({
-			index,
-			rect: element.getBoundingClientRect(),
-		})
+		refs.setReference(element)
+		setHoverIndex(index)
 	}
 
 	function scheduleClose() {
 		clearCloseTimer()
 		closeTimer.current = window.setTimeout(() => {
-			setHover(null)
+			setHoverIndex(null)
 			closeTimer.current = null
 		}, 100)
 	}
 
 	function closeNow() {
 		clearCloseTimer()
-		setHover(null)
+		setHoverIndex(null)
 	}
 
 	return (
@@ -111,50 +127,30 @@ export function CitationPills({
 				)
 			})}
 
-			<Popover
-				open={!!hover && !!activeCitation}
-				onOpenChange={(open) => {
-					if (!open) {
-						closeNow()
-					}
-				}}
-			>
-				{hover ? (
-					<PopoverAnchor asChild>
-						<span
-							aria-hidden
-							className="pointer-events-none fixed"
-							style={{
-								top: hover.rect.top,
-								left: hover.rect.left,
-								width: hover.rect.width,
-								height: hover.rect.height,
-							}}
-						/>
-					</PopoverAnchor>
-				) : null}
-				<PopoverContent
-					side="top"
-					sideOffset={8}
-					className="w-auto max-w-sm gap-1.5 rounded-xl p-3"
-					onMouseEnter={clearCloseTimer}
-					onMouseLeave={scheduleClose}
-					onOpenAutoFocus={(event) => event.preventDefault()}
-					onCloseAutoFocus={(event) => event.preventDefault()}
-				>
-					{activeCitation ? (
-						<>
-							<p className="font-medium">{displayTitle}</p>
-							<p className="text-muted-foreground">{plainExcerpt}</p>
-							{!activeCitation.canNavigate ? (
-								<p className="text-xs text-muted-foreground">
-									Source deleted. Excerpt retained.
-								</p>
+			{open
+				? createPortal(
+						<div
+							ref={refs.setFloating}
+							style={floatingStyles}
+							className="z-50 flex w-auto max-w-sm flex-col gap-1.5 rounded-xl bg-popover p-3 text-sm text-popover-foreground shadow-(--shadow-pine) ring-1 ring-foreground/5 outline-hidden"
+							onMouseEnter={clearCloseTimer}
+							onMouseLeave={scheduleClose}
+						>
+							{activeCitation ? (
+								<>
+									<p className="font-medium">{displayTitle}</p>
+									<p className="text-muted-foreground">{plainExcerpt}</p>
+									{!activeCitation.canNavigate ? (
+										<p className="text-xs text-muted-foreground">
+											Source deleted. Excerpt retained.
+										</p>
+									) : null}
+								</>
 							) : null}
-						</>
-					) : null}
-				</PopoverContent>
-			</Popover>
+						</div>,
+						document.body,
+					)
+				: null}
 		</div>
 	)
 }

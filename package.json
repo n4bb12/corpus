@@ -6,7 +6,7 @@
     "src/*": "./src/*"
   },
   "scripts": {
-		"build": "bun --bun vite build",
+    "build": "bun --bun vite build",
     "check": "biome check",
     "dev": "concurrently -n vite,convex -c cyan,yellow \"bun run dev:vite\" \"bun run dev:convex\"",
     "dev:vite": "bun --bun vite dev --port 3000",
@@ -27,6 +27,7 @@
     "@ai-sdk/openai": "^4.0.20",
     "@ai-sdk/voyage": "^2.0.12",
     "@convex-dev/better-auth": "^0.12.5",
+    "@floating-ui/react-dom": "^2.1.9",
     "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/outfit": "^5.3.0",
     "@plunk/node": "^3.0.3",
