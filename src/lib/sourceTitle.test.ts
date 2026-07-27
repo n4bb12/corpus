@@ -1,10 +1,14 @@
 import { describe, expect, test } from "bun:test"
 import {
+  compactTitle,
+  humanizeFilenameTitle,
+  isWeakTitle,
   looksLikeFilename,
   normalizeTitle,
   titleFromFilename,
   titleFromMarkdown,
   titleFromPastedText,
+  titleFromSourceLabel,
   titleFromUrl,
 } from "./sourceTitle"
 
@@ -37,12 +41,32 @@ describe("source titles", () => {
     ).toMatchInlineSnapshot(`"example.com/docs/guide"`)
     expect(titleFromFilename("notes.pdf")).toMatchInlineSnapshot(`"notes.pdf"`)
     expect(
+      humanizeFilenameTitle("Elternbrief_Start_Infoportal.pdf"),
+    ).toMatchInlineSnapshot(`"Elternbrief Start Infoportal"`)
+    expect(
+      titleFromSourceLabel("Elternbrief_Start_Infoportal.pdf"),
+    ).toMatchInlineSnapshot(`"Elternbrief Start Infoportal"`)
+    expect(
       titleFromMarkdown(
         "## Elternbrief\n\nElternbrief zum Start des Infoportals mit wichtigen Hinweisen. Mehr Text folgt.",
       ),
+    ).toMatchInlineSnapshot(`"Elternbrief"`)
+    expect(
+      titleFromMarkdown(
+        "Wichtiger Hinweis:\n\nIm Rahmen der kontinuierlichen Weiterentwicklung unserer schulischen Organisation.",
+      ),
     ).toMatchInlineSnapshot(
-      `"Elternbrief zum Start des Infoportals mit wichtigen Hinweisen."`,
+      `"Im Rahmen der kontinuierlichen Weiterentwicklung"`,
     )
+    expect(
+      compactTitle(
+        "Im Rahmen der kontinuierlichen Weiterentwicklung unserer schulischen Organisation werden wir die Elt",
+      ),
+    ).toMatchInlineSnapshot(
+      `"Im Rahmen der kontinuierlichen Weiterentwicklung"`,
+    )
+    expect(isWeakTitle("Wichtiger Hinweis:")).toBe(true)
+    expect(isWeakTitle("Elternbrief")).toBe(false)
     expect(looksLikeFilename("Elternbrief_Start_Infoportal.pdf")).toBe(true)
     expect(looksLikeFilename("Infoportal start letter")).toBe(false)
   })

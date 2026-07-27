@@ -3498,7 +3498,7 @@ Select-all uses `px-2` while list rows use `px-2.5` — aligning that padding.
 The select-all row used `px-2` while source rows used `px-2.5`, so the checkboxes sat 2px apart. Both now use `px-2.5`.
 
 # Notebook name generation
-_Exported on 7/27/2026 at 15:01:22 GMT+2 from Cursor (3.13.10)_
+_Exported on 7/27/2026 at 15:08:49 GMT+2 from Cursor (3.13.10)_
 
 ---
 
@@ -3515,4 +3515,44 @@ I'll find where notebook names are generated and tighten that prompt so it produ
 The prompt currently allows up to 8 words — I'll tighten that so generated notebook titles stay shorter.
 
 Updated the title-generation prompt in `src/convex/titles.ts`: **max 8 words → max 4 words**, and wording from “short” to “compact”. New notebooks will get tighter auto-names; existing ones are unchanged unless you rename or re-trigger generation.
+
+---
+
+**User**
+
+I just got "Im Rahmen der kontinuierlichen Weiterentwicklung unserer schulischen Organisation werden wir die Elt" (same as before).
+
+---
+
+**Cursor**
+
+That title looks like a truncated content sentence, not an LLM summary — I'll check the generation path and the markdown/filename fallbacks.
+
+That string is a 100-character content truncate — the model likely echoed the opening sentence (or failed into that fallback). I'll enforce a hard compact limit on generated titles and tighten the markdown fallback.
+
+That title was a **100-char truncate of the opening sentence** — the model was echoing the source (or the markdown fallback did), and we only trimmed length, not word count.
+
+Now generation and fallback both go through `compactTitle` (**max 4 words / ~48 chars**), prefer short headings when present, and the prompt tells the model not to copy sentences.
+
+Create a **new** notebook (or rename manually) to see it — already-named ones won’t regenerate.
+
+---
+
+**User**
+
+Now I got "Wichtiger Hinweis:" which lacks context and clarity. Event the file name, Elternbrief_Start_Infoportal.pdf, would be clearer.
+
+---
+
+**Cursor**
+
+“Wichtiger Hinweis:” is a low-signal heading — I’ll prefer a humanized filename (and skip generic headings) when the LLM doesn’t produce a clear topical title.
+
+That was a section label, not a real title. Naming now works like this:
+
+1. **LLM** — gets the humanized source label as a hint; weak labels like `Wichtiger Hinweis:` are rejected  
+2. **Fallback** — `Elternbrief_Start_Infoportal.pdf` → **Elternbrief Start Infoportal**  
+3. **Last resort** — markdown content, skipping colon-style labels
+
+Try a fresh notebook with that PDF again.
 

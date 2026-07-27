@@ -6,21 +6,27 @@ import { v } from "convex/values"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
 import {
+  compactTitle,
+  isWeakTitle,
   looksLikeFilename,
-  normalizeTitle,
   titleFromMarkdown,
+  titleFromSourceLabel,
 } from "src/lib/sourceTitle"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
 
 function cleanGeneratedTitle(raw: string) {
-  return normalizeTitle(
+  return compactTitle(
     raw
       .replace(/^["'`“”]+|["'`“”]+$/g, "")
       .replace(/\s+/g, " ")
       .trim(),
     "",
   )
+}
+
+function isUsableTitle(title: string) {
+  return !!title && !looksLikeFilename(title) && !isWeakTitle(title)
 }
 
 export const maybeGenerateNotebookTitle = internalAction({
@@ -68,6 +74,11 @@ export const maybeGenerateNotebookTitle = internalAction({
       })
     }
 
+    const sourceLabel = titleFromSourceLabel(
+      source.originalTitle || source.title,
+      "",
+    )
+
     let markdown = ""
 
     try {
@@ -82,31 +93,40 @@ export const maybeGenerateNotebookTitle = internalAction({
         apiKey: requireEnv("OPENAI_API_KEY"),
       })
 
+      const labelHint = sourceLabel ? `Source label: ${sourceLabel}\n` : ""
+
       const result = await generateText({
         model: openai(MODELS.title),
-        prompt: `Summarize this source into a compact notebook title (max 4 words). Prefer a topical phrase over a document filename. Return only the title.\n\n${markdown}`,
+        prompt: `${labelHint}Create a compact notebook title for this source.
+Rules:
+- Max 5 words
+- Specific topical phrase with clear subject
+- Prefer the source label when it is already clear
+- Do not copy section labels like "Wichtiger Hinweis"
+- Do not copy or truncate a sentence from the source
+- Return only the title
+
+${markdown}`,
       })
 
       const title = cleanGeneratedTitle(result.text)
 
-      if (title && !looksLikeFilename(title)) {
+      if (isUsableTitle(title)) {
         await applyTitle(title)
         return
       }
 
-      throw new Error("Empty or filename-like generated title.")
+      throw new Error("Empty or weak generated title.")
     } catch {
-      const fromContent = titleFromMarkdown(markdown, "")
-
-      if (fromContent && !looksLikeFilename(fromContent)) {
-        await applyTitle(fromContent)
+      if (isUsableTitle(sourceLabel)) {
+        await applyTitle(sourceLabel)
         return
       }
 
-      const fallback = normalizeTitle(source.title, "")
+      const fromContent = titleFromMarkdown(markdown, "")
 
-      if (fallback && !looksLikeFilename(fallback)) {
-        await applyTitle(fallback)
+      if (isUsableTitle(fromContent)) {
+        await applyTitle(fromContent)
         return
       }
 
