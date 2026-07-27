@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test"
 import {
+  EVIDENCE_CHARACTER_BUDGET,
+  maxChunksPerSourceForBudget,
   mergeRetrievalCandidates,
+  packCoverageEvidence,
   selectEvidenceWithinBudget,
   sourcesExceedEvidenceBudget,
   tryPackInlineEvidence,
@@ -161,5 +164,116 @@ describe("retrieval helpers", () => {
         8,
       ),
     ).toMatchInlineSnapshot(`null`)
+  })
+
+  test("packs coverage round-robin across sources by ordinal", () => {
+    expect(
+      packCoverageEvidence(
+        [
+          {
+            chunkId: "s2-1",
+            sourceId: "s2",
+            text: "bbbb",
+            startOffset: 4,
+            endOffset: 8,
+            ordinal: 1,
+          },
+          {
+            chunkId: "s1-0",
+            sourceId: "s1",
+            text: "aa",
+            startOffset: 0,
+            endOffset: 2,
+            ordinal: 0,
+          },
+          {
+            chunkId: "s2-0",
+            sourceId: "s2",
+            text: "bb",
+            startOffset: 0,
+            endOffset: 2,
+            ordinal: 0,
+          },
+          {
+            chunkId: "s1-1",
+            sourceId: "s1",
+            text: "aaaa",
+            startOffset: 2,
+            endOffset: 6,
+            ordinal: 1,
+          },
+        ],
+        100,
+      ).map((item) => item.chunkId),
+    ).toMatchInlineSnapshot(`
+      [
+        "s1-0",
+        "s2-0",
+        "s1-1",
+        "s2-1",
+      ]
+    `)
+  })
+
+  test("coverage pack stays within budget and keeps per-source fairness", () => {
+    const packed = packCoverageEvidence(
+      [
+        {
+          chunkId: "a0",
+          sourceId: "a",
+          text: "1111",
+          startOffset: 0,
+          endOffset: 4,
+          ordinal: 0,
+        },
+        {
+          chunkId: "a1",
+          sourceId: "a",
+          text: "2222",
+          startOffset: 4,
+          endOffset: 8,
+          ordinal: 1,
+        },
+        {
+          chunkId: "b0",
+          sourceId: "b",
+          text: "3333",
+          startOffset: 0,
+          endOffset: 4,
+          ordinal: 0,
+        },
+        {
+          chunkId: "b1",
+          sourceId: "b",
+          text: "4444",
+          startOffset: 4,
+          endOffset: 8,
+          ordinal: 1,
+        },
+      ],
+      10,
+    )
+
+    expect(packed.map((item) => item.chunkId)).toMatchInlineSnapshot(`
+      [
+        "a0",
+        "b0",
+      ]
+    `)
+    expect(
+      packed.every((item) => item.channel === "coverage"),
+    ).toMatchInlineSnapshot(`true`)
+  })
+
+  test("bounds per-source chunk reads for an evidence budget", () => {
+    expect(
+      maxChunksPerSourceForBudget(1, EVIDENCE_CHARACTER_BUDGET),
+    ).toMatchInlineSnapshot(`151`)
+    expect(
+      maxChunksPerSourceForBudget(20, EVIDENCE_CHARACTER_BUDGET),
+    ).toMatchInlineSnapshot(`9`)
+    expect(
+      maxChunksPerSourceForBudget(0, EVIDENCE_CHARACTER_BUDGET),
+    ).toMatchInlineSnapshot(`0`)
   })
 })

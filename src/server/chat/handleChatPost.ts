@@ -17,6 +17,10 @@ import {
   parseCitationMarkers,
 } from "src/lib/citations"
 import { requireEnv } from "src/lib/env"
+import {
+  formatCorpusEvidence,
+  formatFlatEvidence,
+} from "src/lib/evidencePrompt"
 import { MODELS } from "src/lib/limits"
 import {
   mapAnswerCitations,
@@ -298,40 +302,10 @@ export async function handleChatPost(request: Request) {
             ordinal: number
           }>
           insufficient: boolean
+          mode: "factual" | "corpus"
         }
 
         throwIfCanceled()
-
-        const evidenceBlock = evidencePack.evidence
-          .map(
-            (item: (typeof evidencePack.evidence)[number], index: number) =>
-              `[${index + 1}] chunk:${item.chunkId} source:${item.sourceId}\n${item.text}`,
-          )
-          .join("\n\n")
-
-        const historyText = prepared.history
-          .map(
-            (pair: (typeof prepared.history)[number]) =>
-              `User: ${pair.user.content ?? ""}\nAssistant: ${pair.assistant.content ?? ""}`,
-          )
-          .join("\n\n")
-
-        const system = `You are Corpus, a strictly source-grounded assistant.
-Only answer using the supplied evidence chunks.
-Return a structured object with:
-- insufficient: true when the evidence cannot answer the question; false when it can.
-- paragraphs: ordered answer paragraphs. Each has text (markdown, no [[cite:…]] markers) then citations (evidence used by that paragraph).
-Each citation must include chunkId and quote. The quote must be a short verbatim span copied from that chunk—ideally one sentence or less—that actually supports the paragraph.
-When one paragraph draws on multiple distinct facts, include a separate citation (with its own quote) for each fact—even when they come from the same chunk.
-Within a single answer paragraph, cite each source passage at most once per evidence chunk (do not list the same chunk twice when the quotes come from the same passage).
-When insufficient is true, use one clear paragraph and leave every citations array empty.
-When insufficient is false, every substantive factual paragraph must list the citations it relies on.
-Do not invent facts from general knowledge.
-Never include chunk IDs that were not supplied.
-Never invent or paraphrase quotes; copy them from the evidence.`
-
-        const userPrompt = `Evidence:\n${evidenceBlock || "(none)"}\n\nRecent exchanges:\n${historyText || "(none)"}\n\nQuestion:\n${prepared.prompt}`
-        const answerOutput = Output.object({ schema: answerSchema })
 
         if (evidencePack.insufficient) {
           fullText =
@@ -349,15 +323,18 @@ Never invent or paraphrase quotes; copy them from the evidence.`
           return
         }
 
-        const sourceIds = [
+        const evidenceSourceIds = [
           ...new Set(
             evidencePack.evidence.map(
               (item: (typeof evidencePack.evidence)[number]) => item.sourceId,
             ),
           ),
         ]
+        const titleSourceIds = [
+          ...new Set([...prepared.sourceIds, ...evidenceSourceIds]),
+        ]
         const sources = await Promise.all(
-          sourceIds.map(async (sourceId) => {
+          titleSourceIds.map(async (sourceId) => {
             throwIfCanceled()
             const source = await fetchAuthQuery(api.sources.get, {
               sourceId: sourceId as never,
@@ -370,6 +347,71 @@ Never invent or paraphrase quotes; copy them from the evidence.`
         const sourcesById = new Map(
           sources.map(({ sourceId, source }) => [sourceId, source]),
         )
+        const sourceTitleById = new Map(
+          sources.map(({ sourceId, source }) => [
+            sourceId,
+            typeof source?.title === "string" ? source.title : "",
+          ]),
+        )
+
+        const distinctSourceCount = new Set(
+          evidencePack.evidence.map(
+            (item: (typeof evidencePack.evidence)[number]) => item.sourceId,
+          ),
+        ).size
+        const useCorpusLayout =
+          evidencePack.mode === "corpus" ||
+          (distinctSourceCount > 1 && evidencePack.mode !== "factual")
+
+        const evidenceBlock = useCorpusLayout
+          ? formatCorpusEvidence(
+              evidencePack.evidence,
+              sourceTitleById,
+              prepared.sourceIds,
+            )
+          : formatFlatEvidence(evidencePack.evidence)
+
+        const historyText = prepared.history
+          .map(
+            (pair: (typeof prepared.history)[number]) =>
+              `User: ${pair.user.content ?? ""}\nAssistant: ${pair.assistant.content ?? ""}`,
+          )
+          .join("\n\n")
+
+        const sourceNames = prepared.sourceIds
+          .map((sourceId) => {
+            const title = sourceTitleById.get(sourceId)?.trim()
+            return title || sourceId
+          })
+          .join("; ")
+
+        const corpusAddendum = useCorpusLayout
+          ? `
+This question is a cross-cutting task over multiple sources.
+Selected sources: ${sourceNames || "(none)"}.
+Evidence is grouped under each source title. You must write at least one grounded paragraph with citations for every source section that has chunks—do not skip a source, and do not focus on only one source.
+For summaries and briefs, cover each source in turn (or clearly synthesize with citations from each).
+For contradictions or contested claims, state agreements and disagreements and cite each side.
+Ignore prior answers that omitted sources; re-answer from the evidence below.
+`
+          : ""
+
+        const system = `You are Corpus, a strictly source-grounded assistant.
+Only answer using the supplied evidence chunks.
+Return a structured object with:
+- insufficient: true when the evidence cannot answer the question; false when it can.
+- paragraphs: ordered answer paragraphs. Each has text (markdown, no [[cite:…]] markers) then citations (evidence used by that paragraph).
+Each citation must include chunkId and quote. The quote must be a short verbatim span copied from that chunk—ideally one sentence or less—that actually supports the paragraph.
+When one paragraph draws on multiple distinct facts, include a separate citation (with its own quote) for each fact—even when they come from the same chunk.
+Within a single answer paragraph, cite each source passage at most once per evidence chunk (do not list the same chunk twice when the quotes come from the same passage).
+When insufficient is true, use one clear paragraph and leave every citations array empty.
+When insufficient is false, every substantive factual paragraph must list the citations it relies on.
+Do not invent facts from general knowledge.
+Never include chunk IDs that were not supplied.
+Never invent or paraphrase quotes; copy them from the evidence.${corpusAddendum}`
+
+        const userPrompt = `Evidence:\n${evidenceBlock || "(none)"}\n\nRecent exchanges:\n${historyText || "(none)"}\n\nQuestion:\n${prepared.prompt}`
+        const answerOutput = Output.object({ schema: answerSchema })
 
         await emitStatus(CHAT_PROGRESS.writing)
 

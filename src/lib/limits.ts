@@ -16,6 +16,7 @@ export const LIMITS = {
 } as const
 
 export const MODELS = {
+  classify: "gpt-5.4-nano",
   chat: "gpt-5.4-mini",
   title: "gpt-5.4-nano",
   embed: "voyage-4-large",

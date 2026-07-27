@@ -3,9 +3,11 @@ import { IslandCta } from "src/components/ui/IslandCta"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 
 const SUGGESTIONS = [
-  "Give me a concise brief of these sources.",
-  "Which claims rest on thin or contested support?",
-  "Pull the most important quotes and why they matter.",
+  "Summarize the sources for me.",
+  "What are the key takeaways?",
+  "Where do these sources disagree?",
+  "Explain this like I'm new to the topic.",
+  "What's the secret?",
 ]
 
 export type ChatEmptyPromptState = "ready" | "processing" | "select" | "empty"

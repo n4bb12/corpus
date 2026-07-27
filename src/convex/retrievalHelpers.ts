@@ -43,6 +43,7 @@ export const listChunksForSources = internalQuery({
   args: {
     notebookId: v.id("notebooks"),
     sourceIds: v.array(v.id("sources")),
+    maxChunksPerSource: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const chunks: Array<{
@@ -54,11 +55,19 @@ export const listChunksForSources = internalQuery({
       ordinal: number
     }> = []
 
+    const perSourceLimit =
+      typeof args.maxChunksPerSource === "number" && args.maxChunksPerSource > 0
+        ? args.maxChunksPerSource
+        : null
+
     for (const sourceId of args.sourceIds) {
-      const sourceChunks = await ctx.db
+      const query = ctx.db
         .query("chunks")
         .withIndex("by_source_ordinal", (q) => q.eq("sourceId", sourceId))
-        .collect()
+
+      const sourceChunks = perSourceLimit
+        ? await query.take(perSourceLimit)
+        : await query.collect()
 
       for (const chunk of sourceChunks) {
         if (chunk.deletedAt || chunk.notebookId !== args.notebookId) {
