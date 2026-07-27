@@ -1,10 +1,10 @@
 import { voyage } from "@ai-sdk/voyage"
-import { embed, embedMany } from "ai"
+import { embedMany } from "ai"
 import type { ConvexHttpClient } from "convex/browser"
-import semantic from "semantic-chunker"
 import { api } from "src/convex/_generated/api"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { deriveChunkLocators } from "src/lib/chunkLocators"
+import { chunkMarkdown } from "src/lib/chunkMarkdown"
 import { requireEnv } from "src/lib/env"
 import { LIMITS, MODELS } from "src/lib/limits"
 import { titleFromUrl } from "src/lib/sourceTitle"
@@ -138,35 +138,10 @@ export async function processSourcePipeline(
       processingState: "chunking",
     })
 
-    const embeddingModel = voyage.textEmbedding(MODELS.embed)
-    const chunker = semantic({
-      embed: async (text) => {
-        const { embedding } = await embed({
-          model: embeddingModel,
-          value: text,
-          providerOptions: {
-            voyage: {
-              inputType: "document",
-            },
-          },
-        })
-
-        return embedding
-      },
-      splitMode: "markdown",
+    const texts = chunkMarkdown(markdown, {
       maxChunkSize: 1200,
       minChunkSize: 200,
-      zScoreThreshold: 1,
     })
-    const texts: string[] = []
-
-    for await (const [text] of chunker(markdown)) {
-      const trimmed = text.trim()
-
-      if (trimmed) {
-        texts.push(trimmed)
-      }
-    }
 
     if (!texts.length) {
       throw new Error("Couldn't prepare this source for chat. Try again.")
@@ -179,6 +154,7 @@ export async function processSourcePipeline(
       processingState: "embedding",
     })
 
+    const embeddingModel = voyage.textEmbedding(MODELS.embed)
     const { embeddings: vectors } = await embedMany({
       model: embeddingModel,
       values: texts,
