@@ -3453,3 +3453,24 @@ I have enough detail on models, ingest, and citations. Updating the README so ar
 
 Architecture now sits after local setup. It keeps the stack diagram and adds short sections for models, the ingest pipeline (extract → chunk → embed), and how citations flow from retrieval through `[[cite:…]]` markers to preview highlighting.
 
+# Notebook card menu feedback
+_Exported on 7/27/2026 at 14:19:25 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Clicking the notebook card menu should not trigger button active (scaling animation) feedback
+
+---
+
+**Cursor**
+
+I'll find the notebook card and its menu trigger so we can stop the parent active/scale feedback from firing when the menu is clicked.
+
+The card wrapper uses `active:scale-[0.98]`, so pressing the menu (a child) still activates the parent. I'll scope the scale to when the notebook link itself is pressed.
+
+Fixed. The card’s press scale was on the outer wrapper via `active:scale-[0.98]`, so any child press (including the menu) activated it.
+
+It’s now `has-[a:active]:scale-[0.98]`, so the scale only runs when the notebook link is pressed — not when opening the menu.
+
