@@ -7392,3 +7392,54 @@ Regression test: `ignores empty trailing paragraph shells while citations stream
 
 Try another answer—the last paragraph shouldn’t strobe pills while cites are still loading.
 
+# Atomic commits discussion
+_Exported on 7/27/2026 at 21:05:57 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll inspect the working tree and recent commit style, then split the uncommitted work into atomic commits.
+
+Next I'll read the full diffs so I can group them by intent.
+
+I need the rest of `handleChatPost` and how the citation helpers depend on each other so the commit order stays valid.
+
+Checking whether the retrieval type change is self-contained and how chunk sizing fits the citation work.
+
+Grouping into independent fixes (dialog, skip-RAG), then citation matching → markers/streaming → chunk sizing → docs. Committing in that order.
+
+Split into 8 commits on `main` (working tree clean):
+
+1. `52eb25f` — fix(ui): prevent add-source dialog clipping on mobile  
+2. `5a81174` — feat(retrieval): skip RAG when selected sources fit the evidence budget  
+3. `317e704` — feat(citations): resolve quotes through markdown and clamp multi-paragraph spans  
+4. `3c1149b` — feat(citations): fall back to markdown-aware excerpt search for highlights  
+5. `754b2b3` — feat(citations): number markers, dedupe by passage, and hold trailing cites  
+6. `ac5a35e` — feat(chat): stream numbered citation catalogs with resolved quote locators  
+7. `69c8b55` — refactor(sources): shrink markdown chunks for finer citation spans  
+8. `1f350ff` — docs: record skip-RAG, mobile dialog, and citation session notes
+
+# Security review
+_Exported on 7/27/2026 at 21:06:47 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+/review-security 
+
+---
+
+**Cursor**
+
+Launching a security review of branch changes against the repo default base.
+
+Security review found no issues.
+
