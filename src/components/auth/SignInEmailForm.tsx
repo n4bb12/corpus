@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "src/components/ui/shadcn/alert"
 import { Input } from "src/components/ui/shadcn/input"
 import { Label } from "src/components/ui/shadcn/label"
 import { fadeTransition, respectReducedMotion } from "src/lib/motion"
+import { useThemeAutofillRemountKey } from "src/lib/theme"
 
 export type SignInEmailFormProps = {
   email: string
@@ -30,6 +31,7 @@ export function SignInEmailForm({
 }: SignInEmailFormProps) {
   const reduceMotion = useReducedMotion()
   const transition = respectReducedMotion(reduceMotion, fadeTransition)
+  const autofillEpoch = useThemeAutofillRemountKey()
 
   return (
     <form
@@ -47,6 +49,7 @@ export function SignInEmailForm({
           ) : null}
 
           <Input
+            key={autofillEpoch}
             id="email"
             type="email"
             autoComplete="email"
