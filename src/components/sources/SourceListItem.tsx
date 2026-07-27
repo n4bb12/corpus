@@ -1,19 +1,7 @@
-import {
-  CircleAlert,
-  FileText,
-  Link as LinkIcon,
-  MoreHorizontal,
-  Type,
-} from "lucide-react"
+import { CircleAlert, FileText, Link as LinkIcon, Type } from "lucide-react"
 import { memo } from "react"
-import { Button } from "src/components/ui/shadcn/button"
+import { SourceListItemMenu } from "src/components/sources/SourceListItemMenu"
 import { Checkbox } from "src/components/ui/shadcn/checkbox"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "src/components/ui/shadcn/dropdown-menu"
 import { Label } from "src/components/ui/shadcn/label"
 import { Spinner } from "src/components/ui/shadcn/spinner"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
@@ -106,37 +94,14 @@ export const SourceListItem = memo(function SourceListItem({
       </span>
 
       <div className="relative z-10 flex items-center gap-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              className="rounded-sm opacity-100 touch-manipulation md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-              aria-label={`Source menu for ${label}`}
-            >
-              <MoreHorizontal size={16} />
-            </Button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="end" className="rounded-xl">
-            <DropdownMenuItem onClick={() => onRename(source)}>
-              Rename
-            </DropdownMenuItem>
-
-            {failed ? (
-              <DropdownMenuItem onClick={() => onRetry(source._id)}>
-                Retry
-              </DropdownMenuItem>
-            ) : null}
-
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => onDelete(source._id)}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SourceListItemMenu
+          label={label}
+          source={source}
+          failed={failed}
+          onRename={onRename}
+          onRetry={onRetry}
+          onDelete={onDelete}
+        />
 
         <Label
           htmlFor={checkboxId}
