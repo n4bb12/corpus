@@ -4,6 +4,7 @@ import { NotebookPage } from "src/pages/notebooks/NotebookPage"
 import { z } from "zod"
 
 export const Route = createFileRoute("/notebooks/$notebookId")({
+  ssr: false,
   validateSearch: z.object({
     tab: z.enum(["sources", "chat"]).optional(),
   }),

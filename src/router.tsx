@@ -7,6 +7,8 @@ export function getRouter() {
     routeTree,
     scrollRestoration: true,
     defaultPreload: "render",
+    // Only used for client-only routes (notebooks) and the SPA shell mask.
+    // `/` and `/sign-in` SSR real page HTML during prerender.
     defaultPendingComponent: AppPending,
   })
 
