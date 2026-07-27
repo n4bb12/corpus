@@ -9,7 +9,8 @@ export const LIMITS = {
   maxExtractedCharacters: 500_000,
   maxPromptCharacters: 4_000,
   maxTitleCharacters: 100,
-  libraryPageSize: 12,
+  libraryFirstPageSize: 6,
+  libraryPageSize: 9,
   chatHistoryPairs: 10,
   embeddingDimensions: 1_024,
 } as const
