@@ -7774,3 +7774,656 @@ Done. Changes:
 2. **Plus card height** locked to featured + gap + regular (`14rem + 1.5rem + 10.5rem`) from the start, and `self-start` removed so it fills the two-row span.
 3. **Regular notebook cards** get `min-h-42` so that math stays stable when the second card appears.
 
+# Sources sidebar order
+_Exported on 7/27/2026 at 23:26:48 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+As sources finish processing, they change order in the sources sidebar. Keep them in the order they were added, not in the order they complete.
+
+---
+
+**Cursor**
+
+I'll find how the sources sidebar orders items and keep them in add order instead of completion order.
+
+The list already sorts by `createdAt`; I'll check whether processing updates that field or how uploading items are merged into the sidebar.
+
+Upload completion likely sets `createdAt`, so I'll check how uploads assign timestamps and preserve add order.
+
+Root cause: uploads stamp `createdAt` when each file finishes, and placeholders sit above the list, so rows jump as they complete. I'll stamp add-time and merge placeholders into one stable newest-first list.
+
+Cleaning up the merge helper, then wiring `createdAt` through the API.
+
+Replacing the non-null assertion with a proper guard.
+
+Sources were jumping because file `createdAt` was set when each upload finished, and uploading placeholders always sat above the real list.
+
+**Fix:**
+1. Stamp `addedAt` at selection time (earlier files in a batch sort higher for newest-first).
+2. Persist that as `createdAt` on `addFile`.
+3. Merge uploading + ready rows into one list sorted by that timestamp, so rows keep their place as they finish.
+
+# Suggestions for improvements
+_Exported on 7/27/2026 at 23:42:07 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Make more suggestions for SUGGESTIONS.
+
+---
+
+**Cursor**
+
+I'll look at where `SUGGESTIONS` is defined and how it's used so we can expand the list in the same style.
+
+There's an empty placeholder in the list — checking product context so the new suggestions match the app's voice.
+
+Filling the empty slot and expanding the list with a few more grounded starter prompts in the same tone.
+
+Filled the empty slot and expanded to five prompts:
+
+1. Summarize the sources for me.
+2. What are the key takeaways?
+3. Where do these sources disagree?
+4. Explain this like I'm new to the topic.
+5. What's the secret?
+
+# Dark mode tab contrast
+_Exported on 7/27/2026 at 23:52:15 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Dark mode tabs need better contrast.
+
+---
+
+**Cursor**
+
+I'll find the tab components and their dark-mode styles so we can improve contrast.
+
+The active tab uses `bg-card` on a `muted` track; in dark mode card is darker than muted, so the selection reads recessed. I'll align with the design (raised surface + pine text) and fix dark contrast.
+
+Updated the mobile Sources/Chat tabs in `NotebookMobileTabs.tsx`.
+
+In dark mode the active pill used `bg-card` on a `muted` track, but card is *darker* than muted there, so the selection looked recessed. Changes:
+
+1. Darker track (`dark:bg-black/45`) so the selected pill reads raised  
+2. Active pill uses `dark:bg-muted` plus a pine ring  
+3. Active label uses pine (`text-primary`), matching the design note
+
+---
+
+**User**
+
+Much better but just a tidbid softer please.
+
+---
+
+**Cursor**
+
+Softened the dark track, rings, and active pill so the contrast stays clear without feeling as sharp.
+
+# Composer height on mobile
+_Exported on 7/27/2026 at 23:54:19 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Reduce the composer height on mobile.
+
+---
+
+**Cursor**
+
+I'll find the chat composer styles and tighten its height on mobile.
+
+The textarea uses a fixed `min-h-24`; I'll make that smaller on mobile and keep the desktop size.
+
+Mobile composer textarea min-height is now `min-h-12` (48px), with `md:min-h-24` kept for larger screens.
+
+---
+
+**User**
+
+Also lower the message thread bottom padding.
+
+---
+
+**Cursor**
+
+Thread bottom padding is now `pb-48` on mobile, with `md:pb-72` unchanged for larger screens.
+
+# Text parsing issue
+_Exported on 7/27/2026 at 23:57:25 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+I dropped this file. The source text got parsed as a single long plain text blob with no breaks or passages. This makes it very difficult to quote and highlight small passages.
+
+---
+
+**Cursor**
+
+I'll look at how uploaded files are parsed into source text and why the PDF ends up as one unbroken blob.
+
+The PDF extractor likely joins glyphs with spaces and skips geometry-based line breaks. Checking how TextItems are structured and how the preview uses paragraphs.
+
+Reproducing extraction on that PDF to see what text layout we get.
+
+The PDF has no text layer, so extraction falls through to vision OCR. Checking what that path returns.
+
+Text-layer PDFs only get soft line breaks (`\n`), never paragraph breaks (`\n\n`), so preview and chunking treat the whole file as one passage. Fixing extraction to reconstruct paragraphs from item geometry.
+
+Implementing geometry-based paragraph reconstruction so text-layer PDFs get real passage breaks.
+
+Improving soft-wrap detection for hyphenated lines and lettered sub-bullets (`o …`).
+
+Simplifying soft-wrap join logic — the hyphen handling was too fragile.
+
+PDF text-layer extraction was joining everything into one block: it only used spaces/`hasEOL`, never reconstructed paragraphs. Preview and citations both key off blank-line passages, so the whole source became one highlight target.
+
+**Fix:** rebuild text from pdf.js item geometry — Y gaps → paragraph breaks, soft wraps unwrapped, same-line fragments ordered by X. Scanned PDFs (like `Elternbrief_Start_Infoportal.pdf`) still go through vision; that prompt now also asks for blank lines between paragraphs.
+
+Already-ingested sources keep the old blob. Delete and re-add them to get proper passages.
+
+---
+
+**User**
+
+<timestamp>Monday, Jul 27, 2026, 11:50 PM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: success
+task_id: 212756
+title: Find the uploaded PDF file
+tool_call_id: call-18761d6d-4b31-42ce-94df-a735a903f65f-17
+fc_964009b9-bdf6-9d47-a75c-d636e683a863_3
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/212756.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+---
+
+**Cursor**
+
+The PDF search finished — it found `Elternbrief_Start_Infoportal.pdf` in Downloads, which was already used to verify extraction. Re-add that source to pick up the paragraph-break fix.
+
+# File processing spinner sync
+_Exported on 7/28/2026 at 00:06:47 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Can we keep file processing spinners alive without reset/remount across processing phases? That way, spinners for files that started at the same time, don't de-sync.
+
+---
+
+**Cursor**
+
+I'll look at how file processing spinners are keyed and remounted across phases so we can keep them continuous.
+
+I'll check the upload flow next — the desync is likely from remounting when the row swaps upload → source or when the phase label updates the spinner.
+
+Spinners remount when the row swaps upload → source (different keys/components) and when phase updates churn the SVG. I'll keep one stable row identity and a spinner whose DOM stays mounted across phases.
+
+I'll unify the upload and source rows under one component with a stable `localId` key, and keep the spinner SVG props unchanged across phases.
+
+Cleaning up the awkward class logic, then wiring stable row keys through the list merge.
+
+The early-return split can still remount the shell. Switching to a single render path so the spinner stays mounted.
+
+Yes. Spinners were restarting for two reasons: the upload row remounted as a different component/key when the source appeared, and phase labels were being pushed onto the spinner SVG.
+
+What changed:
+
+1. **One row component** — `SourceListItem` now handles both uploading and live sources, so React can keep the same tree across the handoff.
+2. **Stable row key** — the upload `localId` is remembered and reused as the React key through processing, instead of switching to `_id`.
+3. **Stable spinner** — the spinner keeps fixed props (`aria-hidden`); phase text (“Waiting” → “Reading” → …) updates only in the status line, and `Spinner` is memoized so phase updates don’t touch the SVG.
+
+Files that start together should stay visually in sync for the whole upload → indexing run.
+
+# Cross-cutting questions support
+_Exported on 7/28/2026 at 00:10:13 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+I'd like to support use cases with cross-cutting questions like "Summarize all sources" or "Where do sources contradict"? These questions lack concrete semantics relating to content. They're a broader task.
+
+---
+
+**Cursor**
+
+Cross-cutting questions need a different path than content-retrieval Q&A. I'll inspect how queries are handled today and what already exists for multi-source synthesis.
+
+This has real architecture trade-offs (intent routing vs always-full-context vs hybrid). Switching to Plan mode so we can design it properly.
+
+The empty-state prompts already invite these tasks, but retrieval still ranks by query similarity—which fails for corpus-wide work. Checking limits and whether the plan already covers this.
+
+One design fork changes the whole approach. Asking that first.
+
+Today’s path embeds the question and packs top-ranked chunks into a 12k budget. That works for “What does source A say about X?” and for small notebooks that already go fully inline — but for “Summarize all sources” / “Where do they contradict?”, similarity to the *task wording* is the wrong signal. You need **coverage across sources**, not top-k hits.
+
+Two decisions change the design:
+
+---
+
+**User**
+
+That's great. We should make sure the categorization phase is covered by the shimmering status.
+
+---
+
+**Cursor**
+
+I'll fold the classify step into the existing chat progress shimmer and update the plan.
+
+Updated. Classify runs inside `prepareEvidence` and emits a new shimmer label — `Understanding the question…` — via the same `setProgress` path as Searching / Ranking, so there’s no silent gap while nano classifies. Inline-fit turns still skip classify and that status.
+
+---
+
+**User**
+
+Any other status we're missing?
+
+---
+
+**Cursor**
+
+Checking the full progress timeline against the planned corpus path for gaps.
+
+One real gap: after corpus classify, coverage packing can linger on “Understanding the question…” while loading/packing chunks. I’ll add a coverage status parallel to Searching; the rest is fine under Looking / Writing.
+
+Replacing the table with a bullet list — plan rendering doesn't support tables.
+
+Only one worth adding: **Gathering passages from each source…** after corpus classify, while the coverage pack loads and stratifies chunks. Without it, that work would still show as “Understanding the question…”.
+
+Everything else already has a home:
+- Inline load / char counts → Looking
+- Factual path → Searching → Ranking
+- Answer stream (and citation retry) → Writing
+- Post-stream quote resolution → skip; text is already on screen
+
+Plan updated with the gathering status.
+
+---
+
+**User**
+
+After implementing the plan, what's the sequence?
+
+---
+
+**Cursor**
+
+After the plan lands, a chat turn follows one of these paths:
+
+**Small notebooks (selected sources fit 12k)**  
+1. Looking through your sources…  
+2. Writing an answer…  
+(no classify; full inline evidence)
+
+**Over budget + factual question**  
+1. Looking through your sources…  
+2. Understanding the question…  
+3. Searching for relevant passages…  
+4. Picking the best matches…  
+5. Writing an answer…
+
+**Over budget + corpus question** (summarize / contradict / compare / overview)  
+1. Looking through your sources…  
+2. Understanding the question…  
+3. Gathering passages from each source…  
+4. Writing an answer…
+
+Classify failure falls through to the factual path (Searching → Ranking → Writing).
+
+---
+
+**User**
+
+Also update the SUGGESTIONS to include at least one corpus and one factual question.
+
+---
+
+**Cursor**
+
+Updated. Empty-state `SUGGESTIONS` will mix modes: at least one corpus task and at least one factual question.
+
+---
+
+**User**
+
+ The third suggestion could be something the corpus doesn't know.
+
+---
+
+**Cursor**
+
+Updated. The three empty-state prompts will be: corpus, factual, and one out-of-scope ask the sources can’t support (insufficient path).
+
+---
+
+**User**
+
+Perfect, go.
+
+---
+
+**Cursor**
+
+Implementing corpus-task retrieval now — starting with the coverage packer and progress labels, then wiring classify into `prepareEvidence`.
+
+Fixing the non-null assertions flagged by the linter.
+
+Shipped. Over-budget turns now classify (with shimmer), then either coverage-pack or hybrid RAG.
+
+**Retrieval**
+- `packCoverageEvidence` round-robins early ordinals across sources
+- `prepareEvidence` returns `mode: "inline" | "factual" | "corpus"`
+- Classify via nano; failure → factual
+
+**Status**
+- `Understanding the question…` → classify
+- `Gathering passages from each source…` → corpus pack
+
+**Answer + UI**
+- Corpus mode adds multi-source synthesis instructions
+- Suggestions: brief (corpus) / main claim (factual) / Tokyo weather (unsupported)
+
+All 61 tests pass; types and lint are clean.
+
+---
+
+**User**
+
+Are we already applying reasonable limits to the amount of chunks we retrieve? Listing all chunks could become expensive.
+
+---
+
+**Cursor**
+
+Checking how chunk listing is bounded today — especially the coverage and inline paths.
+
+**Hybrid RAG is limited; the full-list paths are not.**
+
+Bounded today:
+- Vector: 8 hits per source, then top 24 overall
+- Text search: `.take(24)`
+- Rerank: `topN` ≤ 12
+- Model evidence: 12k character budget
+
+Unbounded:
+- `listChunksForSources` does `.collect()` per source — used for **inline** and the new **corpus** path
+- Packing still caps what the model sees, but the query can load every chunk first (up to 20 sources × ~500k chars ≈ many thousands of rows)
+
+So corpus mode is the expensive case: we load everything, then throw most of it away in `packCoverageEvidence`. Worth capping the read (e.g. first N ordinals per source, or stop once the coverage budget is satisfied while scanning). Want me to add that?
+
+---
+
+**User**
+
+Yes.
+
+---
+
+**Cursor**
+
+Capping per-source chunk reads for the corpus path so we don't `.collect()` entire sources.
+
+Done. Inline and corpus listing now use `.take(maxChunksPerSource)` instead of unbounded `.collect()`.
+
+`maxChunksPerSourceForBudget` sizes the cap from a fair share of the 12k budget and the 80-char min chunk size — e.g. **151** for one source, **9** for twenty — so large sources only load early ordinals needed for packing.
+
+---
+
+**User**
+
+Review our other queries, too. Convex has a 1s hard timeout.
+
+---
+
+**Cursor**
+
+I'll audit Convex queries for unbounded `.collect()` / heavy work that could hit the 1s timeout.
+
+**Highest risk (can blow the 1s query/mutation limit)**
+
+1. **`chat.list`** — Loads every entry in the current epoch, then for each assistant message `.collect()`s citations and `get`s each source. Long threads → O(messages × citations) in one subscribed query. Biggest realtime risk.
+
+2. **`ingestion.replaceChunks`** — One mutation `.collect()`s all old chunks, deletes them, then inserts every new chunk + 1024-d embedding. A large source can be hundreds–thousands of writes → mutation timeout on ingest/re-ingest.
+
+3. **`applySourceSelectionBoundary` / `prepareGeneration`** — Both `.collect()` the full chat epoch (history / “is anything streaming?”). Same growth curve as chat length; mutations, not the live list, but still unbounded.
+
+**Moderate (bounded by product limits, still wasteful)**
+
+4. **`notebooks.list`** — `.collect()`s all notebooks (≤100), then for each page card `.collect()`s that notebook’s sources just to count. Fine at caps, but N+1 and no DB-level pagination.
+
+5. **`cleanup.*`** — Outer loops are batched (`take(25)`), but citation deletes per assistant still `.collect()` unbounded. Usually small; worst-case chat with huge citation sets could stall a batch.
+
+**Already OK / recently fixed**
+
+- Sources list (≤20), text search `.take(24)`, vector top-k, coverage/inline chunk reads with `maxChunksPerSource`
+- `listSourceCharacterCounts` — ≤20 `get`s
+
+**Suggested hardening order:** batch `replaceChunks`; slim `chat.list` (citations join / cap / denormalize); avoid full-epoch collects in prepare/boundary (tail scan or flags); maintain `sourceCount` on notebooks.
+
+Want me to implement those in that order?
+
+---
+
+**User**
+
+We don't need to harden for really large use-cases, unleass it's an easy one.
+
+---
+
+**Cursor**
+
+Agreed. Within your caps (20 sources, 100 notebooks, epoch clears), the expensive cases that matter in practice are mostly already bounded — and the chunk-read cap we just added was the easy win.
+
+I’ll leave `chat.list`, `replaceChunks`, and full-epoch collects alone unless something starts failing in real use.
+
+---
+
+**User**
+
+One test. Based on the shimmering label, It went into inline mode. But it only summarized and cited the Biblebots source.
+
+---
+
+**Cursor**
+
+Inline mode skips classify and the corpus prompt addendum, so the model can fixate on one source even with full evidence. Checking the path and fixing it.
+
+Root cause: inline skips classify, so `mode: "inline"` never gets the multi-source corpus instructions and the model can ignore other sources. Classifying on multi-source inline and returning `corpus`/`factual` for the prompt.
+
+Fixing the circular type inference in `prepareEvidence`.
+
+Root cause: small notebooks took the **inline** shortcut and returned `mode: "inline"`, which skipped classify and the multi-source prompt — so the model could lean on one source even with full evidence.
+
+**Fix:** On multi-source inline, still run classify (you’ll see “Understanding the question…”). Corpus briefs get the cover-every-source instructions. Also refuse inline if a source hit the per-source chunk cap (partial read).
+
+Retry the brief — you should see categorizing shimmer, then citations across the Elternbrief / Geheimnis / Biblebots sources.
+
+---
+
+**User**
+
+Same result.
+
+---
+
+**Cursor**
+
+Digging deeper — likely the evidence pack or prompt structure, not just classify. Checking how sources land in the evidence and how the model sees them.
+
+Opaque `source:id` blobs and a prior one-source answer in history can keep the model stuck on Biblebots. Grouping evidence by source title and requiring each source be covered.
+
+Making corpus formatting resilient when Convex still returns legacy `mode: "inline"` (likely why the first fix didn’t stick).
+
+The classify-only fix wasn’t enough: evidence was a flat soup of opaque `source:` ids, so the model could latch onto the English Biblebots material and ignore the German sources — especially with the previous one-sided answer in history.
+
+**Now for corpus / multi-source inline:**
+- Evidence is grouped under each **source title**
+- Prompt requires **at least one cited paragraph per source section**
+- Prior incomplete answers are explicitly ignored
+- Works even if Convex still returns legacy `mode: "inline"`
+
+Clear chat (so the old brief isn’t in context) and retry. Hover the citation pills — you should see Elternbrief / Geheimnis titles, not only Biblebots.
+
+If other sources still never appear in pills, say so: that would mean their chunks aren’t in the evidence pack at all.
+
+---
+
+**User**
+
+I think summarization is a common enough task to justify generating source summaries and using those to satisfy summary questions. WDYT? I don't see us succeeding with the current approach.
+
+---
+
+**Cursor**
+
+Agreed — for **summarize / brief / overview**, the current path is fighting the wrong problem. You’re asking a chat model to fairly compress many raw chunks in one shot; it will keep preferring the loudest, most on-language source. Prompt grouping won’t fix that reliably.
+
+**Source summaries as first-class artifacts** fit this product better:
+
+1. **At ingest (when a source becomes ready)** — generate a short grounded summary (and optionally a few keyed claims + chunk ids / quotes).
+2. **Store it on the source** — content is immutable, so no refresh churn.
+3. **For corpus summary questions** — feed the selected sources’ summaries (tiny, balanced, titled). Easy to fit 20 of them in the evidence budget.
+4. **Keep hybrid RAG for factual questions** — “Where does it say X?” still needs passages.
+5. **Compare / contradict** — summaries help as a map step; a second pass over contested claims can still pull chunks if you want citations with locators.
+
+The design choice that matters: **citations**. Pure prose summaries don’t give you passage pills unless you either (a) allow source-level cites for summary answers, or (b) generate the summary already anchored to chunk quotes. I’d do **(b)** lightly — a few supporting quotes per source at ingest — so the brief stay grounded without stuffing full documents into the turn.
+
+So: yes, treat summarization as its own path backed by per-source digests; stop trying to make one-shot coverage packing do NotebookLM’s job.
+
+---
+
+**User**
+
+Yes, that's good. And if we have summary chunks, we can also use that to better generate notebook titles and even automatically update the title as sources are added or removed (works well with the max 20 sources limit).
+
+---
+
+**Cursor**
+
+That ties the digests into titling nicely. I'll sketch a concrete plan against the current ingest and title flow.
+
+Agreed — digests become the shared substrate for **briefs** and **auto titles**.
+
+Plan saved at [`.agents/plans/source-digests.md`](.agents/plans/source-digests.md). Core shape:
+
+1. **Ingest** — after embed, generate a short grounded digest + supporting chunk quotes, then mark ready  
+2. **Corpus summaries** — answer from selected digests (balanced, titled), not raw coverage packs  
+3. **Titles** — refresh from all ready digests whenever sources are added/removed, unless `titleOrigin === "manual"` (this replaces the old “title once from first source, never again” rule)  
+4. **Factual Q** — keep hybrid RAG  
+
+One policy call already baked in: **generated titles stay updatable; only manual edits freeze them.** Say if you want that differently, otherwise we can implement from that plan.
+
+---
+
+**User**
+
+Yes. It would be nice if we could revert to automatic naming by clearing the notebook title.
+
+---
+
+**Cursor**
+
+Updating the plan so clearing the title re-enables automatic naming from digests.
+
+Updated. Clearing the notebook title (empty rename) will set `titleOrigin` back to `placeholder` and trigger a digest-based refresh — so auto-naming comes back without a separate control. Non-empty renames stay manual.
+
+---
+
+**User**
+
+Clearing the notebook just leaves it as "Untitled notebook" with no title.
+
+---
+
+**Cursor**
+
+Checking current clear-title behavior — digests may not be wired yet, so clearing might only blank the field.
+
+Clearing currently sets `titleOrigin: "manual"` with an empty title, so it stays “Untitled notebook” forever. Wiring empty rename back to placeholder and re-triggering auto title generation.
+
+That was the bug: clearing still marked the title as **manual**, so nothing ever regenerated.
+
+**Now:** clearing the title sets `placeholder` + `pending`, then `refreshNotebookTitle` rebuilds from ready sources. The field shimmers as “Untitled notebook” until the new name lands. Non-empty renames stay manual. Same refresh runs when a source becomes ready or is deleted.
+
+---
+
+**User**
+
+Works now. But the quality is poor. We just got the URL as title. Not even the document title from that URL, much less an actual content summary.
+
+---
+
+**Cursor**
+
+The fallback is accepting URL-shaped labels. I'll reject those and prefer the real document title (and content) for auto-naming.
+
+Two bugs stacked:
+
+1. Fallback preferred `originalTitle` (the URL) over the real source title “Mission – Biblebots”
+2. Short topical titles were rejected as “verbatim” if they also appeared in the page — so a good model title could lose to the URL fallback
+
+**Fix:** reject URL/host-path titles, prefer the display source title for fallbacks, allow short heading-like titles, and ban URLs in the title prompt.
+
+Clear the notebook title again (or re-add the source) — you should get something like “Mission – Biblebots” or a short topic phrase, not `biblebots.de/mission/`.
+
+# Summary regeneration info icon
+_Exported on 7/28/2026 at 00:10:33 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+While regenerating a summary, show an info and/or icon to clarify what's happening.
+
+---
+
+**Cursor**
+
+I'll check the source-digests plan and how summary regeneration is currently shown in the UI.
+
+The title shimmer is likely what needs the clarifying info. Checking how that UI is wired.
+
+The loading title uses `placeholder-shimmer`, which hides the text—so clearing for auto-name looks like an unexplained bar. I'll show a spinner and status copy while the title regenerates.
+
+Radix tooltips use `asChild`, not a `render` prop — fixing that and wiring `generating` on the notebook page.
+
+While an automatic title is regenerating, the opaque shimmer bar is replaced with a clear status: spinner, “Generating title…”, and an info tooltip (“Building a short title from your sources.”). First-load still uses the skeleton shimmer.
+
+---
+
+**User**
+
+The tooltip is practically useless, it's not visible for long enough. Probably better to show sparkles or something.
+
+---
+
+**Cursor**
+
+I'll drop the tooltip and use a sparkles icon instead so the generating state reads at a glance.
+
+Removed the tooltip. Generating state is now just sparkles + “Generating title…”.
+
