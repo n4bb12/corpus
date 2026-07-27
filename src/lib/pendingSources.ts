@@ -5,6 +5,7 @@ import { createStore } from "zustand/vanilla"
 
 type NotebookPending = {
   uploading: UploadingSource[]
+  rowKeyBySourceId: Record<string, string>
   creatingCount: number
   awaitingSourceIds: Id<"sources">[]
 }
@@ -15,9 +16,11 @@ type PendingSourcesState = {
 
 const EMPTY_UPLOADING: UploadingSource[] = []
 const EMPTY_AWAITING: Id<"sources">[] = []
+const EMPTY_ROW_KEYS: Record<string, string> = {}
 
 const EMPTY_NOTEBOOK: NotebookPending = {
   uploading: EMPTY_UPLOADING,
+  rowKeyBySourceId: EMPTY_ROW_KEYS,
   creatingCount: 0,
   awaitingSourceIds: EMPTY_AWAITING,
 }
@@ -54,6 +57,27 @@ export function updateUploadingSources(
   setNotebookPending(key, {
     ...current,
     uploading,
+  })
+}
+
+export function rememberSourceRowKey(
+  notebookId: Id<"notebooks">,
+  sourceId: Id<"sources">,
+  localId: string,
+) {
+  const key = notebookId
+  const current = notebookPending(key)
+
+  if (current.rowKeyBySourceId[sourceId] === localId) {
+    return
+  }
+
+  setNotebookPending(key, {
+    ...current,
+    rowKeyBySourceId: {
+      ...current.rowKeyBySourceId,
+      [sourceId]: localId,
+    },
   })
 }
 
@@ -99,12 +123,22 @@ export function prunePendingSources(
 ) {
   const key = notebookId
   const current = notebookPending(key)
-  const ids = new Set(sourceIds)
+  const ids = new Set<string>(sourceIds)
   const awaitingSourceIds = current.awaitingSourceIds.filter(
     (sourceId) => !ids.has(sourceId),
   )
+  const rowKeyBySourceId = Object.fromEntries(
+    Object.entries(current.rowKeyBySourceId).filter(([sourceId]) =>
+      ids.has(sourceId),
+    ),
+  )
+  const awaitingUnchanged =
+    awaitingSourceIds.length === current.awaitingSourceIds.length
+  const rowKeysUnchanged =
+    Object.keys(rowKeyBySourceId).length ===
+    Object.keys(current.rowKeyBySourceId).length
 
-  if (awaitingSourceIds.length === current.awaitingSourceIds.length) {
+  if (awaitingUnchanged && rowKeysUnchanged) {
     return
   }
 
@@ -113,6 +147,9 @@ export function prunePendingSources(
     awaitingSourceIds: awaitingSourceIds.length
       ? awaitingSourceIds
       : EMPTY_AWAITING,
+    rowKeyBySourceId: Object.keys(rowKeyBySourceId).length
+      ? rowKeyBySourceId
+      : EMPTY_ROW_KEYS,
   })
 }
 
@@ -120,6 +157,13 @@ export function useUploadingSources(notebookId: Id<"notebooks">) {
   return useStore(
     store,
     (state) => state.byNotebook[notebookId]?.uploading ?? EMPTY_UPLOADING,
+  )
+}
+
+export function useSourceRowKeys(notebookId: Id<"notebooks">) {
+  return useStore(
+    store,
+    (state) => state.byNotebook[notebookId]?.rowKeyBySourceId ?? EMPTY_ROW_KEYS,
   )
 }
 

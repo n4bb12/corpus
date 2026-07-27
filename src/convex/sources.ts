@@ -251,6 +251,7 @@ export const addFile = mutation({
     storageId: v.id("_storage"),
     filename: v.string(),
     mimeType: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { user, notebook } = await requireNotebookOwner(ctx, args.notebookId)
@@ -266,6 +267,10 @@ export const addFile = mutation({
     }
 
     const now = Date.now()
+    const createdAt =
+      typeof args.createdAt === "number" && Number.isFinite(args.createdAt)
+        ? args.createdAt
+        : now
     const title = titleFromFilename(args.filename)
 
     const sourceId = await ctx.db.insert("sources", {
@@ -279,7 +284,7 @@ export const addFile = mutation({
       originalStorageId: args.storageId,
       selected: true,
       processingState: "pending",
-      createdAt: now,
+      createdAt,
       updatedAt: now,
     })
 

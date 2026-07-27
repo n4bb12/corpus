@@ -3,7 +3,10 @@ import { useState } from "react"
 import { uploadSourceFiles } from "src/components/sources/uploadSourceFiles"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
-import { updateUploadingSources } from "src/lib/pendingSources"
+import {
+  rememberSourceRowKey,
+  updateUploadingSources,
+} from "src/lib/pendingSources"
 import {
   markUploadingSourceCreated,
   removeUploadingSource,
@@ -36,6 +39,7 @@ export function useSourceUpload({
           ])
         },
         onCreated: (localId, sourceId) => {
+          rememberSourceRowKey(notebookId, sourceId, localId)
           updateUploadingSources(notebookId, (current) =>
             markUploadingSourceCreated(current, localId, sourceId),
           )

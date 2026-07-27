@@ -117,6 +117,7 @@ export function SourcesPane({
         listRef={pane.listRef}
         filtered={pane.filtered}
         uploading={pane.uploading}
+        rowKeyBySourceId={pane.rowKeyBySourceId}
         selectable={pane.selectable}
         selectedCount={pane.selectedCount}
         onAdd={handleAdd}

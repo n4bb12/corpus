@@ -5,6 +5,7 @@ import type { Id } from "src/convex/_generated/dataModel"
 import {
   prunePendingSources,
   updateUploadingSources,
+  useSourceRowKeys,
   useUploadingSources,
 } from "src/lib/pendingSources"
 import { visibleUploadingSources } from "src/lib/uploadingSources"
@@ -17,6 +18,7 @@ export function useSourcesList(notebookId: Id<"notebooks">) {
   )
   const [query, setQuery] = useState("")
   const uploadingSources = useUploadingSources(notebookId)
+  const rowKeyBySourceId = useSourceRowKeys(notebookId)
 
   const filtered = useMemo(() => {
     const list = sources ?? []
@@ -70,6 +72,7 @@ export function useSourcesList(notebookId: Id<"notebooks">) {
     setQuery,
     uploading,
     uploadingCount: uploadingSources.length,
+    rowKeyBySourceId,
     filtered,
     selectable,
     selectedCount,

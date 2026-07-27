@@ -62,6 +62,7 @@ export function useSourcesPaneData({
     setDeleteId: sourceDelete.setDeleteId,
     uploadNotice: upload.uploadNotice,
     uploading: list.uploading,
+    rowKeyBySourceId: list.rowKeyBySourceId,
     listRef,
     scrollMemory,
     previewMarkdown,

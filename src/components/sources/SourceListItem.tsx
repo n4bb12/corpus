@@ -6,6 +6,7 @@ import { Label } from "src/components/ui/shadcn/label"
 import { Spinner } from "src/components/ui/shadcn/spinner"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { formatTitle } from "src/lib/sourceTitle"
+import type { SourcesListEntry } from "src/lib/uploadingSources"
 import { cn } from "src/lib/utils"
 
 const STATUS_LABEL: Record<string, string> = {
@@ -18,7 +19,7 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export type SourceListItemProps = {
-  source: Doc<"sources">
+  entry: SourcesListEntry
   onPreview: (sourceId: Id<"sources">) => void
   onRename: (source: Doc<"sources">) => void
   onRetry: (sourceId: Id<"sources">) => void
@@ -27,23 +28,75 @@ export type SourceListItemProps = {
 }
 
 export const SourceListItem = memo(function SourceListItem({
-  source,
+  entry,
   onPreview,
   onRename,
   onRetry,
   onDelete,
   onSelect,
 }: SourceListItemProps) {
-  const Icon =
-    source.kind === "url" ? LinkIcon : source.kind === "file" ? FileText : Type
-  const failed = source.processingState === "failed"
+  const source = entry.type === "source" ? entry.source : null
+  const uploading = entry.type === "uploading" ? entry.source : null
+  const kind = source?.kind ?? "file"
+  const Icon = kind === "url" ? LinkIcon : kind === "file" ? FileText : Type
+  const failed = source?.processingState === "failed"
   const busy =
-    source.processingState !== "ready" && source.processingState !== "failed"
-  const checkboxId = `source-select-${source._id}`
-  const label = formatTitle(source.title)
-  const statusText = failed
-    ? source.errorCode || STATUS_LABEL.failed
-    : STATUS_LABEL[source.processingState]
+    !!uploading ||
+    (!!source &&
+      source.processingState !== "ready" &&
+      source.processingState !== "failed")
+  const label = formatTitle((source ?? uploading)?.title ?? "")
+  const statusText = uploading
+    ? "Uploading"
+    : failed
+      ? source?.errorCode || STATUS_LABEL.failed
+      : source
+        ? STATUS_LABEL[source.processingState]
+        : undefined
+  const checkboxId = uploading
+    ? `source-upload-${uploading.localId}`
+    : source
+      ? `source-select-${source._id}`
+      : "source-select"
+
+  const trailing = source ? (
+    <>
+      <SourceListItemMenu
+        label={label}
+        source={source}
+        failed={!!failed}
+        onRename={onRename}
+        onRetry={onRetry}
+        onDelete={onDelete}
+      />
+
+      <Label
+        htmlFor={checkboxId}
+        className="flex cursor-pointer items-center gap-2"
+      >
+        <span className="sr-only">Select {label}</span>
+
+        <Checkbox
+          id={checkboxId}
+          checked={source.selected}
+          disabled={!!failed}
+          onCheckedChange={(checked) => onSelect(source._id, checked === true)}
+        />
+      </Label>
+    </>
+  ) : (
+    <>
+      <span className="size-6 shrink-0" aria-hidden />
+
+      <Checkbox
+        id={checkboxId}
+        checked
+        className="pointer-events-none"
+        tabIndex={-1}
+        aria-label={`Selected ${label}`}
+      />
+    </>
+  )
 
   return (
     <div
@@ -51,15 +104,19 @@ export const SourceListItem = memo(function SourceListItem({
         "group relative flex items-start gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-(--duration-hover) ease-spring",
         failed
           ? "bg-destructive/5 hover:bg-destructive/10"
-          : "hover:bg-muted/55",
+          : source
+            ? "hover:bg-muted/55"
+            : undefined,
       )}
     >
-      <button
-        type="button"
-        className="absolute inset-0 z-0 rounded-2xl"
-        aria-label={failed ? `Open ${label}, failed` : `Open ${label}`}
-        onClick={() => onPreview(source._id)}
-      />
+      {source ? (
+        <button
+          type="button"
+          className="absolute inset-0 z-0 rounded-2xl"
+          aria-label={failed ? `Open ${label}, failed` : `Open ${label}`}
+          onClick={() => onPreview(source._id)}
+        />
+      ) : null}
 
       <span
         className={cn(
@@ -68,10 +125,7 @@ export const SourceListItem = memo(function SourceListItem({
         )}
       >
         {busy ? (
-          <Spinner
-            aria-label={statusText ?? "Processing"}
-            className="size-4.5"
-          />
+          <Spinner aria-hidden className="size-4.5" />
         ) : failed ? (
           <CircleAlert size={18} strokeWidth={1.5} aria-hidden />
         ) : (
@@ -87,38 +141,13 @@ export const SourceListItem = memo(function SourceListItem({
             "mt-0.5 block text-xs",
             failed ? "text-destructive" : "text-muted-foreground",
           )}
-          role={failed ? "status" : undefined}
+          role={busy || failed ? "status" : undefined}
         >
           {statusText}
         </span>
       </span>
 
-      <div className="relative z-10 flex items-center gap-1">
-        <SourceListItemMenu
-          label={label}
-          source={source}
-          failed={failed}
-          onRename={onRename}
-          onRetry={onRetry}
-          onDelete={onDelete}
-        />
-
-        <Label
-          htmlFor={checkboxId}
-          className="flex cursor-pointer items-center gap-2"
-        >
-          <span className="sr-only">Select {label}</span>
-
-          <Checkbox
-            id={checkboxId}
-            checked={source.selected}
-            disabled={failed}
-            onCheckedChange={(checked) =>
-              onSelect(source._id, checked === true)
-            }
-          />
-        </Label>
-      </div>
+      <div className="relative z-10 flex items-center gap-1">{trailing}</div>
     </div>
   )
 })

@@ -3,7 +3,7 @@ import type { Id } from "src/convex/_generated/dataModel"
 import { describeRejectedFile, isAcceptedUpload } from "src/lib/fileTypes"
 import { startSourceIngest } from "src/lib/ingestClient"
 import { titleFromFilename } from "src/lib/sourceTitle"
-import type { UploadingSource } from "src/lib/uploadingSources"
+import { addedAtForBatch, type UploadingSource } from "src/lib/uploadingSources"
 
 export type UploadSourceFilesArgs = {
   files: File[]
@@ -47,11 +47,13 @@ export async function uploadSourceFiles({
     accepted.push(file)
   }
 
+  const addedAtBase = Date.now()
   const pending = accepted.map(
-    (file): UploadingSource => ({
+    (file, index): UploadingSource => ({
       localId: nanoid(),
       filename: file.name,
       title: titleFromFilename(file.name),
+      addedAt: addedAtForBatch(index, accepted.length, addedAtBase),
     }),
   )
 
@@ -60,7 +62,11 @@ export async function uploadSourceFiles({
   }
 
   for (const [index, file] of accepted.entries()) {
-    const localId = pending[index]?.localId
+    const pendingEntry = pending[index]
+
+    if (!pendingEntry) {
+      continue
+    }
 
     try {
       const uploadUrl = await generateUploadUrl()
@@ -84,10 +90,11 @@ export async function uploadSourceFiles({
         storageId,
         filename: file.name,
         mimeType: file.type || undefined,
+        createdAt: pendingEntry.addedAt,
       })
-      onCreated?.(localId, sourceId)
+      onCreated?.(pendingEntry.localId, sourceId)
     } catch (error) {
-      onFailed?.(localId)
+      onFailed?.(pendingEntry.localId)
 
       for (const leftover of pending.slice(index + 1)) {
         onFailed?.(leftover.localId)

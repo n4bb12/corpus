@@ -3,16 +3,19 @@ import { useMemo } from "react"
 import { AddSourceCard } from "src/components/sources/AddSourceCard"
 import { SourceListItem } from "src/components/sources/SourceListItem"
 import { SourcesSelectAll } from "src/components/sources/SourcesSelectAll"
-import { UploadingSourceListItem } from "src/components/sources/UploadingSourceListItem"
 import { ScrollArea } from "src/components/ui/shadcn/scroll-area"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
-import type { UploadingSource } from "src/lib/uploadingSources"
+import {
+  mergeSourcesListEntries,
+  type UploadingSource,
+} from "src/lib/uploadingSources"
 
 export type SourcesListProps = {
   notebookId: Id<"notebooks">
   listRef: RefObject<HTMLDivElement | null>
   filtered: Doc<"sources">[]
   uploading: UploadingSource[]
+  rowKeyBySourceId: Record<string, string>
   selectable: Doc<"sources">[]
   selectedCount: number
   onAdd: () => void
@@ -33,6 +36,7 @@ export function SourcesList({
   listRef,
   filtered,
   uploading,
+  rowKeyBySourceId,
   selectable,
   selectedCount,
   onAdd,
@@ -47,6 +51,10 @@ export function SourcesList({
     () => selectable.map((source) => source._id),
     [selectable],
   )
+  const entries = useMemo(
+    () => mergeSourcesListEntries(uploading, filtered, rowKeyBySourceId),
+    [filtered, rowKeyBySourceId, uploading],
+  )
 
   return (
     <ScrollArea
@@ -56,6 +64,7 @@ export function SourcesList({
     >
       <div className="flex flex-col gap-1">
         <AddSourceCard onClick={onAdd} />
+
         <SourcesSelectAll
           notebookId={notebookId}
           sourceIds={selectableIds}
@@ -63,13 +72,11 @@ export function SourcesList({
           pendingCount={uploading.length}
           onSelectMany={onSelectMany}
         />
-        {uploading.map((source) => (
-          <UploadingSourceListItem key={source.localId} source={source} />
-        ))}
-        {filtered.map((source) => (
+
+        {entries.map((entry) => (
           <SourceListItem
-            key={source._id}
-            source={source}
+            key={entry.key}
+            entry={entry}
             onPreview={onPreview}
             onRename={onRename}
             onRetry={onRetry}

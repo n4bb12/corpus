@@ -21,6 +21,8 @@ export type IngestCreateFileInput = {
   storageId: Id<"_storage">
   filename: string
   mimeType?: string
+  /** Client add time so sidebar order stays selection order, not upload completion. */
+  createdAt?: number
 }
 
 export type IngestRetryInput = {

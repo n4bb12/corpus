@@ -26,6 +26,7 @@ const createFileSchema = z.object({
   storageId: z.string(),
   filename: z.string(),
   mimeType: z.string().optional(),
+  createdAt: z.number().optional(),
 })
 
 const retrySchema = z.object({
@@ -80,6 +81,7 @@ export const Route = createFileRoute("/api/sources/ingest")({
               storageId: body.storageId as Id<"_storage">,
               filename: body.filename,
               mimeType: body.mimeType,
+              createdAt: body.createdAt,
             })) as Id<"sources">
           }
 
