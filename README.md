@@ -2,23 +2,6 @@
 
 NotebookLM-style grounded research notebooks. Add URL, file, or pasted-text sources, then chat with citations that open the exact passage.
 
-## Architecture
-
-```text
-TanStack Start (Vercel)
-  ├── Better Auth proxy  →  Convex HTTP (/api/auth)
-  ├── Chat SSE bridge    →  Convex prepare + Voyage/OpenAI
-  ├── Source ingest API  →  MarkItDown / chunk / embed, Convex mutations
-  └── ConvexReactClient + convex-helpers query cache
-
-Convex
-  ├── Better Auth component
-  ├── Plunk transactional email
-  ├── Notebooks / sources / chunks / chat / citations
-  ├── Ingestion step mutations (state, chunks, ready/failed)
-  └── Hybrid retrieval (vector + text → Voyage rerank)
-```
-
 ## Local setup (Bun)
 
 ### 1. Install
@@ -102,6 +85,47 @@ bun run dev
 That runs Vite and Convex together via `concurrently`. For one side only: `bun run dev:vite` or `bun run dev:convex`.
 
 App: [http://localhost:3000](http://localhost:3000)
+
+## Architecture
+
+```text
+TanStack Start (Vercel)
+  ├── Better Auth proxy  →  Convex HTTP (/api/auth)
+  ├── Chat SSE bridge    →  Convex prepare + Voyage/OpenAI
+  ├── Source ingest API  →  MarkItDown / chunk / embed, Convex mutations
+  └── ConvexReactClient + convex-helpers query cache
+
+Convex
+  ├── Better Auth component
+  ├── Plunk transactional email
+  ├── Notebooks / sources / chunks / chat / citations
+  ├── Ingestion step mutations (state, chunks, ready/failed)
+  └── Hybrid retrieval (vector + text → Voyage rerank)
+```
+
+### Models
+
+| Role | Model |
+| --- | --- |
+| Chat + scanned-PDF OCR | `gpt-5.4-mini` (OpenAI) |
+| Notebook auto-title | `gpt-5.4-nano` (OpenAI) |
+| Embeddings (ingest + query) | `voyage-4-large` (Voyage, 1024-d) |
+| Rerank | `rerank-2.5` (Voyage) |
+
+### Source processing
+
+`POST /api/sources/ingest` creates or retries a source, returns `202`, and continues on Vercel via `waitUntil`. The pipeline drives Convex step mutations so the UI can subscribe to `processingState`:
+
+1. **Extract** — URL (fetch + readable HTML), file (MarkItDown; scanned PDFs fall back to vision OCR), or pasted text → markdown in Convex storage
+2. **Chunk** — `semantic-chunker` (markdown-aware, ~200–1200 chars) with Voyage boundary embeds; store start/end offsets into the markdown
+3. **Embed** — Voyage document embeddings → chunk rows → `ready` (or `failed` with a short error)
+
+### Chat and citations
+
+1. Convex hybrid retrieval: query embed + vector search, text search, merge, Voyage rerank, budgeted evidence pack
+2. Vercel `/api/chat` streams the OpenAI answer over SSE; the model may only use the evidence and must cite with `[[cite:CHUNK_ID]]`
+3. Markers are validated against retrieved chunks, renumbered, and stored with excerpt + locator (`startOffset` / `endOffset`)
+4. UI pills show the excerpt on hover; click opens the source preview and scrolls/highlights that span
 
 ## Supported sources and limits
 

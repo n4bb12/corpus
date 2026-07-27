@@ -3434,3 +3434,22 @@ Fixed. The ask-time selection is now the baseline; deferred toggles during strea
 
 So: A selected → ask → stream → switch to B → response ends → separator shows with B selected.
 
+# Comprehensive README architecture
+_Exported on 7/27/2026 at 13:27:54 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make the technical setup /architecture in the README more comprehensive but move it below the onboarding: For example, mention used models, source processing workflow and how citations work. Keep it to the point.
+
+---
+
+**Cursor**
+
+I'll read the README and dig into the codebase for models, source processing, and citations so the architecture section is accurate and concise.
+
+I have enough detail on models, ingest, and citations. Updating the README so architecture sits below setup and covers those three.
+
+Architecture now sits after local setup. It keeps the stack diagram and adds short sections for models, the ingest pipeline (extract → chunk → embed), and how citations flow from retrieval through `[[cite:…]]` markers to preview highlighting.
+
