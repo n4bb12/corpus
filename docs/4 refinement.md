@@ -3809,3 +3809,136 @@ Restored a **single** enter: the chat surface stays mounted and Motion animates 
 
 No more `key={tab}` / `AnimatePresence` remount, so you shouldn’t get the exit+enter double play.
 
+# Source pagination adjustment
+_Exported on 7/27/2026 at 15:33:34 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Show source pagination after the first 6 sources.
+
+---
+
+**Cursor**
+
+I'll find how sources are listed and where pagination is controlled so we can show it after the first 6.
+
+Sources already load fully and search appears at 6+; I'll add client-side pagination with page size 6, matching that threshold and the library Previous/Next pattern.
+
+I'll stabilize the page navigation callbacks and scroll the list to the top on page changes.
+
+Sources now paginate in pages of **6**, with Previous/Next shown only when there’s more than one page.
+
+- `LIMITS.sourcesPageSize: 6`
+- Client-side paging in `useSourcesPaneData` (search resets to page 1; page clamps when the list shrinks)
+- Footer controls in `SourcesList`, same style as library pagination
+- Select-all still applies to all matching sources, not just the current page
+
+---
+
+**User**
+
+This is more than 6
+
+---
+
+**Cursor**
+
+That screenshot is the library notebook grid — I’ll paginate notebooks after 6 and undo the sources-pane paging I added by mistake.
+
+I'll fix library pagination to 6 notebooks and strip the mistaken sources-list paging while keeping the other in-progress sources work.
+
+Sorry — that was the library grid, not notebook sources. I set `libraryPageSize` to **6** and reverted the sources-pane paging.
+
+With your 9 notebooks you should now see 6 on the first page, then Previous/Next (and search, since pagination is active).
+
+---
+
+**User**
+
+The special display with the plus card and the wide most recently used card should be page 1 only. Page 2+ should show 9 cards and all regular display.
+
+---
+
+**Cursor**
+
+I'll adjust the library grid so the plus + wide featured layout is page 1 only, and later pages use a flat 9-card regular grid.
+
+Done.
+
+- **Page 1:** 6 notebooks with the plus card + wide most-recent card  
+- **Page 2+:** 9 notebooks, all regular cards (no plus, no featured)  
+- Search uses the regular 9-card layout throughout
+
+---
+
+**User**
+
+Pagination should show the page/count and use buttons with arrows.
+
+---
+
+**Cursor**
+
+I'll update library pagination to show page/count and switch the controls to arrow buttons.
+
+Switching the library to page-number pagination so we can show `page / count` with arrow controls.
+
+The enrich helper was stripping notebook fields from the type — fixing that.
+
+Pagination now shows `1/2`-style page counts between chevron buttons, and Previous/Next step one page at a time via a `?page=` URL param.
+
+---
+
+**User**
+
+Searching notebooks should feel more instant and typing should not block rendering. It should also not animate the cards or the clear component to feel more snappy. Position changes may remain animated, just not the fade-up.
+
+---
+
+**Cursor**
+
+I'll inspect how library search and card animations are wired so typing stays responsive and we drop the fade-up on search updates.
+
+I'll tighten stale-result caching so browse data doesn't flash during search, and fix formatting.
+
+Search should feel snappier now:
+
+- **Input stays responsive** — `useDeferredValue` drives the query so typing isn’t blocked by filtering/rendering
+- **Results update sooner** — search hits Convex from the draft immediately; URL sync is deferred in a transition
+- **No fade-up on search** — removed `Reveal` from the search field, grid, and clear/empty states; cards still use layout motion for position changes only
+- **No grid flash** — keeps prior search results while the next query loads instead of unmounting into a loading state
+
+---
+
+**User**
+
+During typing, I would like to keep the current results.
+
+---
+
+**Cursor**
+
+I'll keep the input live while freezing displayed results until typing settles (debounced commit).
+
+The input still updates immediately, but results stay on the last committed query until typing pauses (~200ms), then the search runs.
+
+---
+
+**User**
+
+search isnt matching existing title words
+
+---
+
+**Cursor**
+
+I'll check how notebook title search is implemented — "portal" should match "Infoportal".
+
+Convex full-text search only matches token prefixes, so `portal` won't hit `Infoportal`. With a 100-notebook cap, I'll switch to case-insensitive substring matching.
+
+Full-text search only matched whole-word prefixes, so `portal` missed `Infoportal`.
+
+Library search now uses case-insensitive substring matching on titles (including “Untitled notebook”), so `portal` finds those notebooks.
+
