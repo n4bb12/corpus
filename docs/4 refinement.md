@@ -4179,3 +4179,34 @@ Done. While an assistant message is `pending`/`streaming` and has content, a thi
 
 It respects `prefers-reduced-motion` (steady, no blink).
 
+# Sources changed separator width
+_Exported on 7/27/2026 at 15:56:19 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+The sources changed separator should have a max width equal to 50% of the max width of the thread.
+
+---
+
+**Cursor**
+
+I'll find the sources-changed separator and thread max-width styles so we can set the separator to half the thread width.
+
+Thread uses `max-w-200`, so I'll cap the separator at `max-w-100` (half) and center it.
+
+The sources-changed separator is now capped at `max-w-100` (half of the thread’s `max-w-200`) and centered with `mx-auto`.
+
+---
+
+**User**
+
+This is source boundary layout. Move it into the component. mx-auto flex w-full max-w-100 items-center gap-3 py-2 text-muted-foreground
+
+---
+
+**Cursor**
+
+Done. That layout now lives on the root of `ChatSourceBoundary`, and the extra wrapper in `ChatMessageList` is gone.
+

@@ -90,11 +90,9 @@ export const ChatMessageList = memo(function ChatMessageList({
                 className="grid"
               >
                 <div className="min-h-0 overflow-hidden">
-                  <div className="flex items-center gap-3 py-2 text-muted-foreground">
-                    <ChatSourceBoundary
-                      activeSourceCount={entry.activeSourceCount ?? 0}
-                    />
-                  </div>
+                  <ChatSourceBoundary
+                    activeSourceCount={entry.activeSourceCount ?? 0}
+                  />
                 </div>
               </motion.div>
             )
