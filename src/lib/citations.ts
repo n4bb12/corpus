@@ -1,3 +1,6 @@
+import { normalizeCitationText } from "src/lib/citationMatch"
+import { passageIndexForQuote } from "src/lib/citationQuote"
+
 export type CitationRef = {
   chunkId: string
   excerpt?: string
@@ -17,6 +20,17 @@ export type AnswerParagraph = {
 const CITATION_PATTERN = /\[\[cite:([^\]]+)\]\]/g
 const NUMBERED_CITATION_PATTERN = /\[\[cite:(\d+)\]\]/g
 
+export type BuildCitedMarkdownOptions = {
+  /** chunkId markers work mid-stream with the evidence catalog; numbered markers are final. */
+  markerStyle?: "chunkId" | "numbered"
+  chunkTextById?: ReadonlyMap<string, string>
+  /**
+   * Structured answers stream citations after each paragraph's text.
+   * Hold markers on the last paragraph until the next one starts or the stream ends.
+   */
+  holdTrailingParagraphCitations?: boolean
+}
+
 /** Join paragraph texts for streaming display before markers are injected. */
 export function joinParagraphText(
   paragraphs: Array<{ text?: string } | undefined> | undefined,
@@ -31,43 +45,120 @@ export function joinParagraphText(
     .join("\n\n")
 }
 
+function passageKey(
+  citation: AnswerCitation,
+  chunkTextById?: ReadonlyMap<string, string>,
+) {
+  const chunkText = chunkTextById?.get(citation.chunkId)
+
+  if (!chunkText) {
+    return citation.chunkId
+  }
+
+  const index = passageIndexForQuote(chunkText, citation.quote)
+
+  if (typeof index === "number") {
+    return `${citation.chunkId}:${index}`
+  }
+
+  return citation.chunkId
+}
+
+/** One slot per source paragraph within an answer paragraph. */
+export function dedupeParagraphCitations(
+  citations: AnswerCitation[],
+  chunkTextById?: ReadonlyMap<string, string>,
+) {
+  const kept: AnswerCitation[] = []
+
+  for (const citation of citations) {
+    const key = passageKey(citation, chunkTextById)
+    const duplicateIndex = kept.findIndex(
+      (existing) => passageKey(existing, chunkTextById) === key,
+    )
+
+    if (duplicateIndex < 0) {
+      kept.push(citation)
+      continue
+    }
+
+    const existing = kept[duplicateIndex]
+
+    if (
+      existing &&
+      normalizeCitationText(citation.quote).length >
+        normalizeCitationText(existing.quote).length
+    ) {
+      kept[duplicateIndex] = citation
+    }
+  }
+
+  return kept
+}
+
+function trailingTextParagraphIndex(paragraphs: AnswerParagraph[]) {
+  for (let index = paragraphs.length - 1; index >= 0; index -= 1) {
+    if (paragraphs[index]?.text.trim()) {
+      return index
+    }
+  }
+
+  return -1
+}
+
 /**
- * Validate structured paragraph citations and inject `[[cite:chunkId]]` markers.
- * First-seen valid chunk order is preserved in `citations` for later numbering.
+ * Validate structured paragraph citations and inject cite markers.
+ * Each citation entry becomes its own numbered slot (duplicate chunkIds allowed).
  */
 export function buildCitedMarkdown(
   paragraphs: AnswerParagraph[],
   allowedChunkIds: Set<string>,
+  options: BuildCitedMarkdownOptions = {},
 ) {
+  const markerStyle = options.markerStyle ?? "chunkId"
   const citations: CitationRef[] = []
   const invalid: string[] = []
-  const seen = new Set<string>()
+  const holdTrailing = !!options.holdTrailingParagraphCitations
+  const holdParagraphIndex = holdTrailing
+    ? trailingTextParagraphIndex(paragraphs)
+    : -1
 
   const content = paragraphs
-    .map((paragraph) => {
+    .map((paragraph, index) => {
       const text = paragraph.text.trim()
 
       if (!text) {
         return ""
       }
 
-      const markers: string[] = []
+      const isTrailing = holdTrailing && index === holdParagraphIndex
 
-      for (const citation of paragraph.citations) {
+      if (isTrailing) {
+        return text
+      }
+
+      const markers: string[] = []
+      const paragraphCitations = dedupeParagraphCitations(
+        paragraph.citations,
+        options.chunkTextById,
+      )
+
+      for (const citation of paragraphCitations) {
         if (!allowedChunkIds.has(citation.chunkId)) {
           invalid.push(citation.chunkId)
           continue
         }
 
-        if (!seen.has(citation.chunkId)) {
-          seen.add(citation.chunkId)
-          citations.push({
-            chunkId: citation.chunkId,
-            quote: citation.quote,
-          })
-        }
+        citations.push({
+          chunkId: citation.chunkId,
+          quote: citation.quote,
+        })
 
-        markers.push(`[[cite:${citation.chunkId}]]`)
+        if (markerStyle === "numbered") {
+          markers.push(`[[cite:${citations.length}]]`)
+        } else {
+          markers.push(`[[cite:${citation.chunkId}]]`)
+        }
       }
 
       if (!markers.length) {
@@ -82,8 +173,43 @@ export function buildCitedMarkdown(
   return { content, citations, invalid }
 }
 
+export function normalizeNumberedCitedMarkdown(text: string) {
+  return text
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/ {2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+}
+
+export function usesNumberedCitationMarkers(text: string) {
+  if (!NUMBERED_CITATION_PATTERN.test(text)) {
+    return false
+  }
+
+  for (const match of text.matchAll(CITATION_PATTERN)) {
+    const raw = match[1]?.trim() ?? ""
+
+    if (!raw || raw.includes(",")) {
+      return false
+    }
+
+    if (!/^\d+$/.test(raw)) {
+      return false
+    }
+  }
+
+  return true
+}
+
 /** Collect `[[cite:id,…]]` markers → numbered `[[cite:n]]` + ordered refs. */
 export function parseCitationMarkers(text: string) {
+  if (usesNumberedCitationMarkers(text)) {
+    return {
+      text: normalizeNumberedCitedMarkdown(text),
+      citations: [] as CitationRef[],
+    }
+  }
+
   const refs: CitationRef[] = []
   const cleaned = text.replace(CITATION_PATTERN, (_match, rawIds: string) => {
     const ids = rawIds

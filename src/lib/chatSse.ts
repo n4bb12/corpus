@@ -1,6 +1,8 @@
 import {
+  normalizeNumberedCitedMarkdown,
   parseCitationMarkers,
   remapCitationMarkers,
+  usesNumberedCitationMarkers,
   validateCitations,
 } from "src/lib/citations"
 
@@ -54,6 +56,13 @@ export function resolveStreamedAssistantContent(
   text: string,
   catalog: StreamCitation[],
 ) {
+  if (usesNumberedCitationMarkers(text)) {
+    return {
+      content: normalizeNumberedCitedMarkdown(text),
+      citations: catalog,
+    }
+  }
+
   const parsed = parseCitationMarkers(text)
   const byChunkId = new Map(
     catalog.map((citation) => [citation.chunkId, citation]),

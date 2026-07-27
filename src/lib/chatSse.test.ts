@@ -41,7 +41,55 @@ describe("chat sse", () => {
       Still writing"
       ,
       }
-      `)
+    `)
+
+    const finalCatalog = [
+      {
+        _id: "answer-cite-0",
+        chunkId: "chunk-1",
+        sourceId: "source-1",
+        liveTitle: "Research notes",
+        excerpt: "First quote",
+        canNavigate: true,
+      },
+      {
+        _id: "answer-cite-1",
+        chunkId: "chunk-1",
+        sourceId: "source-1",
+        liveTitle: "Research notes",
+        excerpt: "Second quote",
+        canNavigate: true,
+      },
+    ]
+
+    expect(
+      resolveStreamedAssistantContent(
+        "Combined paragraph. [[cite:1]] [[cite:2]]",
+        finalCatalog,
+      ),
+    ).toMatchInlineSnapshot(`
+      {
+        "citations": [
+          {
+            "_id": "answer-cite-0",
+            "canNavigate": true,
+            "chunkId": "chunk-1",
+            "excerpt": "First quote",
+            "liveTitle": "Research notes",
+            "sourceId": "source-1",
+          },
+          {
+            "_id": "answer-cite-1",
+            "canNavigate": true,
+            "chunkId": "chunk-1",
+            "excerpt": "Second quote",
+            "liveTitle": "Research notes",
+            "sourceId": "source-1",
+          },
+        ],
+        "content": "Combined paragraph. [[cite:1]] [[cite:2]]",
+      }
+    `)
   })
 
   test("parses framed status and error events", () => {
