@@ -14,6 +14,7 @@ import {
   type AnswerParagraph,
   buildCitedMarkdown,
   joinParagraphText,
+  parseCitationMarkers,
 } from "src/lib/citations"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
@@ -23,8 +24,9 @@ const answerSchema = z.object({
   insufficient: z.boolean(),
   paragraphs: z.array(
     z.object({
-      text: z.string(),
+      // chunkIds first so citations bind before paragraph text streams in.
       chunkIds: z.array(z.string()),
+      text: z.string(),
     }),
   ),
 })
@@ -117,11 +119,18 @@ export const Route = createFileRoute("/api/chat")({
 
         const controller = new AbortController()
 
-        request.signal.addEventListener("abort", () => {
-          controller.abort()
-        })
+        const abortGeneration = () => {
+          if (!controller.signal.aborted) {
+            controller.abort()
+          }
+        }
+
+        request.signal.addEventListener("abort", abortGeneration)
 
         const stream = new ReadableStream({
+          cancel() {
+            abortGeneration()
+          },
           async start(streamController) {
             let fullText = ""
             let lastPersist = 0
@@ -129,8 +138,23 @@ export const Route = createFileRoute("/api/chat")({
             let settled = false
             let emittedInsufficient: boolean | null = null
 
+            const throwIfCanceled = () => {
+              if (controller.signal.aborted) {
+                const error = new Error("Canceled")
+                error.name = "AbortError"
+                throw error
+              }
+            }
+
+            const haltIfInactive = (active: unknown) => {
+              if (active === false) {
+                abortGeneration()
+                throwIfCanceled()
+              }
+            }
+
             const persistLatest = () => {
-              if (persistInFlight) {
+              if (persistInFlight || controller.signal.aborted) {
                 return
               }
 
@@ -142,6 +166,11 @@ export const Route = createFileRoute("/api/chat")({
                   content: fullText,
                 },
               )
+                .then((active) => {
+                  if (active === false) {
+                    abortGeneration()
+                  }
+                })
                 .catch(() => undefined)
                 .finally(() => {
                   persistInFlight = null
@@ -149,15 +178,24 @@ export const Route = createFileRoute("/api/chat")({
             }
 
             const emitStatus = async (label: string) => {
+              throwIfCanceled()
               streamController.enqueue(encodeSse("status", { label }))
-              await fetchAuthMutation(api.chat.setProgressLabel, {
-                messageId: prepared.assistantMessageId as never,
-                generationId: prepared.generationId,
-                progressLabel: label,
-              })
+              const active = await fetchAuthMutation(
+                api.chat.setProgressLabel,
+                {
+                  messageId: prepared.assistantMessageId as never,
+                  generationId: prepared.generationId,
+                  progressLabel: label,
+                },
+              )
+              haltIfInactive(active)
             }
 
             const emitInsufficient = (insufficient: boolean) => {
+              if (controller.signal.aborted) {
+                return
+              }
+
               if (emittedInsufficient === insufficient) {
                 return
               }
@@ -169,6 +207,10 @@ export const Route = createFileRoute("/api/chat")({
             }
 
             const emitText = (nextText: string) => {
+              if (controller.signal.aborted) {
+                return
+              }
+
               if (nextText === fullText) {
                 return
               }
@@ -243,6 +285,8 @@ export const Route = createFileRoute("/api/chat")({
                 insufficient: boolean
               }
 
+              throwIfCanceled()
+
               const evidenceBlock = evidencePack.evidence
                 .map(
                   (
@@ -264,7 +308,7 @@ export const Route = createFileRoute("/api/chat")({
 Only answer using the supplied evidence chunks.
 Return a structured object with:
 - insufficient: true when the evidence cannot answer the question; false when it can.
-- paragraphs: ordered answer paragraphs. Each has text (markdown, no [[cite:…]] markers) and chunkIds (evidence chunk IDs that support that paragraph).
+- paragraphs: ordered answer paragraphs. Each has chunkIds (evidence chunk IDs that support that paragraph) and text (markdown, no [[cite:…]] markers).
 When insufficient is true, use one clear paragraph and leave every chunkIds array empty.
 When insufficient is false, every substantive factual paragraph must list the chunk IDs it relies on.
 Do not invent facts from general knowledge.
@@ -299,6 +343,7 @@ Never include chunk IDs that were not supplied.`
               ]
               const sources = await Promise.all(
                 sourceIds.map(async (sourceId) => {
+                  throwIfCanceled()
                   const source = await fetchAuthQuery(api.sources.get, {
                     sourceId: sourceId as never,
                   }).catch(() => null)
@@ -306,6 +351,7 @@ Never include chunk IDs that were not supplied.`
                   return { sourceId, source }
                 }),
               )
+              throwIfCanceled()
               const sourcesById = new Map(
                 sources.map(({ sourceId, source }) => [sourceId, source]),
               )
@@ -353,6 +399,8 @@ Never include chunk IDs that were not supplied.`
               let latestAnswer: AnswerObject | null = null
 
               for await (const partial of result.partialOutputStream) {
+                throwIfCanceled()
+
                 if (typeof partial.insufficient === "boolean") {
                   emitInsufficient(partial.insufficient)
                 }
@@ -374,7 +422,9 @@ Never include chunk IDs that were not supplied.`
                 }
               }
 
+              throwIfCanceled()
               const output = await result.output
+              throwIfCanceled()
 
               if (!output) {
                 throw new Error("No answer came back. Try again.")
@@ -391,8 +441,10 @@ Never include chunk IDs that were not supplied.`
                   model: openai(MODELS.chat),
                   system: `${system}\nOnly cite these chunk IDs: ${[...allowed].join(", ")}`,
                   prompt: userPrompt,
+                  abortSignal: controller.signal,
                   output: answerOutput,
                 })
+                throwIfCanceled()
 
                 if (!retry.output) {
                   throw new Error("No answer came back. Try again.")
@@ -404,6 +456,7 @@ Never include chunk IDs that were not supplied.`
                 built = buildCitedMarkdown(paragraphs, allowed)
               }
 
+              throwIfCanceled()
               emitInsufficient(insufficient)
 
               if (insufficient) {
@@ -427,7 +480,9 @@ Never include chunk IDs that were not supplied.`
 
               if (built.invalid.length || !built.content.trim()) {
                 await finalize({
-                  content: built.content || joinParagraphText(paragraphs),
+                  content:
+                    parseCitationMarkers(built.content).text ||
+                    joinParagraphText(paragraphs),
                   status: "failed",
                   insufficient: false,
                   errorMessage:
@@ -443,6 +498,7 @@ Never include chunk IDs that were not supplied.`
                 return
               }
 
+              const numbered = parseCitationMarkers(built.content)
               emitText(built.content)
 
               const citations = built.citations.map((citation, order) => {
@@ -480,7 +536,7 @@ Never include chunk IDs that were not supplied.`
               }))
 
               await finalize({
-                content: built.content,
+                content: numbered.text,
                 status: "complete",
                 insufficient: false,
                 citations: titled,

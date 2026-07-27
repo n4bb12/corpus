@@ -26,8 +26,8 @@ export function joinParagraphText(
 }
 
 /**
- * Validate structured paragraph chunkIds and inject dense `[[cite:n]]` markers.
- * Numbering follows first-seen valid chunk order across paragraphs.
+ * Validate structured paragraph chunkIds and inject `[[cite:chunkId]]` markers.
+ * First-seen valid chunk order is preserved in `citations` for later numbering.
  */
 export function buildCitedMarkdown(
   paragraphs: AnswerParagraph[],
@@ -35,7 +35,7 @@ export function buildCitedMarkdown(
 ) {
   const citations: CitationRef[] = []
   const invalid: string[] = []
-  const idToIndex = new Map<string, number>()
+  const seen = new Set<string>()
 
   const content = paragraphs
     .map((paragraph) => {
@@ -53,15 +53,12 @@ export function buildCitedMarkdown(
           continue
         }
 
-        let index = idToIndex.get(chunkId)
-
-        if (index === undefined) {
+        if (!seen.has(chunkId)) {
+          seen.add(chunkId)
           citations.push({ chunkId })
-          index = citations.length
-          idToIndex.set(chunkId, index)
         }
 
-        markers.push(`[[cite:${index}]]`)
+        markers.push(`[[cite:${chunkId}]]`)
       }
 
       if (!markers.length) {

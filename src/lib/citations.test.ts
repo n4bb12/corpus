@@ -69,9 +69,9 @@ describe("citations", () => {
           },
         ],
         "content": 
-      "First claim. [[cite:1]]
+      "First claim. [[cite:c1]]
 
-      Second claim. [[cite:2]] [[cite:1]]"
+      Second claim. [[cite:c2]] [[cite:c1]]"
       ,
         "invalid": [
           "bad",
