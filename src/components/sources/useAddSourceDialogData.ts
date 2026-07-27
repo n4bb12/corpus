@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import type { Id } from "src/convex/_generated/dataModel"
 import { startSourceIngest } from "src/lib/ingestClient"
+import {
+  beginCreatingSource,
+  completeCreatingSource,
+  failCreatingSource,
+} from "src/lib/pendingSources"
 
 export function useAddSourceDialogData({
   open,
@@ -51,15 +56,18 @@ export function useAddSourceDialogData({
     const submittedUrl = url
 
     onOpenChange(false)
+    beginCreatingSource(notebookId)
 
     try {
-      await startSourceIngest({
+      const sourceId = await startSourceIngest({
         action: "create",
         kind: "url",
         notebookId,
         url: submittedUrl,
       })
+      completeCreatingSource(notebookId, sourceId)
     } catch (err) {
+      failCreatingSource(notebookId)
       setUrl(submittedUrl)
       setMode("main")
       setError(err instanceof Error ? err.message : "Couldn't add this URL.")
@@ -75,15 +83,18 @@ export function useAddSourceDialogData({
     const submittedText = text
 
     onOpenChange(false)
+    beginCreatingSource(notebookId)
 
     try {
-      await startSourceIngest({
+      const sourceId = await startSourceIngest({
         action: "create",
         kind: "text",
         notebookId,
         text: submittedText,
       })
+      completeCreatingSource(notebookId, sourceId)
     } catch (err) {
+      failCreatingSource(notebookId)
       setText(submittedText)
       setMode("text")
       setError(err instanceof Error ? err.message : "Couldn't add this text.")

@@ -52,9 +52,10 @@ export function ChatPane({
           streamedCitations={chat.streamedCitations}
           streamedInsufficient={chat.streamedInsufficient}
           optimisticUserPrompt={chat.optimisticUserPrompt}
-          hasReadySources={chat.readySelected.length > 0}
+          emptyPromptState={chat.emptyPromptState}
           canRetry={chat.canRetry}
           onAddSource={onAddSource}
+          onOpenSources={onOpenSources}
           onCite={onCite}
           onSendSuggestion={(suggestion) => void chat.send(suggestion)}
           onRetry={(nextPrompt, assistantId) =>

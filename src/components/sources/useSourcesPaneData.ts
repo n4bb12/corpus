@@ -9,9 +9,13 @@ import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { startSourceIngest } from "src/lib/ingestClient"
 import { patchChatEntriesForSourceSelection } from "src/lib/optimisticSourceBoundary"
 import {
+  prunePendingSources,
+  updateUploadingSources,
+  useUploadingSources,
+} from "src/lib/pendingSources"
+import {
   markUploadingSourceCreated,
   removeUploadingSource,
-  type UploadingSource,
   visibleUploadingSources,
 } from "src/lib/uploadingSources"
 import { useEventCallback } from "src/lib/useEventCallback"
@@ -158,9 +162,7 @@ export function useSourcesPaneData({
   const [renameDraft, setRenameDraft] = useState("")
   const [deleteId, setDeleteId] = useState<Id<"sources"> | null>(null)
   const [uploadNotice, setUploadNotice] = useState<string | null>(null)
-  const [uploadingSources, setUploadingSources] = useState<UploadingSource[]>(
-    [],
-  )
+  const uploadingSources = useUploadingSources(notebookId)
   const listRef = useRef<HTMLDivElement>(null)
   const scrollMemory = useRef(0)
   const previewMarkdown = useSourcePreviewMarkdownData(previewSourceId)
@@ -193,12 +195,14 @@ export function useSourcesPaneData({
 
     const sourceIds = new Set(sources.map((source) => source._id))
 
-    setUploadingSources((current) => {
+    prunePendingSources(notebookId, sourceIds)
+
+    updateUploadingSources(notebookId, (current) => {
       const next = visibleUploadingSources(current, sourceIds)
 
       return next.length === current.length ? current : next
     })
-  }, [sources])
+  }, [notebookId, sources])
 
   const selectable = useMemo(
     () => filtered.filter((source) => source.processingState !== "failed"),
@@ -220,15 +224,18 @@ export function useSourcesPaneData({
         sourceCount: (sources?.length ?? 0) + uploadingSources.length,
         generateUploadUrl: async () => generateUploadUrl({}),
         onPending: (pending) => {
-          setUploadingSources((current) => [...pending, ...current])
+          updateUploadingSources(notebookId, (current) => [
+            ...pending,
+            ...current,
+          ])
         },
         onCreated: (localId, sourceId) => {
-          setUploadingSources((current) =>
+          updateUploadingSources(notebookId, (current) =>
             markUploadingSourceCreated(current, localId, sourceId),
           )
         },
         onFailed: (localId) => {
-          setUploadingSources((current) =>
+          updateUploadingSources(notebookId, (current) =>
             removeUploadingSource(current, localId),
           )
         },

@@ -3700,3 +3700,49 @@ Stop now fully tears down generation end-to-end.
 
 **Convex** — `appendAssistantText` / `setProgressLabel` no-op once the turn is no longer active (and return `false` so the route aborts). `finalizeAssistant` will not resurrect a canceled answer as complete/failed.
 
+# Source selection prompts
+_Exported on 7/27/2026 at 15:19:18 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+While the first source is processing, we still show "Add first source". Instead, show a processing indication. When no sources are selected, we also show "Add first source". Instead, show a selection prompt as indication.
+
+---
+
+**Cursor**
+
+I'll find where "Add first source" is shown and how source processing/selection state is determined so we can swap in the right prompts.
+
+I'll split the empty chat into three states—no sources, processing, and none selected—and wire the right prompts through from the chat pane.
+
+Empty chat now picks the right prompt from source state:
+
+1. **No sources** → “Add first source”
+2. **Selected sources still processing** → spinner + “Sources are processing”
+3. **Sources exist but none ready-selected** → “Select sources to chat” (opens Sources)
+
+Ready-selected sources still get the suggestion prompts as before.
+
+---
+
+**User**
+
+The processing feedback should be shown immediately apon adding a source (e.g. during file upload, it's not shown yet.
+
+---
+
+**Cursor**
+
+I'll check how uploads and optimistic source rows are tracked so the processing empty state can appear as soon as add starts.
+
+Uploading state lives only in the Sources pane, so Chat never sees it. I'll lift pending uploads (and URL/text creates) into a shared store so the processing empty state shows immediately.
+
+I'll tighten the pending store so URL/text creates stay “processing” until the source row shows up in Convex, avoiding a flash back to empty.
+
+Pending adds are now shared via a store, so chat can react before the Convex source row exists.
+
+- **File uploads** — processing shows as soon as the upload placeholder appears  
+- **URL/text** — processing shows from submit until the source shows up in the list
+

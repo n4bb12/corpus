@@ -1,5 +1,6 @@
 import { Eyebrow } from "src/components/ui/Eyebrow"
 import { IslandCta } from "src/components/ui/IslandCta"
+import { PendingLabel } from "src/components/ui/PendingLabel"
 
 const SUGGESTIONS = [
   "What are the main claims in these sources?",
@@ -7,18 +8,22 @@ const SUGGESTIONS = [
   "Summarize the strongest evidence for the key point.",
 ]
 
+export type ChatEmptyPromptState = "ready" | "processing" | "select" | "empty"
+
 export type ChatEmptyPromptProps = {
-  readySelectedCount: number
+  state: ChatEmptyPromptState
   onAddSource: () => void
+  onOpenSources: () => void
   onSendSuggestion: (suggestion: string) => void
 }
 
 export function ChatEmptyPrompt({
-  readySelectedCount,
+  state,
   onAddSource,
+  onOpenSources,
   onSendSuggestion,
 }: ChatEmptyPromptProps) {
-  if (readySelectedCount) {
+  if (state === "ready") {
     return (
       <div className="space-y-6 pt-10">
         <div className="space-y-3">
@@ -43,6 +48,43 @@ export function ChatEmptyPrompt({
             </button>
           ))}
         </div>
+      </div>
+    )
+  }
+
+  if (state === "processing") {
+    return (
+      <div className="space-y-5 pt-10">
+        <Eyebrow>Getting ready</Eyebrow>
+        <h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
+          Sources are processing
+        </h2>
+        <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+          Chat unlocks when at least one selected source has finished
+          processing.
+        </p>
+        <PendingLabel
+          pending
+          pendingLabel="Processing sources"
+          className="text-sm text-muted-foreground"
+        >
+          Processing sources
+        </PendingLabel>
+      </div>
+    )
+  }
+
+  if (state === "select") {
+    return (
+      <div className="space-y-5 pt-10">
+        <Eyebrow>Sources first</Eyebrow>
+        <h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
+          Select sources to chat
+        </h2>
+        <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+          Choose at least one source that has finished processing.
+        </p>
+        <IslandCta onClick={onOpenSources}>Select sources</IslandCta>
       </div>
     )
   }

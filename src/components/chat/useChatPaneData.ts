@@ -10,6 +10,7 @@ import {
   type OptimisticChatSubmission,
 } from "src/lib/chatHistory"
 import { consumeChatSse, type StreamCitation } from "src/lib/chatSse"
+import { useHasPendingSources } from "src/lib/pendingSources"
 import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 export function useChatPaneData(notebookId: Id<"notebooks">) {
@@ -38,6 +39,8 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   const acceptingStreamRef = useRef(false)
   const streamedContentRef = useRef<string | null>(null)
 
+  const hasPendingSources = useHasPendingSources(notebookId)
+
   const readySelected =
     sources?.filter(
       (source) => source.selected && source.processingState === "ready",
@@ -54,7 +57,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
 
   const emptyPromptState = readySelected.length
     ? ("ready" as const)
-    : hasSelectedProcessing
+    : hasSelectedProcessing || hasPendingSources
       ? ("processing" as const)
       : hasSources
         ? ("select" as const)

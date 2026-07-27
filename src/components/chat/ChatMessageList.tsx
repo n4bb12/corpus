@@ -2,7 +2,10 @@ import type { FunctionReturnType } from "convex/server"
 import { AnimatePresence, motion } from "motion/react"
 import { memo } from "react"
 import { ChatAssistantMessage } from "src/components/chat/ChatAssistantMessage"
-import { ChatEmptyPrompt } from "src/components/chat/ChatEmptyPrompt"
+import {
+  ChatEmptyPrompt,
+  type ChatEmptyPromptState,
+} from "src/components/chat/ChatEmptyPrompt"
 import { ChatSourceBoundary } from "src/components/chat/ChatSourceBoundary"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import type { api } from "src/convex/_generated/api"
@@ -19,9 +22,10 @@ export type ChatMessageListProps = {
   streamedCitations: StreamCitation[]
   streamedInsufficient: boolean | null
   optimisticUserPrompt: string | null
-  hasReadySources: boolean
+  emptyPromptState: ChatEmptyPromptState
   canRetry: boolean
   onAddSource: () => void
+  onOpenSources: () => void
   onCite: (args: ChatCiteArgs) => void
   onSendSuggestion: (suggestion: string) => void
   onRetry: (prompt: string, assistantId: string) => void
@@ -33,9 +37,10 @@ export const ChatMessageList = memo(function ChatMessageList({
   streamedCitations,
   streamedInsufficient,
   optimisticUserPrompt,
-  hasReadySources,
+  emptyPromptState,
   canRetry,
   onAddSource,
+  onOpenSources,
   onCite,
   onSendSuggestion,
   onRetry,
@@ -49,8 +54,9 @@ export const ChatMessageList = memo(function ChatMessageList({
     <div className="mx-auto flex min-h-full w-full max-w-200 flex-col gap-6 py-4">
       {empty ? (
         <ChatEmptyPrompt
-          readySelectedCount={hasReadySources ? 1 : 0}
+          state={emptyPromptState}
           onAddSource={onAddSource}
+          onOpenSources={onOpenSources}
           onSendSuggestion={onSendSuggestion}
         />
       ) : null}
