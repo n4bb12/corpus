@@ -1,5 +1,4 @@
 import dns from "node:dns/promises"
-import { load } from "cheerio"
 import { LIMITS } from "src/lib/limits"
 import {
   isBlockedResolvedAddress,
@@ -112,7 +111,8 @@ export async function fetchPublicHtml(url: URL) {
 }
 
 /** Prefer article/main/body inner HTML; strip script/style/noscript. */
-export function extractReadableHtml(html: string) {
+export async function extractReadableHtml(html: string) {
+  const { load } = await import("cheerio")
   const $ = load(html)
   const title = $("title").first().text().trim() || null
 

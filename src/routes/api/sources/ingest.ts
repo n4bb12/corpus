@@ -3,7 +3,6 @@ import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { fetchAuthMutation, getToken } from "src/lib/authServer"
 import { scheduleBackground } from "src/server/scheduleBackground"
-import { processSourcePipeline } from "src/server/sources/processSource"
 import { z } from "zod"
 
 const createUrlSchema = z.object({
@@ -83,6 +82,10 @@ export const Route = createFileRoute("/api/sources/ingest")({
               mimeType: body.mimeType,
             })) as Id<"sources">
           }
+
+          const { processSourcePipeline } = await import(
+            "src/server/sources/processSource"
+          )
 
           scheduleBackground(processSourcePipeline(sourceId, token))
 
