@@ -49,6 +49,55 @@ describe("citationQuote", () => {
     `)
   })
 
+  test("matches a plain quote against markdown bold markers", () => {
+    const chunkText =
+      "**Wichtiger Hinweis:** Der **Schulmanager** wird am 31.07.2026 abgeschaltet."
+
+    expect(
+      resolveCitationQuote({
+        chunkText,
+        startOffset: 50,
+        endOffset: 50 + chunkText.length,
+        ordinal: 1,
+        quote:
+          "Wichtiger Hinweis: Der Schulmanager wird am 31.07.2026 abgeschaltet.",
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "excerpt": "Wichtiger Hinweis:** Der **Schulmanager** wird am 31.07.2026 abgeschaltet.",
+        "locator": {
+          "endOffset": 126,
+          "ordinal": 1,
+          "startOffset": 52,
+        },
+      }
+    `)
+  })
+
+  test("clamps a multi-paragraph match to the paragraph that supports the quote", () => {
+    const chunkText =
+      "Datenschutz und Formular.\n\n**Wichtiger Hinweis:** Schulmanager Ende 31.07.2026.\n\nMit freundlichen Grüßen."
+
+    expect(
+      resolveCitationQuote({
+        chunkText,
+        startOffset: 0,
+        endOffset: chunkText.length,
+        ordinal: 0,
+        quote: "Schulmanager Ende 31.07.2026",
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "excerpt": "Schulmanager Ende 31.07.2026",
+        "locator": {
+          "endOffset": 78,
+          "ordinal": 0,
+          "startOffset": 50,
+        },
+      }
+    `)
+  })
+
   test("returns null when the quote is not in the chunk", () => {
     expect(
       resolveCitationQuote({
