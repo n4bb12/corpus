@@ -11,7 +11,7 @@ export function BrandLockup({ to = "/", compact = false }: BrandLockupProps) {
   return (
     <Link
       to={to}
-      className="group inline-flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-accent pr-2"
+      className="group inline-flex items-center gap-2.5 rounded-full pr-2 hover:bg-foreground/6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:hover:bg-muted/75"
     >
       <span
         className={cn(

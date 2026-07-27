@@ -7557,3 +7557,62 @@ Removing the hardcoded `border-radius` from `.placeholder-shimmer` so Tailwind r
 
 Removed that from the utility and added `rounded-lg` on the SourcePreview placeholders that depended on the old default. Call sites that already set rounding (`rounded-full`, `rounded-lg`) keep control.
 
+# BrandLockup hover background
+_Exported on 7/27/2026 at 22:01:26 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Give the BrandLockup the same hover bg as the menu triggers.
+
+---
+
+**Cursor**
+
+I'll check BrandLockup and the menu trigger styles so we can match the hover background.
+
+BrandLockup already uses `hover:bg-accent` — checking the ghost button hover so we can match it exactly.
+
+Ghost triggers use `hover:bg-muted/80` (and `dark:hover:bg-muted/50`); BrandLockup still has `hover:bg-accent`. Updating it to match.
+
+Updated BrandLockup to use the same hover as ghost menu triggers: `hover:bg-muted/80` and `dark:hover:bg-muted/50`.
+
+---
+
+**User**
+
+In light mode, it doesn't show.
+
+---
+
+**Cursor**
+
+Hover likely blends into the light header — checking muted/accent tokens against the header background.
+
+---
+
+**User**
+
+Possible but I can see menu hover backgrounds and we're using the same shade for brand. Although the contrast isn't great. Perhaps choose a starker contrast for menus as well. Dark mode is fine.
+
+---
+
+**Cursor**
+
+Boosting light-mode hover contrast on ghost buttons and BrandLockup; leaving dark mode as-is.
+
+Light mode now uses `foreground/8` (and `/10` when a menu is open) for ghost triggers and BrandLockup. Dark mode still uses `muted/50`.
+
+---
+
+**User**
+
+A tidbit less contrast.
+
+---
+
+**Cursor**
+
+Dialed light hover back to `foreground/6` (open state `/8`).
+
