@@ -84,7 +84,7 @@ export const maybeGenerateNotebookTitle = internalAction({
 
       const result = await generateText({
         model: openai(MODELS.title),
-        prompt: `Summarize this source into a short notebook title (max 8 words). Prefer a topical phrase over a document filename. Return only the title.\n\n${markdown}`,
+        prompt: `Summarize this source into a compact notebook title (max 4 words). Prefer a topical phrase over a document filename. Return only the title.\n\n${markdown}`,
       })
 
       const title = cleanGeneratedTitle(result.text)
