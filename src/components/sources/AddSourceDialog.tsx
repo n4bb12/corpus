@@ -32,7 +32,7 @@ export function AddSourceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex aspect-3/2 w-full max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-2xl sm:max-w-3xl">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-2xl max-sm:min-h-[min(24rem,calc(100dvh-2rem))] sm:aspect-3/2 sm:max-w-3xl">
         <DialogHeader className="shrink-0">
           <DialogTitle>Add source</DialogTitle>
         </DialogHeader>
