@@ -3942,3 +3942,102 @@ Full-text search only matched whole-word prefixes, so `portal` missed `Infoporta
 
 Library search now uses case-insensitive substring matching on titles (including “Untitled notebook”), so `portal` finds those notebooks.
 
+# Chunking performance issue
+_Exported on 7/27/2026 at 15:35:39 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+The chunking always seems to take quite some time.
+
+---
+
+**Cursor**
+
+I'll look at how chunking is implemented and where time is spent in this project.
+
+That’s expected with the current pipeline — **“Preparing” is doing remote Voyage embeds, one segment at a time.**
+
+In `processSource.ts`, the `chunking` state runs `semantic-chunker` with Voyage as the BYOE embedder:
+
+```136:169:src/server/sources/processSource.ts
+    await client.mutation(api.ingestion.setProcessingState, {
+      sourceId,
+      processingState: "chunking",
+    })
+
+    const embeddingModel = voyage.textEmbedding(MODELS.embed)
+    const chunker = semantic({
+      embed: async (text) => {
+        const { embedding } = await embed({
+          model: embeddingModel,
+          value: text,
+          // ...
+        })
+        return embedding
+      },
+      splitMode: "markdown",
+      maxChunkSize: 1200,
+      minChunkSize: 200,
+      zScoreThreshold: 1,
+    })
+```
+
+What that library actually does:
+
+1. Split markdown into segments  
+2. **Embed every segment sequentially** (`await embed(item)` in a loop — no batching)  
+3. Find similarity dropoffs and form chunks  
+4. **Embed each final chunk again** before yielding  
+
+Then the pipeline moves to `embedding` / “Indexing” and calls `embedMany` on those same final texts — so the chunker’s chunk embeddings are thrown away.
+
+So latency scales with **number of markdown segments × Voyage round-trips**, not just document size. A long article can mean dozens/hundreds of sequential API calls during “Preparing,” then another batched pass for indexing.
+
+If you want it faster later, the high-leverage levers are: batch segment embeds, skip re-embedding yielded chunks (reuse or drop that pass), use a cheaper/local model only for boundary detection, or fall back to size/markdown splitting without semantic embeds.
+
+---
+
+**User**
+
+Use size/markdown/structural splitting. Can be semantic but without calling an LLM.
+
+---
+
+**Cursor**
+
+I'll switch chunking to structural markdown/size splitting (no embedding API calls for boundaries). Checking the TDD skill and current chunking setup first.
+
+Per TDD, one seam to confirm before writing tests:
+
+**Seam:** a pure `chunkMarkdown(markdown, { maxChunkSize, minChunkSize }) → string[]` — structural markdown split (headings / fences / paragraphs), then pack/split by size. No embeds. `processSource` just calls it, then Voyage only in the indexing step.
+
+Does that seam look right, or do you want something else under test too?
+
+---
+
+**User**
+
+yes
+
+---
+
+**Cursor**
+
+Confirmed. Starting TDD on `chunkMarkdown`: failing test first, then structural markdown + size packing.
+
+Red confirmed. Implementing the minimal packer next.
+
+The min-size test was packing within `max` already — fixing it so the merge path is actually exercised.
+
+Wiring `processSource` and removing `semantic-chunker`.
+
+Chunking is now local and structural — no Voyage calls during “Preparing.”
+
+**`chunkMarkdown`** (`src/lib/chunkMarkdown.ts`): splits on headings / fences / paragraphs, packs to ~200–1200 chars, hard-splits oversized segments.
+
+**`processSource`**: uses that for the chunking step; Voyage only runs in the indexing/`embedMany` step.
+
+**Removed** the `semantic-chunker` dependency.
+
