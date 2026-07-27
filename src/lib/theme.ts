@@ -11,7 +11,7 @@ type ThemeState = {
   preference: ThemePreference
 }
 
-function isThemePreference(value: string): value is ThemePreference {
+export function isThemePreference(value: string): value is ThemePreference {
   return value === "light" || value === "dark" || value === "system"
 }
 

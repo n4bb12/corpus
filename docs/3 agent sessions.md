@@ -7616,3 +7616,24 @@ A tidbit less contrast.
 
 Dialed light hover back to `foreground/6` (open state `/8`).
 
+# Theme switcher checked state
+_Exported on 7/27/2026 at 22:09:54 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Give the theme switcher a checked state.
+
+---
+
+**Cursor**
+
+I'll inspect the theme switcher and how menu items currently indicate selection.
+
+Switching the theme options to radio items so the active preference shows a check.
+
+Reusing the existing theme preference guard and checking lints.
+
+The theme menu now uses radio items, so the active preference (Light / Dark / System) shows a checkmark.
+

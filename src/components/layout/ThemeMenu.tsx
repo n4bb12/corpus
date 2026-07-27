@@ -4,11 +4,13 @@ import { Button } from "src/components/ui/shadcn/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "src/components/ui/shadcn/dropdown-menu"
 import {
   applyTheme,
+  isThemePreference,
   resolveTheme,
   setThemePreference,
   subscribeTheme,
@@ -69,15 +71,18 @@ export function ThemeMenu({ className }: ThemeMenuProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="rounded-xl">
-        <DropdownMenuItem onClick={() => setThemePreference("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setThemePreference("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setThemePreference("system")}>
-          System
-        </DropdownMenuItem>
+        <DropdownMenuRadioGroup
+          value={preference}
+          onValueChange={(value) => {
+            if (isThemePreference(value)) {
+              setThemePreference(value)
+            }
+          }}
+        >
+          <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )
