@@ -7460,3 +7460,76 @@ I'll hide the Clear chat control when there are no messages (matching the empty-
 
 **Clear chat** now only appears when the thread has messages (or an in-flight optimistic user turn). Empty threads no longer show the control.
 
+# Splitting large hooks
+_Exported on 7/27/2026 at 21:28:54 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+We have a few pretty long hooks, e.g. useSourcesPaneData. Some of the hooks and state within are likely not directly related. Can we split such large hooks into multiple smaller ones?
+
+---
+
+**Cursor**
+
+I'll inspect the larger sources hooks and how they're composed so we can identify clean seams for smaller hooks.
+
+This is a design choice with a few clean seams — I'll switch to Plan so we can agree on the split before touching code.
+
+Checking how similar panes structure their hooks so the split matches existing patterns.
+
+Yes. `useSourcesPaneData` mixes unrelated concerns; I'll keep it as a thin composer and extract focused internal hooks so `SourcesPane` stays unchanged.
+
+Yes. `useSourcesPaneData` is now a thin composer; `SourcesPane` is unchanged.
+
+Split by concern:
+
+| Hook | Responsibility |
+|------|----------------|
+| `useSourcesList` | Query, search/filter, uploading sync |
+| `useSourceSelection` | Select / select-many + optimistic updates |
+| `useSourceUpload` | Drag state, upload notice, file upload |
+| `useSourceRename` | Rename dialog state |
+| `useSourceDelete` | Delete dialog state |
+
+Pure optimistic helpers moved to `src/lib/optimisticSourceSelection.ts`. Preview markdown was already separate.
+
+`useChatPaneData` (~350 lines) has the same shape — streaming, scroll, clear dialog — and could get the same treatment next if you want.
+
+---
+
+**User**
+
+Also extract all composite components such as DropdownMenu, DropdownMenuFoo, Dialog, DialogFoo groups of JSX into separate files.
+
+---
+
+**Cursor**
+
+I'll find inline DropdownMenu/Dialog composite JSX in the sources (and nearby) components and extract each group into its own file.
+
+Only `SourceListItem` still inlines a DropdownMenu tree; the Dialog/menu files elsewhere are already separate. Extracting that menu to match `NotebookCardMenu`.
+
+Extracted the only remaining embedded tree: the source row menu → `SourceListItemMenu.tsx` (same pattern as `NotebookCardMenu`).
+
+Everything else that uses DropdownMenu/Dialog/Popover was already in its own file (`SourceRenameDialog`, `SourceDeleteDialog`, `AddSourceDialog`, `NotebookCardMenu`, `AccountMenu`, `ThemeMenu`, etc.).
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll inspect the full uncommitted change set and recent commit style, then split it into atomic commits.
+
+Leaving the unrelated `SourcePreview` blank-line change uncommitted. Splitting into two commits: hook extraction, then the menu component.
+
+Two commits:
+
+1. `b631933` — **refactor(sources): split useSourcesPaneData into focused hooks**
+2. `2c88c7b` — **refactor(sources): extract SourceListItemMenu dropdown**
