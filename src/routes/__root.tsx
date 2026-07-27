@@ -78,17 +78,17 @@ export const Route = createRootRoute({
 
 function NotFoundPage() {
   return (
-    <div className="atmosphere flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
+    <div className="atmosphere atmosphere-noise flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
       <BrandLockup />
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
+      <div className="space-y-3">
+        <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
           Page not found
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="mx-auto max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
           That route does not exist, or the notebook may have been removed.
         </p>
       </div>
-      <Button asChild className="rounded-sm">
+      <Button asChild className="rounded-full">
         <Link to="/">Back to notebooks</Link>
       </Button>
     </div>

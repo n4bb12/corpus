@@ -1,5 +1,5 @@
-import { LoaderCircle } from "lucide-react"
 import { Checkbox } from "src/components/ui/shadcn/checkbox"
+import { Spinner } from "src/components/ui/shadcn/spinner"
 import { formatTitle } from "src/lib/sourceTitle"
 import type { UploadingSource } from "src/lib/uploadingSources"
 
@@ -16,7 +16,7 @@ export function UploadingSourceListItem({
   return (
     <div className="group relative flex items-start gap-2 rounded-2xl px-2.5 py-2.5">
       <span className="mt-0.5 text-primary">
-        <LoaderCircle size={18} className="animate-spin" strokeWidth={1.5} />
+        <Spinner aria-label="Uploading" className="size-4.5" />
       </span>
 
       <span className="min-w-0 flex-1">

@@ -2,7 +2,6 @@ import {
   CircleAlert,
   FileText,
   Link as LinkIcon,
-  LoaderCircle,
   MoreHorizontal,
   Type,
 } from "lucide-react"
@@ -16,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "src/components/ui/shadcn/dropdown-menu"
 import { Label } from "src/components/ui/shadcn/label"
+import { Spinner } from "src/components/ui/shadcn/spinner"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { formatTitle } from "src/lib/sourceTitle"
 import { cn } from "src/lib/utils"
@@ -80,7 +80,10 @@ export const SourceListItem = memo(function SourceListItem({
         )}
       >
         {busy ? (
-          <LoaderCircle size={18} className="animate-spin" strokeWidth={1.5} />
+          <Spinner
+            aria-label={statusText ?? "Processing"}
+            className="size-4.5"
+          />
         ) : failed ? (
           <CircleAlert size={18} strokeWidth={1.5} aria-hidden />
         ) : (
