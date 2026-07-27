@@ -5,15 +5,23 @@ import { startTransition, useEffect, useRef, useState } from "react"
 import { api } from "src/convex/_generated/api"
 import { authClient } from "src/lib/authClient"
 import { normalizeTitle } from "src/lib/sourceTitle"
+import { useDebouncedValue } from "src/lib/useDebouncedValue"
 import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 const routeApi = getRouteApi("/")
+const SEARCH_DEBOUNCE_MS = 100
 
 export function useLibraryPageData() {
   const navigate = useNavigate()
   const search = routeApi.useSearch()
   const [draft, setDraft] = useState(search.q ?? "")
-  const searchTerm = (search.q ?? "").trim()
+  const [debouncedDraft, setDebouncedDraft] = useDebouncedValue(
+    draft,
+    SEARCH_DEBOUNCE_MS,
+  )
+  const searchTerm = debouncedDraft.trim()
+  const typing = draft !== debouncedDraft
+  const lastWrittenQ = useRef(search.q ?? "")
   const createNotebook = useMutation(api.notebooks.create)
   const removeNotebook = useMutation(api.notebooks.remove)
   const renameNotebook = useMutation(api.notebooks.rename).withOptimisticUpdate(
@@ -53,56 +61,80 @@ export function useLibraryPageData() {
   const session = authClient.useSession()
   const [creating, setCreating] = useState(false)
   const [creatingNotebookId, setCreatingNotebookId] = useState<string>()
-  const pageIndex = search.page ?? 1
+  const pageIndex =
+    searchTerm === (search.q ?? "").trim() ? (search.page ?? 1) : 1
 
   useEffect(() => {
-    setDraft(search.q ?? "")
-  }, [search.q])
+    const urlQ = search.q ?? ""
 
-  useEffect(() => {
-    if ((search.q ?? "") === draft) {
+    if (urlQ === lastWrittenQ.current) {
       return
     }
 
-    const handle = window.setTimeout(() => {
-      startTransition(() => {
-        void navigate({
-          to: "/",
-          search: {
-            q: draft || undefined,
-            page: undefined,
-          },
-        })
-      })
-    }, 200)
+    lastWrittenQ.current = urlQ
+    setDraft(urlQ)
+    setDebouncedDraft(urlQ)
+  }, [search.q, setDebouncedDraft])
 
-    return () => window.clearTimeout(handle)
-  }, [draft, navigate, search.q])
+  useEffect(() => {
+    if ((search.q ?? "") === debouncedDraft) {
+      return
+    }
 
+    lastWrittenQ.current = debouncedDraft
+    void navigate({
+      to: "/",
+      search: {
+        q: debouncedDraft || undefined,
+        page: undefined,
+      },
+    })
+  }, [debouncedDraft, navigate, search.q])
+
+  const listArgs = searchTerm
+    ? { search: searchTerm, page: pageIndex }
+    : { page: pageIndex }
+  // While the draft is ahead of the debounce, drop the prior list subscription so
+  // an in-flight search cannot finish after the user has already moved on.
   const result = useQuery(
     api.notebooks.list,
-    useSignedInQueryArgs({
-      search: searchTerm || undefined,
-      page: pageIndex,
-    }),
+    useSignedInQueryArgs(typing ? "skip" : listArgs),
   )
-  const cachedResult = useRef<NonNullable<typeof result> | null>(null)
+  const displayRef = useRef<{
+    searchTerm: string
+    result: NonNullable<typeof result>
+  } | null>(null)
+  const hasResolvedOnce = useRef(false)
 
-  if (result !== undefined) {
-    cachedResult.current = result
+  // Publish search term + results together so the grid does not restyle (hero →
+  // search) on the debounce tick and then reshuffle again when data arrives.
+  if (!typing && result !== undefined) {
+    hasResolvedOnce.current = true
+    displayRef.current = { searchTerm, result }
   }
 
-  const displayResult = result ?? cachedResult.current
-  const isInitialLoading = displayResult === undefined
+  const display = displayRef.current
+  const isInitialLoading = !hasResolvedOnce.current
+  const displaySearchTerm = display?.searchTerm ?? ""
+  const displayResult = display?.result
   const page = (displayResult?.page ?? []).filter(
     (notebook) => notebook._id !== creatingNotebookId,
   )
-  const isEmpty = !isInitialLoading && !searchTerm && !page.length
-  const noMatches = result !== undefined && !!searchTerm && !result.page.length
+  // Keep empty / no-match from the last published display so skipping the query
+  // while typing does not blank the results pane.
+  const isEmpty =
+    hasResolvedOnce.current && !displaySearchTerm && !page.length
+  const noMatches =
+    hasResolvedOnce.current && !!displaySearchTerm && !page.length
   const currentPage = displayResult?.pageIndex ?? pageIndex
   const pageCount = displayResult?.pageCount ?? 0
   const showPagination = !isInitialLoading && pageCount > 1
-  const showSearch = showPagination || !!draft || !!search.q || pageIndex > 1
+  const showSearch =
+    showPagination ||
+    !!draft ||
+    !!search.q ||
+    !!displaySearchTerm ||
+    pageIndex > 1
 
   async function onCreate() {
     setCreating(true)
@@ -122,7 +154,9 @@ export function useLibraryPageData() {
   }
 
   function clearSearch() {
+    lastWrittenQ.current = ""
     setDraft("")
+    setDebouncedDraft("")
     startTransition(() => {
       void navigate({ to: "/", search: {} })
     })
@@ -145,7 +179,7 @@ export function useLibraryPageData() {
     draft,
     setDraft,
     creating,
-    searchTerm,
+    searchTerm: displaySearchTerm,
     page,
     currentPage,
     pageCount,
