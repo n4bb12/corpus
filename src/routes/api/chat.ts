@@ -11,8 +11,10 @@ import {
 import { formatChatError } from "src/lib/chatErrors"
 import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import {
+  isInsufficiencyAnswer,
   parseCitationMarkers,
   remapCitationMarkers,
+  stripCitationMarkers,
   validateCitations,
 } from "src/lib/citations"
 import { requireEnv } from "src/lib/env"
@@ -195,8 +197,8 @@ export const Route = createFileRoute("/api/chat")({
 
               const system = `You are Corpus, a strictly source-grounded assistant.
 Only answer using the supplied evidence chunks.
-If evidence is insufficient, say that the selected sources do not support the answer.
-For every substantive factual paragraph, cite chunk IDs using [[cite:CHUNK_ID]] markers.
+If evidence is insufficient, say that the selected sources do not support the answer, and do not include any [[cite:…]] markers.
+For every substantive factual paragraph that answers the question, cite chunk IDs using [[cite:CHUNK_ID]] markers.
 Do not invent facts from general knowledge.
 Never cite chunk IDs that were not supplied.`
 
@@ -318,6 +320,18 @@ Never cite chunk IDs that were not supplied.`
                 fullText = retry.text
                 parsed = parseCitationMarkers(fullText)
                 validation = validateCitations(parsed.citations, allowed)
+              }
+
+              if (isInsufficiencyAnswer(parsed.text || fullText)) {
+                const content = stripCitationMarkers(parsed.text || fullText)
+                await finalize({
+                  content,
+                  status: "complete",
+                  citations: [],
+                })
+                streamController.enqueue(encodeSse("done", {}))
+                streamController.close()
+                return
               }
 
               if (validation.invalid.length) {

@@ -1,4 +1,9 @@
-import { hashSourceSelection, planSourceBoundary } from "src/lib/chatHistory"
+import {
+  hashSourceSelection,
+  planSourceBoundary,
+  shouldCreateSourceRevision,
+  sourceIdsFromSelectionHash,
+} from "src/lib/chatHistory"
 
 export async function getReadySelectedIds(
   ctx: { db: any },
@@ -123,4 +128,47 @@ export async function applySourceSelectionBoundary(
     sourceRevision: nextRevision,
     chatSelectionHash,
   }
+}
+
+/**
+ * After a chat turn finishes, insert a deferred source boundary when the user
+ * changed selection while the assistant was still streaming (those toggles are
+ * ignored mid-stream). Keeps chatSelectionHash as the ask-time baseline.
+ */
+export async function reconcileSourceBoundaryAfterChatTurn(
+  ctx: { db: any },
+  notebook: {
+    _id: any
+    chatEpoch: number
+    sourceRevision: number
+    chatSelectionHash?: string
+  },
+) {
+  const nextIds = await getReadySelectedIds(ctx, notebook._id)
+  const nextHash = hashSourceSelection(nextIds)
+
+  if (!notebook.chatSelectionHash) {
+    return {
+      sourceRevision: notebook.sourceRevision,
+      chatSelectionHash: nextHash,
+    }
+  }
+
+  if (notebook.chatSelectionHash === nextHash) {
+    return {
+      sourceRevision: notebook.sourceRevision,
+      chatSelectionHash: notebook.chatSelectionHash,
+    }
+  }
+
+  const previousIds = sourceIdsFromSelectionHash(notebook.chatSelectionHash)
+
+  if (!shouldCreateSourceRevision(previousIds, nextIds)) {
+    return {
+      sourceRevision: notebook.sourceRevision,
+      chatSelectionHash: notebook.chatSelectionHash,
+    }
+  }
+
+  return applySourceSelectionBoundary(ctx, notebook, previousIds, nextIds)
 }

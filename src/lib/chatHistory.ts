@@ -120,6 +120,14 @@ export function hashSourceSelection(ids: string[]) {
   return [...ids].sort().join("\0")
 }
 
+export function sourceIdsFromSelectionHash(hash: string | null | undefined) {
+  if (!hash) {
+    return []
+  }
+
+  return hash.split("\0").filter(Boolean)
+}
+
 export function shouldCreateSourceRevision(
   previousIds: string[],
   nextIds: string[],

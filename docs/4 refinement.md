@@ -3351,3 +3351,32 @@ The flicker came from React keys changing whenever the optimistic row was swappe
 
 The trailing separator now keeps a fixed key (`trailing-source-boundary`), the optimistic id is stable, and the count text updates in place without a crossfade.
 
+# Response streaming sources issue
+_Exported on 7/27/2026 at 13:17:47 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+When toggling sources while a response is streaming, once the response finishes, no sources separator is shown. This is because the sources used for the separator are determined after the response, not before. We need source A -> question -> response streams -> source A deselected, source B selected -> response ends -> separator shows up
+
+---
+
+**Cursor**
+
+I'll look at how the sources separator is determined relative to streaming so we can capture sources before the response finishes, not after.
+
+The boundary is skipped while streaming; I'll check whether completion re-evaluates it against the ask-time selection.
+
+The bug is in `finalizeAssistant`: it overwrites `chatSelectionHash` with the post-stream selection and never re-applies a deferred boundary. I'll fix that and add coverage.
+
+Fixed. The ask-time selection is now the baseline; deferred toggles during streaming become a separator when the response finishes.
+
+**Cause:** Mid-stream source toggles correctly skip inserting a boundary (`activeStreaming`). But `finalizeAssistant` then overwrote `chatSelectionHash` with the *current* selection, so the A→B change was forgotten and no separator appeared.
+
+**Fix:**
+1. Keep `chatSelectionHash` as the ask-time baseline (don’t replace it with post-stream selection).
+2. On finalize, reconcile ask-time hash vs current selection and insert the deferred “Sources changed” boundary when they differ.
+
+So: A selected → ask → stream → switch to B → response ends → separator shows with B selected.
+

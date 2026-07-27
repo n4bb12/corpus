@@ -8,6 +8,7 @@ import {
   planSourceBoundaryFromEntries,
   readySelectedSourceIds,
   shouldCreateSourceRevision,
+  sourceIdsFromSelectionHash,
   successfulPairsAfterBoundary,
 } from "./chatHistory"
 
@@ -99,6 +100,38 @@ describe("chat history", () => {
     expect(
       planSourceBoundary({
         previousIds: ["a"],
+        nextIds: ["b"],
+        chatSelectionHash: hashSourceSelection(["a"]),
+        hasSuccessfulExchange: true,
+        activeStreaming: false,
+        trailingKind: "message",
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "activeSourceCount": 1,
+        "selectionHash": "b",
+        "type": "insert",
+      }
+    `)
+    expect(
+      planSourceBoundary({
+        previousIds: ["a"],
+        nextIds: ["b"],
+        chatSelectionHash: hashSourceSelection(["a"]),
+        hasSuccessfulExchange: true,
+        activeStreaming: true,
+        trailingKind: "message",
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "selectionHash": "b",
+        "type": "none",
+      }
+    `)
+    // After streaming ends, reconcile ask-time selection (a) vs current (b).
+    expect(
+      planSourceBoundary({
+        previousIds: sourceIdsFromSelectionHash(hashSourceSelection(["a"])),
         nextIds: ["b"],
         chatSelectionHash: hashSourceSelection(["a"]),
         hasSuccessfulExchange: true,
