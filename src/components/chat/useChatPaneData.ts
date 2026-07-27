@@ -12,7 +12,7 @@ import {
 import { consumeChatSse, type StreamCitation } from "src/lib/chatSse"
 import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
-export function useChatPane(notebookId: Id<"notebooks">) {
+export function useChatPaneData(notebookId: Id<"notebooks">) {
   const notebookArgs = useSignedInQueryArgs({ notebookId })
   const entries = useQuery(api.chat.list, notebookArgs)
   const sources = useQuery(api.sources.listByNotebook, notebookArgs)

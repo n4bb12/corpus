@@ -9,10 +9,10 @@ import {
   pageEnterInitial,
   respectReducedMotion,
 } from "src/lib/motion"
-import { useNotebookPage } from "src/pages/notebooks/useNotebookPage"
+import { useNotebookPageData } from "src/pages/notebooks/useNotebookPageData"
 
 export function NotebookPage() {
-  const page = useNotebookPage()
+  const page = useNotebookPageData()
   const reduceMotion = useReducedMotion()
 
   return (

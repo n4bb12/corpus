@@ -4,7 +4,7 @@ import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
-export function useSourcePreviewMarkdown(previewSourceId?: string | null) {
+export function useSourcePreviewMarkdownData(previewSourceId?: string | null) {
   const previewUrl = useQuery(
     api.sources.getNormalizedContent,
     useSignedInQueryArgs(

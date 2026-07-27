@@ -10,7 +10,7 @@ import { useIsSignedIn, useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 const routeApi = getRouteApi("/notebooks/$notebookId")
 
-export function useNotebookPage() {
+export function useNotebookPageData() {
   const { notebookId } = routeApi.useParams()
   const search = routeApi.useSearch()
   const navigate = useNavigate()

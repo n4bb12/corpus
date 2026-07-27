@@ -3,7 +3,7 @@ import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { uploadSourceFiles } from "src/components/sources/uploadSourceFiles"
-import { useSourcePreviewMarkdown } from "src/components/sources/useSourcePreviewMarkdown"
+import { useSourcePreviewMarkdownData } from "src/components/sources/useSourcePreviewMarkdownData"
 import { api } from "src/convex/_generated/api"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { startSourceIngest } from "src/lib/ingestClient"
@@ -70,7 +70,7 @@ function syncOptimisticChatBoundary(
   )
 }
 
-export function useSourcesPane({
+export function useSourcesPaneData({
   notebookId,
   previewSourceId,
   addOpenControlled,
@@ -163,7 +163,7 @@ export function useSourcesPane({
   )
   const listRef = useRef<HTMLDivElement>(null)
   const scrollMemory = useRef(0)
-  const previewMarkdown = useSourcePreviewMarkdown(previewSourceId)
+  const previewMarkdown = useSourcePreviewMarkdownData(previewSourceId)
 
   const filtered = useMemo(() => {
     const list = sources ?? []

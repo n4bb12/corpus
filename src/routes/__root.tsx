@@ -13,38 +13,47 @@ import { TooltipProvider } from "src/components/ui/shadcn/tooltip"
 import { AppConvexProvider } from "src/integrations/convex/provider"
 import styles from "src/styles.css?url"
 
+type RootHeadLink = {
+  href: string
+  rel: string
+  type?: string
+  sizes?: string
+}
+
+const rootHeadLinks = [
+  {
+    href: "/favicon.svg",
+    rel: "icon",
+    type: "image/svg+xml",
+  },
+  {
+    href: "/favicon.ico",
+    rel: "shortcut icon",
+  },
+  {
+    href: "/favicon-96x96.png",
+    rel: "icon",
+    sizes: "96x96",
+    type: "image/png",
+  },
+  {
+    href: "/apple-touch-icon.png",
+    rel: "apple-touch-icon",
+    sizes: "180x180",
+  },
+  {
+    href: "/site.webmanifest",
+    rel: "manifest",
+  },
+  {
+    href: styles,
+    rel: "stylesheet",
+  },
+] as const satisfies ReadonlyArray<RootHeadLink>
+
 export const Route = createRootRoute({
   head: () => ({
-    links: [
-      {
-        href: "/favicon.svg",
-        rel: "icon",
-        type: "image/svg+xml",
-      },
-      {
-        href: "/favicon.ico",
-        rel: "shortcut icon",
-      },
-      {
-        href: "/favicon-96x96.png",
-        rel: "icon",
-        sizes: "96x96",
-        type: "image/png",
-      },
-      {
-        href: "/apple-touch-icon.png",
-        rel: "apple-touch-icon",
-        sizes: "180x180",
-      },
-      {
-        href: "/site.webmanifest",
-        rel: "manifest",
-      },
-      {
-        href: styles,
-        rel: "stylesheet",
-      },
-    ],
+    links: [...rootHeadLinks],
     meta: [
       {
         charSet: "utf-8",

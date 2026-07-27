@@ -1,7 +1,7 @@
 import { AnimatePresence } from "motion/react"
 import { AddSourceMainPanel } from "src/components/sources/AddSourceMainPanel"
 import { AddSourceTextPanel } from "src/components/sources/AddSourceTextPanel"
-import { useAddSourceDialog } from "src/components/sources/useAddSourceDialog"
+import { useAddSourceDialogData } from "src/components/sources/useAddSourceDialogData"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ export function AddSourceDialog({
   notebookId,
   onFiles,
 }: AddSourceDialogProps) {
-  const dialog = useAddSourceDialog({
+  const dialog = useAddSourceDialogData({
     open,
     onOpenChange,
     notebookId,

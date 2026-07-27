@@ -7,10 +7,10 @@ import { IslandCta } from "src/components/ui/IslandCta"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 import { Reveal } from "src/components/ui/Reveal"
 import { Button } from "src/components/ui/shadcn/button"
-import { useLibraryPage } from "src/pages/useLibraryPage"
+import { useLibraryPageData } from "src/pages/useLibraryPageData"
 
 export function LibraryPage() {
-  const library = useLibraryPage()
+  const library = useLibraryPageData()
 
   return (
     <div className="atmosphere atmosphere-noise relative min-h-dvh">

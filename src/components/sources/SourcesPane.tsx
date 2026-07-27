@@ -3,7 +3,7 @@ import { SourcePreview } from "src/components/sources/SourcePreview"
 import { SourcesList } from "src/components/sources/SourcesList"
 import { SourcesPaneDialogs } from "src/components/sources/SourcesPaneDialogs"
 import { SourcesPaneHeader } from "src/components/sources/SourcesPaneHeader"
-import { useSourcesPane } from "src/components/sources/useSourcesPane"
+import { useSourcesPaneData } from "src/components/sources/useSourcesPaneData"
 import type { Id } from "src/convex/_generated/dataModel"
 import { useEventCallback } from "src/lib/useEventCallback"
 
@@ -26,7 +26,7 @@ export function SourcesPane({
   addOpen: addOpenControlled,
   onAddOpenChange,
 }: SourcesPaneProps) {
-  const pane = useSourcesPane({
+  const pane = useSourcesPaneData({
     notebookId,
     previewSourceId,
     addOpenControlled,

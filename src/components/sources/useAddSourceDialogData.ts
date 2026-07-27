@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import type { Id } from "src/convex/_generated/dataModel"
 import { startSourceIngest } from "src/lib/ingestClient"
 
-export function useAddSourceDialog({
+export function useAddSourceDialogData({
   open,
   onOpenChange,
   notebookId,

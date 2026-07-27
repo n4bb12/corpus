@@ -10,7 +10,7 @@ import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 const routeApi = getRouteApi("/")
 
-export function useLibraryPage() {
+export function useLibraryPageData() {
   const navigate = useNavigate()
   const search = routeApi.useSearch()
   const [draft, setDraft] = useState(search.q ?? "")

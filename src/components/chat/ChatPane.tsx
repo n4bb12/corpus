@@ -4,7 +4,7 @@ import {
   ChatMessageList,
 } from "src/components/chat/ChatMessageList"
 import { ClearChatDialog } from "src/components/chat/ClearChatDialog"
-import { useChatPane } from "src/components/chat/useChatPane"
+import { useChatPaneData } from "src/components/chat/useChatPaneData"
 import { Button } from "src/components/ui/shadcn/button"
 import { ScrollArea } from "src/components/ui/shadcn/scroll-area"
 import type { Id } from "src/convex/_generated/dataModel"
@@ -22,7 +22,7 @@ export function ChatPane({
   onAddSource,
   onCite,
 }: ChatPaneProps) {
-  const chat = useChatPane(notebookId)
+  const chat = useChatPaneData(notebookId)
 
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
