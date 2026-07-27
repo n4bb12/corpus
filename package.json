@@ -6,7 +6,7 @@
     "src/*": "./src/*"
   },
   "scripts": {
-    "build": "bun --bun vite build",
+    "build": "bun --bun vite build && bun scripts/runPatchVercelSpaRoutes.ts",
     "check": "biome check",
     "dev": "concurrently -n vite,convex -c cyan,yellow \"bun run dev:vite\" \"bun run dev:convex\"",
     "dev:vite": "bun --bun vite dev --port 3000",
