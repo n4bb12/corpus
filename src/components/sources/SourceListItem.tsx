@@ -72,6 +72,7 @@ export const SourceListItem = memo(function SourceListItem({
 				aria-label={failed ? `Open ${label}, failed` : `Open ${label}`}
 				onClick={() => onPreview(source._id)}
 			/>
+
 			<span
 				className={cn(
 					"pointer-events-none relative z-10 mt-0.5",
@@ -86,8 +87,10 @@ export const SourceListItem = memo(function SourceListItem({
 					<Icon size={18} strokeWidth={1.5} />
 				)}
 			</span>
+
 			<span className="pointer-events-none relative z-10 min-w-0 flex-1">
 				<span className="line-clamp-2 text-sm font-medium">{label}</span>
+
 				<span
 					className={cn(
 						"mt-0.5 block text-xs",
@@ -98,6 +101,7 @@ export const SourceListItem = memo(function SourceListItem({
 					{statusText}
 				</span>
 			</span>
+
 			<div className="relative z-10 flex items-center gap-1">
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -110,15 +114,18 @@ export const SourceListItem = memo(function SourceListItem({
 							<MoreHorizontal size={16} />
 						</Button>
 					</DropdownMenuTrigger>
+
 					<DropdownMenuContent align="end" className="rounded-xl">
 						<DropdownMenuItem onClick={() => onRename(source)}>
 							Rename
 						</DropdownMenuItem>
+
 						{failed ? (
 							<DropdownMenuItem onClick={() => onRetry(source._id)}>
 								Retry
 							</DropdownMenuItem>
 						) : null}
+
 						<DropdownMenuItem
 							variant="destructive"
 							onClick={() => onDelete(source._id)}
@@ -127,11 +134,13 @@ export const SourceListItem = memo(function SourceListItem({
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
+
 				<Label
 					htmlFor={checkboxId}
 					className="flex cursor-pointer items-center gap-2"
 				>
 					<span className="sr-only">Select {label}</span>
+
 					<Checkbox
 						id={checkboxId}
 						checked={source.selected}

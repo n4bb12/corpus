@@ -62,6 +62,7 @@ export function AddSourceMainPanel({
 					placeholder="https://example.com/article"
 					className="rounded-xl"
 				/>
+
 				<Button
 					type="submit"
 					className="rounded-full"
@@ -87,6 +88,7 @@ export function AddSourceMainPanel({
 			>
 				Paste text
 			</Button>
+
 			{error ? (
 				<motion.p
 					className="shrink-0 text-sm text-destructive"

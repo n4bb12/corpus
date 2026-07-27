@@ -34,8 +34,10 @@ export function SignInEmailForm({
 					Last used
 				</span>
 			) : null}
+
 			<div className="space-y-2">
 				<Label htmlFor="email">Email</Label>
+
 				<Input
 					id="email"
 					type="email"
@@ -47,12 +49,15 @@ export function SignInEmailForm({
 					disabled={pendingEmail || pendingGoogle}
 				/>
 			</div>
+
 			{error ? <p className="text-sm text-destructive">{error}</p> : null}
+
 			{sent ? (
 				<p className="text-sm leading-relaxed text-muted-foreground">
 					Check your inbox for a sign-in link. It expires in a few minutes.
 				</p>
 			) : null}
+
 			<IslandCta
 				type="submit"
 				className="w-full justify-between"
