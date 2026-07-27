@@ -6092,3 +6092,90 @@ Sign-out now:
 
 You should get: sign-out → sign-in, with no empty or library flash in between.
 
+# Streaming response delay
+_Exported on 7/27/2026 at 20:23:22 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+There is sometimes a noticable delay between after streaming citations and streaming the next response paragraph. We could mask it somehow but I'd prefer eliminating it.
+
+---
+
+**Cursor**
+
+I'll look at how citations and response paragraphs are streamed so we can find what's causing that gap.
+
+The schema streams citations (with quotes) before each paragraph’s text — that ordering is a strong suspect for the gap. Digging into how partials are turned into markdown and rendered.
+
+The pause matches the known structural gap: citations (with quotes) stream before each paragraph’s text. Checking how quotes are used so we can reorder without losing them.
+
+The gap is structural: each paragraph streams `citations` (with long quotes) before `text`, so the UI sits idle until the next paragraph’s text starts. Putting `text` first and deferring quotes to a post-pass should remove that dead air.
+
+Implementing text-before-citations and moving quote generation to a post-stream pass so inter-paragraph dead air goes away.
+
+Using the faster title model for the quote pass so finalize stays snappy, then verifying types.
+
+The pause wasn’t network lag — it was the answer schema.
+
+Each paragraph streamed as `{ citations[{ chunkId, quote }], text }`. After one paragraph finished, the model still had to emit the next paragraph’s citations (including verbatim quotes) before any new text arrived. During that stretch the UI looked idle.
+
+**Fix:**
+1. Stream `text` first, then short `citations: string[]` (chunk IDs only).
+2. Resolve supporting quotes in a small post-pass after the answer has streamed, then refine locators/excerpts as before.
+
+Paragraphs should now follow each other without that dead air. Quote extraction still runs at the end (tight excerpts/locators), so the finishing pine dot may linger slightly longer before `done`.
+
+---
+
+**User**
+
+The pause was between AFTER the citations had been streamed and are displayed to users. Then pause. Then next paragraph. And I explicitly want to emit citation pills mid-stream, not pop them in-between later.
+
+---
+
+**Cursor**
+
+The pause is after a paragraph’s pills are already visible — that’s the next paragraph’s citations (especially quotes) streaming before its text. I’ll keep mid-stream pills, put `text` before `citations`, and put quote resolution back in the stream (no post-pass).
+
+You're right — with citations-first, pills for paragraph N show, then the model burns tokens on paragraph N+1's citations/quotes before any new text. Keeping mid-stream pills and quotes; only reordering to text-then-citations.
+
+Got it — I overcorrected last time.
+
+What you were seeing with **citations-first**: paragraph N finishes (text + pills) → model spends tokens on paragraph N+1’s citations/quotes → **pause with pills already visible** → N+1 text finally starts.
+
+**Now:** each paragraph is `text`, then `citations` (still with `chunkId` + `quote`, still mid-stream). Pills still land as that paragraph’s cites stream in; the next paragraph’s text follows immediately after, instead of waiting on the *next* paragraph’s citation block first.
+
+Quote post-pass is gone.
+
+---
+
+**User**
+
+I see, so it was always citations -> text -> citations -> text the whole time?
+
+---
+
+**Cursor**
+
+Yes. With the old schema each paragraph was `{ citations, text }`, so the token stream was:
+
+**citations → text → citations → text → …**
+
+Pills only showed once a paragraph had both (markers need the text). So you’d see paragraph N finish with pills, then sit idle while the next paragraph’s citations streamed, then its text would start.
+
+It’s now **text → citations → text → citations → …**, so after pills land, the next paragraph’s text can begin right away.
+
+---
+
+**User**
+
+That explains why I sometimes felt like the first token took weirdly long to show up. I didn't know schema order matters. That's really good to know.
+
+---
+
+**Cursor**
+
+Exactly — with citations first, the model had to emit the whole first citation block (including quotes) before any answer text reached the UI. Schema field order is generation order for structured streaming, so put the user-visible fields first when you care about TTFT.
+

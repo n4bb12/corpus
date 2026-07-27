@@ -24,14 +24,15 @@ const answerSchema = z.object({
   insufficient: z.boolean(),
   paragraphs: z.array(
     z.object({
-      // citations first so chunk IDs bind before paragraph text streams in.
+      // text before citations: after a paragraph's pills land, the next
+      // paragraph can start immediately instead of waiting on its cites first.
+      text: z.string(),
       citations: z.array(
         z.object({
           chunkId: z.string(),
           quote: z.string(),
         }),
       ),
-      text: z.string(),
     }),
   ),
 })
@@ -315,7 +316,7 @@ export async function handleChatPost(request: Request) {
 Only answer using the supplied evidence chunks.
 Return a structured object with:
 - insufficient: true when the evidence cannot answer the question; false when it can.
-- paragraphs: ordered answer paragraphs. Each has citations (evidence used by that paragraph) and text (markdown, no [[cite:…]] markers).
+- paragraphs: ordered answer paragraphs. Each has text (markdown, no [[cite:…]] markers) then citations (evidence used by that paragraph).
 Each citation must include chunkId and quote. The quote must be a short verbatim span copied from that chunk—ideally one sentence or less—that actually supports the paragraph.
 When insufficient is true, use one clear paragraph and leave every citations array empty.
 When insufficient is false, every substantive factual paragraph must list the citations it relies on.
