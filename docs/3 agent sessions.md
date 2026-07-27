@@ -7443,3 +7443,20 @@ Launching a security review of branch changes against the repo default base.
 
 Security review found no issues.
 
+# Clear chat visibility issue
+_Exported on 7/27/2026 at 21:20:07 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Hide clear chat when the thread is already empty.
+
+---
+
+**Cursor**
+
+I'll hide the Clear chat control when there are no messages (matching the empty-thread check in `ChatMessageList`).
+
+**Clear chat** now only appears when the thread has messages (or an in-flight optimistic user turn). Empty threads no longer show the control.
+

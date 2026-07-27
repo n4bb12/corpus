@@ -25,18 +25,24 @@ export function ChatPane({
 }: ChatPaneProps) {
   const chat = useChatPaneData(notebookId)
 
+  const hasChat =
+    !!chat.optimisticUserPrompt ||
+    !!chat.entries?.some((entry) => entry.kind === "message")
+
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-      <div className="flex shrink-0 items-center justify-end px-4 pt-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="rounded-full"
-          onClick={() => chat.setClearOpen(true)}
-        >
-          Clear chat
-        </Button>
-      </div>
+      {hasChat ? (
+        <div className="flex shrink-0 items-center justify-end px-4 pt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full"
+            onClick={() => chat.setClearOpen(true)}
+          >
+            Clear chat
+          </Button>
+        </div>
+      ) : null}
 
       <ScrollArea
         viewportRef={chat.scrollerRef}
