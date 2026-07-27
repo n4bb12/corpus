@@ -3,6 +3,7 @@ import {
   type ChatCiteArgs,
   CitationPills,
 } from "src/components/chat/CitationPills"
+import { CitationPillsPending } from "src/components/chat/CitationPillsPending"
 import { splitCitedParagraphs, stripCitationMarkers } from "src/lib/citations"
 
 type ChatCitation = {
@@ -18,6 +19,8 @@ export type AssistantContentProps = {
   content: string
   citations: ChatCitation[]
   insufficient?: boolean
+  /** Trailing paragraph cites are held until they finish; show placeholders meanwhile. */
+  citationsPending?: boolean
   onCite: (args: ChatCiteArgs) => void
 }
 
@@ -25,11 +28,13 @@ export function AssistantContent({
   content,
   citations,
   insufficient = false,
+  citationsPending = false,
   onCite,
 }: AssistantContentProps) {
   const visibleCitations = insufficient ? [] : citations
   const displayContent = insufficient ? stripCitationMarkers(content) : content
   const hasInlineMarkers = /\[\[cite:\d+\]\]/.test(displayContent)
+  const showPending = citationsPending && !insufficient
 
   if (!visibleCitations.length || !hasInlineMarkers) {
     const html = marked.parse(stripCitationMarkers(displayContent), {
@@ -48,6 +53,8 @@ export function AssistantContent({
             indexes={visibleCitations.map((_, index) => index + 1)}
             onCite={onCite}
           />
+        ) : showPending ? (
+          <CitationPillsPending />
         ) : null}
       </div>
     )
@@ -57,12 +64,13 @@ export function AssistantContent({
 
   return (
     <div className="space-y-3">
-      {paragraphs.map((paragraph) => {
+      {paragraphs.map((paragraph, index) => {
         const hasPills = !!paragraph.citationIndexes.length
         const html = paragraph.text
           ? (marked.parse(paragraph.text, { async: false }) as string)
           : ""
         const key = `${paragraph.text}:${paragraph.citationIndexes.join(",")}`
+        const isTrailing = index === paragraphs.length - 1
 
         return (
           <div key={key} className="space-y-2">
@@ -78,6 +86,8 @@ export function AssistantContent({
                 indexes={paragraph.citationIndexes}
                 onCite={onCite}
               />
+            ) : showPending && isTrailing ? (
+              <CitationPillsPending />
             ) : null}
           </div>
         )

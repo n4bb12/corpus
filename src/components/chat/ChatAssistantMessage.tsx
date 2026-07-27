@@ -72,6 +72,7 @@ export function ChatAssistantMessage({
           content={content}
           citations={citations}
           insufficient={insufficient}
+          citationsPending={isStreaming && !insufficient}
           onCite={onCite}
         />
       ) : null}
