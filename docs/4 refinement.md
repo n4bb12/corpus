@@ -3011,3 +3011,26 @@ Implemented:
 
 Verified with `bun types`, `bun run test`, and production build. All pass; three static pages/templates are generated.
 
+# Notebook card fade-in issue
+_Exported on 7/27/2026 at 11:23:12 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+We lost the fade-in animations on the notebook cards and the rest of the library page or they are extremely short. They should be fading up on page load.
+
+---
+
+**Cursor**
+
+I'll look at the library page and notebook card animation setup to see why the fade-up on load is missing or too short.
+
+The fade-ups were disabled for SSR (`pageEnterInitial = false`). I'll check the prior Reveal/card animation values and restore them in an SSR-safe way.
+
+Library mounts only after `ClientAuthBoundary`, so restoring Reveal’s fade-up is safe and won’t blank SSR HTML.
+
+The fade-ups were killed by the SSR fix that set `pageEnterInitial = false` on `Reveal`, so Motion never started from a hidden state.
+
+Restored them in `Reveal`: opacity/y/blur entrance again (`0 → 1`, `12px` up, blur clear) over the 320ms reveal timing. Library is fine with a real `initial` because it only mounts after `ClientAuthBoundary` on the client — notebook/sign-in shells still use `pageEnterInitial = false` so their SSR HTML stays visible.
+
