@@ -54,11 +54,15 @@ export const ChatMessageList = memo(function ChatMessageList({
       ) : null}
 
       <AnimatePresence initial={false}>
-        {(entries ?? []).map((entry) => {
+        {(entries ?? []).map((entry, index, list) => {
           if (entry.kind === "sourceBoundary") {
+            // Trailing boundary keeps one stable key across selection updates and
+            // optimistic → server id swaps so AnimatePresence does not stack rows.
+            const isTrailing = index === list.length - 1
+
             return (
               <motion.div
-                key={entry.selectionHash ?? entry._id}
+                key={isTrailing ? "trailing-source-boundary" : entry._id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

@@ -3312,3 +3312,42 @@ Send / Sending / Stop now share the same control.
 
 Send can still be larger with the arrow; Sending and Stop should feel the same.
 
+# Source selection separators
+_Exported on 7/27/2026 at 13:10:09 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+When changing the source selection, there are two sources separators in the message thread: one leaving and one entering. Keep the existing one and change its text.
+
+---
+
+**Cursor**
+
+I'll find how source separators are rendered in the message thread when the source selection changes.
+
+Checking how boundaries are keyed in the message list and whether the animation causes the double separator.
+
+The double separator comes from keying the boundary on `selectionHash` — when the hash updates, AnimatePresence treats it as leave + enter. I'll key on the stable `_id` instead.
+
+The boundary row was keyed on `selectionHash`, so each selection change looked like a remove + insert to `AnimatePresence`. It’s keyed on `_id` now, so the same separator stays and only the count text crossfades.
+
+---
+
+**User**
+
+The layout change is still choppy and and we have multiple rounds of 2 lines, 1 line, 0 lines alternating wildly.
+
+---
+
+**Cursor**
+
+The flicker between 2/1/0 lines points to optimistic vs server boundary churn — I'll trace how those entries are patched and reconciled.
+
+The `_id` key remounts when the optimistic row is replaced by the server id — that matches the 2/1/0 flicker. I'll use a stable key for the trailing boundary so updates and confirmation keep one row.
+
+The flicker came from React keys changing whenever the optimistic row was swapped for the server row (`_id`) or the selection hash changed — `AnimatePresence` treated each swap as leave + enter, so rows stacked and collapsed.
+
+The trailing separator now keeps a fixed key (`trailing-source-boundary`), the optimistic id is stable, and the count text updates in place without a crossfade.
+

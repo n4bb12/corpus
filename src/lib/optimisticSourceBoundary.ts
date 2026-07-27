@@ -65,7 +65,7 @@ function createOptimisticSourceBoundary({
   const now = Date.now()
 
   return {
-    _id: `optimistic_boundary:${plan.selectionHash}` as Id<"chatEntries">,
+    _id: "optimistic_boundary:trailing" as Id<"chatEntries">,
     _creationTime: now,
     notebookId,
     chatEpoch,
