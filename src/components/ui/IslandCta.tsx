@@ -24,10 +24,7 @@ export function IslandCta({
       {...props}
     >
       <span
-        className={cn(
-          "inline-flex items-center",
-          showArrow ? "pl-1" : null,
-        )}
+        className={cn("inline-flex items-center", showArrow ? "pl-1" : null)}
       >
         {children}
       </span>

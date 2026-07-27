@@ -3497,3 +3497,100 @@ Select-all uses `px-2` while list rows use `px-2.5` — aligning that padding.
 
 The select-all row used `px-2` while source rows used `px-2.5`, so the checkboxes sat 2px apart. Both now use `px-2.5`.
 
+# Sources display bug
+_Exported on 7/27/2026 at 14:49:07 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+We should not be showing sources when the text says "Not info in the sources".
+
+---
+
+**Cursor**
+
+I'll find where citation sources are rendered and hide them when the response indicates there's no info in the sources.
+
+The model is citing tangential chunks while saying the sources don’t support an answer. I’ll hide citations for insufficiency replies and stop the no-marker fallback from dumping all source pills.
+
+Insufficiency replies no longer show citation pills.
+
+**What was wrong:** When evidence was only tangentially related, the model still cited chunks while saying the sources don’t support an answer, so pills `1` / `2` / `3` appeared under that message.
+
+**What changed:**
+1. **UI** — `AssistantContent` hides citations when the answer is an insufficiency statement (covers existing messages too).
+2. **API** — Those answers are finalized with no citations, and the prompt tells the model not to cite in that case.
+
+Refresh the chat thread and the pills under that message should be gone.
+
+---
+
+**User**
+
+Can we base insufficiency on a structured response field instead of parsing the response text?
+
+---
+
+**Cursor**
+
+Yes — a structured field is cleaner than text heuristics. I'll inspect how answers are streamed and stored, then wire insufficiency through that path.
+
+I have enough context. Defaulting to `streamObject` with a schema so `insufficient` is first-class, then persisting it on the message.
+
+---
+
+**User**
+
+We should do the same for the sources instead of determining which sources matched after the fact.
+
+---
+
+**Cursor**
+
+That makes sense — I'll check how citations are resolved today, then update the plan so sources come from the structured response too.
+
+Updating the plan so citations come from structured paragraph `chunkIds` instead of post-hoc marker parsing.
+
+Updated the plan so citations are structured too, not just insufficiency.
+
+The model object is now:
+
+- `insufficient: boolean`
+- `paragraphs: { text, chunkIds[] }[]`
+
+The server validates those `chunkIds` against the evidence pack and **writes** the `[[cite:n]]` markers for storage/UI. No more scraping cite markers (or “no info” phrasing) out of free text.
+
+Existing paragraph pills stay; only the authorship of citations moves into the structured field.
+
+---
+
+**User**
+
+build
+
+---
+
+**Cursor**
+
+Implementing the structured answer plan: schema flag, `streamObject` with paragraph `chunkIds`, then SSE/UI wiring.
+
+AI SDK 7 deprecates `streamObject` — I'll use `streamText` with `Output.object` instead, and check the docs for the exact shape.
+
+Implementing core pieces: schema, `buildCitedMarkdown`, and the chat API using `streamText` + `Output.object` (AI SDK 7).
+
+Fixing streaming to send absolute text snapshots (structured output can rewrite mid-string) and wiring the client.
+
+Done. Answers are now structured instead of post-parsed.
+
+**Model output** (`streamText` + `Output.object`):
+```ts
+{ insufficient: boolean, paragraphs: { text, chunkIds[] }[] }
+```
+
+**Server** validates `chunkIds`, injects `[[cite:n]]` for storage/UI, and persists `insufficient` on `chatEntries`.
+
+**UI** hides citation pills when `insufficient` is true (streamed event or stored field).
+
+`bun fix` and the citation/SSE unit tests are green.
+

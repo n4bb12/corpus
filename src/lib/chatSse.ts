@@ -8,6 +8,7 @@ export type ChatSseResult = {
   done: boolean
   error: string | null
   text: string
+  insufficient: boolean | null
 }
 
 export type StreamCitation = {
@@ -23,6 +24,7 @@ export type StreamCitation = {
 export type ChatSseHandlers = {
   onText?: (text: string) => void
   onCitations?: (citations: StreamCitation[]) => void
+  onInsufficient?: (insufficient: boolean) => void
 }
 
 function isStreamCitation(value: unknown): value is StreamCitation {
@@ -122,6 +124,7 @@ export async function consumeChatSse(
       done: false,
       error: "No answer came back. Try again.",
       text: "",
+      insufficient: null,
     }
   }
 
@@ -130,6 +133,7 @@ export async function consumeChatSse(
   let done = false
   let error: string | null = null
   let text = ""
+  let insufficient: boolean | null = null
 
   while (true) {
     const { done: streamDone, value } = await reader.read()
@@ -159,6 +163,18 @@ export async function consumeChatSse(
         }
 
         if (
+          event === "insufficient" &&
+          data &&
+          typeof data === "object" &&
+          "insufficient" in data &&
+          typeof data.insufficient === "boolean"
+        ) {
+          insufficient = data.insufficient
+          handlers.onInsufficient?.(data.insufficient)
+          return
+        }
+
+        if (
           event === "citations" &&
           data &&
           typeof data === "object" &&
@@ -169,19 +185,21 @@ export async function consumeChatSse(
           return
         }
 
-        if (
-          event === "text" &&
-          data &&
-          typeof data === "object" &&
-          "delta" in data &&
-          typeof data.delta === "string"
-        ) {
-          text += data.delta
-          handlers.onText?.(text)
+        if (event === "text" && data && typeof data === "object") {
+          if ("text" in data && typeof data.text === "string") {
+            text = data.text
+            handlers.onText?.(text)
+            return
+          }
+
+          if ("delta" in data && typeof data.delta === "string") {
+            text += data.delta
+            handlers.onText?.(text)
+          }
         }
       },
     )
   }
 
-  return { done, error, text }
+  return { done, error, text, insufficient }
 }

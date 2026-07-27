@@ -319,6 +319,7 @@ export const finalizeAssistant = mutation({
       v.literal("canceled"),
     ),
     errorMessage: v.optional(v.string()),
+    insufficient: v.optional(v.boolean()),
     citations: v.optional(
       v.array(
         v.object({
@@ -367,6 +368,7 @@ export const finalizeAssistant = mutation({
       content: args.content,
       status: args.status,
       errorMessage: args.errorMessage,
+      insufficient: args.insufficient,
       progressLabel: undefined,
     })
 

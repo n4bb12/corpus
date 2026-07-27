@@ -120,6 +120,7 @@ export default defineSchema({
     role: v.optional(chatRole),
     content: v.optional(v.string()),
     status: v.optional(generationStatus),
+    insufficient: v.optional(v.boolean()),
     sourceRevision: v.optional(v.number()),
     selectionHash: v.optional(v.string()),
     activeSourceCount: v.optional(v.number()),

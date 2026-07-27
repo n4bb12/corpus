@@ -3,8 +3,78 @@ export type CitationRef = {
   excerpt?: string
 }
 
+export type AnswerParagraph = {
+  text: string
+  chunkIds: string[]
+}
+
 const CITATION_PATTERN = /\[\[cite:([^\]]+)\]\]/g
 const NUMBERED_CITATION_PATTERN = /\[\[cite:(\d+)\]\]/g
+
+/** Join paragraph texts for streaming display before markers are injected. */
+export function joinParagraphText(
+  paragraphs: Array<{ text?: string } | undefined> | undefined,
+) {
+  if (!paragraphs?.length) {
+    return ""
+  }
+
+  return paragraphs
+    .map((paragraph) => paragraph?.text?.trim() ?? "")
+    .filter(Boolean)
+    .join("\n\n")
+}
+
+/**
+ * Validate structured paragraph chunkIds and inject dense `[[cite:n]]` markers.
+ * Numbering follows first-seen valid chunk order across paragraphs.
+ */
+export function buildCitedMarkdown(
+  paragraphs: AnswerParagraph[],
+  allowedChunkIds: Set<string>,
+) {
+  const citations: CitationRef[] = []
+  const invalid: string[] = []
+  const idToIndex = new Map<string, number>()
+
+  const content = paragraphs
+    .map((paragraph) => {
+      const text = paragraph.text.trim()
+
+      if (!text) {
+        return ""
+      }
+
+      const markers: string[] = []
+
+      for (const chunkId of paragraph.chunkIds) {
+        if (!allowedChunkIds.has(chunkId)) {
+          invalid.push(chunkId)
+          continue
+        }
+
+        let index = idToIndex.get(chunkId)
+
+        if (index === undefined) {
+          citations.push({ chunkId })
+          index = citations.length
+          idToIndex.set(chunkId, index)
+        }
+
+        markers.push(`[[cite:${index}]]`)
+      }
+
+      if (!markers.length) {
+        return text
+      }
+
+      return `${text} ${markers.join(" ")}`
+    })
+    .filter(Boolean)
+    .join("\n\n")
+
+  return { content, citations, invalid }
+}
 
 /** Collect `[[cite:id,…]]` markers → numbered `[[cite:n]]` + ordered refs. */
 export function parseCitationMarkers(text: string) {

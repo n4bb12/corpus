@@ -50,6 +50,7 @@ export function ChatPane({
           entries={chat.entries}
           streamedContent={chat.streamedContent}
           streamedCitations={chat.streamedCitations}
+          streamedInsufficient={chat.streamedInsufficient}
           optimisticUserPrompt={chat.optimisticUserPrompt}
           hasReadySources={chat.readySelected.length > 0}
           canRetry={chat.canRetry}

@@ -17,18 +17,22 @@ type ChatCitation = {
 export type AssistantContentProps = {
   content: string
   citations: ChatCitation[]
+  insufficient?: boolean
   onCite: (args: ChatCiteArgs) => void
 }
 
 export function AssistantContent({
   content,
   citations,
+  insufficient = false,
   onCite,
 }: AssistantContentProps) {
-  const hasInlineMarkers = /\[\[cite:\d+\]\]/.test(content)
+  const visibleCitations = insufficient ? [] : citations
+  const displayContent = insufficient ? stripCitationMarkers(content) : content
+  const hasInlineMarkers = /\[\[cite:\d+\]\]/.test(displayContent)
 
-  if (!citations.length || !hasInlineMarkers) {
-    const html = marked.parse(stripCitationMarkers(content), {
+  if (!visibleCitations.length || !hasInlineMarkers) {
+    const html = marked.parse(stripCitationMarkers(displayContent), {
       async: false,
     }) as string
 
@@ -38,10 +42,10 @@ export function AssistantContent({
           className="prose prose-sm dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: html }}
         />
-        {citations.length ? (
+        {visibleCitations.length ? (
           <CitationPills
-            citations={citations}
-            indexes={citations.map((_, index) => index + 1)}
+            citations={visibleCitations}
+            indexes={visibleCitations.map((_, index) => index + 1)}
             onCite={onCite}
           />
         ) : null}
@@ -49,7 +53,7 @@ export function AssistantContent({
     )
   }
 
-  const paragraphs = splitCitedParagraphs(content)
+  const paragraphs = splitCitedParagraphs(displayContent)
 
   return (
     <div className="space-y-3">
@@ -69,7 +73,7 @@ export function AssistantContent({
             ) : null}
             {paragraph.citationIndexes.length ? (
               <CitationPills
-                citations={citations}
+                citations={visibleCitations}
                 indexes={paragraph.citationIndexes}
                 onCite={onCite}
               />

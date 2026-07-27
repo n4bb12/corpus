@@ -75,6 +75,7 @@ describe("chat sse", () => {
   test("reports each accumulated text update while consuming", async () => {
     const updates: string[] = []
     const citationTitles: string[] = []
+    const insufficientFlags: boolean[] = []
     const response = new Response(
       new ReadableStream({
         start(controller) {
@@ -86,10 +87,15 @@ describe("chat sse", () => {
             ),
           )
           controller.enqueue(
+            encoder.encode(
+              'event: insufficient\ndata: {"insufficient":false}\n\n',
+            ),
+          )
+          controller.enqueue(
             encoder.encode('event: text\ndata: {"delta":"Hello"}\n\n'),
           )
           controller.enqueue(
-            encoder.encode('event: text\ndata: {"delta":" world"}\n\n'),
+            encoder.encode('event: text\ndata: {"text":"Hello world"}\n\n'),
           )
           controller.enqueue(encoder.encode("event: done\ndata: {}\n\n"))
           controller.close()
@@ -102,11 +108,19 @@ describe("chat sse", () => {
       onCitations: (citations) => {
         citationTitles.push(...citations.map((citation) => citation.liveTitle))
       },
+      onInsufficient: (insufficient) => {
+        insufficientFlags.push(insufficient)
+      },
     })
 
     expect(citationTitles).toMatchInlineSnapshot(`
       [
         "Research notes",
+      ]
+    `)
+    expect(insufficientFlags).toMatchInlineSnapshot(`
+      [
+        false,
       ]
     `)
     expect(updates).toMatchInlineSnapshot(`
@@ -119,6 +133,7 @@ describe("chat sse", () => {
       {
         "done": true,
         "error": null,
+        "insufficient": false,
         "text": "Hello world",
       }
     `)

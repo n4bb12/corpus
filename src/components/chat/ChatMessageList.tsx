@@ -17,6 +17,7 @@ export type ChatMessageListProps = {
   entries: ChatListEntry[] | undefined
   streamedContent: string | null
   streamedCitations: StreamCitation[]
+  streamedInsufficient: boolean | null
   optimisticUserPrompt: string | null
   hasReadySources: boolean
   canRetry: boolean
@@ -30,6 +31,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   entries,
   streamedContent,
   streamedCitations,
+  streamedInsufficient,
   optimisticUserPrompt,
   hasReadySources,
   canRetry,
@@ -109,6 +111,7 @@ export const ChatMessageList = memo(function ChatMessageList({
                   : null
               }
               streamedCitations={streamedCitations}
+              streamedInsufficient={streamedInsufficient}
               canRetry={canRetry}
               onCite={onCite}
               onRetry={onRetry}

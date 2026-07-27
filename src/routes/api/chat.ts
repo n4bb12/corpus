@@ -1,6 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { createFileRoute } from "@tanstack/react-router"
-import { generateText, smoothStream, streamText } from "ai"
+import { generateText, Output, streamText } from "ai"
 import { api } from "src/convex/_generated/api"
 import {
   fetchAuthAction,
@@ -11,19 +11,56 @@ import {
 import { formatChatError } from "src/lib/chatErrors"
 import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import {
-  isInsufficiencyAnswer,
-  parseCitationMarkers,
-  remapCitationMarkers,
-  stripCitationMarkers,
-  validateCitations,
+  type AnswerParagraph,
+  buildCitedMarkdown,
+  joinParagraphText,
 } from "src/lib/citations"
 import { requireEnv } from "src/lib/env"
 import { MODELS } from "src/lib/limits"
+import { z } from "zod"
+
+const answerSchema = z.object({
+  insufficient: z.boolean(),
+  paragraphs: z.array(
+    z.object({
+      text: z.string(),
+      chunkIds: z.array(z.string()),
+    }),
+  ),
+})
+
+type AnswerObject = z.infer<typeof answerSchema>
 
 function encodeSse(event: string, data: unknown) {
   return new TextEncoder().encode(
     `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`,
   )
+}
+
+function normalizeParagraphs(paragraphs: unknown): AnswerParagraph[] {
+  if (!Array.isArray(paragraphs)) {
+    return []
+  }
+
+  return paragraphs.flatMap((paragraph) => {
+    if (!paragraph || typeof paragraph !== "object") {
+      return []
+    }
+
+    const text =
+      "text" in paragraph && typeof paragraph.text === "string"
+        ? paragraph.text
+        : ""
+    const chunkIds =
+      "chunkIds" in paragraph && Array.isArray(paragraph.chunkIds)
+        ? paragraph.chunkIds.filter(
+            (chunkId: unknown): chunkId is string =>
+              typeof chunkId === "string",
+          )
+        : []
+
+    return [{ text, chunkIds }]
+  })
 }
 
 export const Route = createFileRoute("/api/chat")({
@@ -90,6 +127,7 @@ export const Route = createFileRoute("/api/chat")({
             let lastPersist = 0
             let persistInFlight: Promise<unknown> | null = null
             let settled = false
+            let emittedInsufficient: boolean | null = null
 
             const persistLatest = () => {
               if (persistInFlight) {
@@ -119,15 +157,41 @@ export const Route = createFileRoute("/api/chat")({
               })
             }
 
+            const emitInsufficient = (insufficient: boolean) => {
+              if (emittedInsufficient === insufficient) {
+                return
+              }
+
+              emittedInsufficient = insufficient
+              streamController.enqueue(
+                encodeSse("insufficient", { insufficient }),
+              )
+            }
+
+            const emitText = (nextText: string) => {
+              if (nextText === fullText) {
+                return
+              }
+
+              fullText = nextText
+              streamController.enqueue(encodeSse("text", { text: nextText }))
+            }
+
             const finalize = async (args: {
               content: string
               status: "complete" | "failed" | "canceled"
               errorMessage?: string
+              insufficient?: boolean
               citations?: Array<{
                 sourceId: never
                 chunkId: never
                 sourceTitleSnapshot: string
                 excerpt: string
+                locator?: {
+                  startOffset: number
+                  endOffset: number
+                  ordinal: number
+                }
                 order: number
               }>
             }) => {
@@ -145,6 +209,7 @@ export const Route = createFileRoute("/api/chat")({
                   content: args.content,
                   status: args.status,
                   errorMessage: args.errorMessage,
+                  insufficient: args.insufficient,
                   citations: args.citations,
                 })
               } catch {
@@ -197,22 +262,28 @@ export const Route = createFileRoute("/api/chat")({
 
               const system = `You are Corpus, a strictly source-grounded assistant.
 Only answer using the supplied evidence chunks.
-If evidence is insufficient, say that the selected sources do not support the answer, and do not include any [[cite:…]] markers.
-For every substantive factual paragraph that answers the question, cite chunk IDs using [[cite:CHUNK_ID]] markers.
+Return a structured object with:
+- insufficient: true when the evidence cannot answer the question; false when it can.
+- paragraphs: ordered answer paragraphs. Each has text (markdown, no [[cite:…]] markers) and chunkIds (evidence chunk IDs that support that paragraph).
+When insufficient is true, use one clear paragraph and leave every chunkIds array empty.
+When insufficient is false, every substantive factual paragraph must list the chunk IDs it relies on.
 Do not invent facts from general knowledge.
-Never cite chunk IDs that were not supplied.`
+Never include chunk IDs that were not supplied.`
 
               const userPrompt = `Evidence:\n${evidenceBlock || "(none)"}\n\nRecent exchanges:\n${historyText || "(none)"}\n\nQuestion:\n${prepared.prompt}`
+              const answerOutput = Output.object({ schema: answerSchema })
 
               if (evidencePack.insufficient) {
                 fullText =
                   "The selected sources do not support an answer to that question."
+                emitInsufficient(true)
                 await finalize({
                   content: fullText,
                   status: "complete",
+                  insufficient: true,
                   citations: [],
                 })
-                streamController.enqueue(encodeSse("text", { delta: fullText }))
+                streamController.enqueue(encodeSse("text", { text: fullText }))
                 streamController.enqueue(encodeSse("done", {}))
                 streamController.close()
                 return
@@ -264,31 +335,36 @@ Never cite chunk IDs that were not supplied.`
               )
               await emitStatus(CHAT_PROGRESS.writing)
 
+              const allowed = new Set(
+                evidencePack.evidence.map(
+                  (item: (typeof evidencePack.evidence)[number]) =>
+                    String(item.chunkId),
+                ),
+              )
+
               const result = streamText({
                 model: openai(MODELS.chat),
                 system,
                 prompt: userPrompt,
                 abortSignal: controller.signal,
-                experimental_transform: smoothStream({
-                  delayInMs: 20,
-                  chunking: "word",
-                }),
+                output: answerOutput,
               })
 
-              for await (const part of result.stream) {
-                if (part.type === "error") {
-                  throw part.error instanceof Error
-                    ? part.error
-                    : new Error(formatChatError(part.error))
+              let latestAnswer: AnswerObject | null = null
+
+              for await (const partial of result.partialOutputStream) {
+                if (typeof partial.insufficient === "boolean") {
+                  emitInsufficient(partial.insufficient)
                 }
 
-                if (part.type !== "text-delta") {
-                  continue
-                }
+                const paragraphs = normalizeParagraphs(partial.paragraphs)
+                const nextText =
+                  typeof partial.insufficient === "boolean" &&
+                  partial.insufficient
+                    ? joinParagraphText(paragraphs)
+                    : buildCitedMarkdown(paragraphs, allowed).content
 
-                const delta = part.text
-                fullText += delta
-                streamController.enqueue(encodeSse("text", { delta }))
+                emitText(nextText)
 
                 const now = Date.now()
 
@@ -298,35 +374,50 @@ Never cite chunk IDs that were not supplied.`
                 }
               }
 
-              if (!fullText.trim()) {
+              const output = await result.output
+
+              if (!output) {
                 throw new Error("No answer came back. Try again.")
               }
 
-              let parsed = parseCitationMarkers(fullText)
-              const allowed = new Set(
-                evidencePack.evidence.map(
-                  (item: (typeof evidencePack.evidence)[number]) =>
-                    String(item.chunkId),
-                ),
-              )
-              let validation = validateCitations(parsed.citations, allowed)
+              latestAnswer = output
 
-              if (validation.invalid.length) {
+              let paragraphs = normalizeParagraphs(latestAnswer.paragraphs)
+              let insufficient = latestAnswer.insufficient
+              let built = buildCitedMarkdown(paragraphs, allowed)
+
+              if (!insufficient && built.invalid.length) {
                 const retry = await generateText({
                   model: openai(MODELS.chat),
                   system: `${system}\nOnly cite these chunk IDs: ${[...allowed].join(", ")}`,
                   prompt: userPrompt,
+                  output: answerOutput,
                 })
-                fullText = retry.text
-                parsed = parseCitationMarkers(fullText)
-                validation = validateCitations(parsed.citations, allowed)
+
+                if (!retry.output) {
+                  throw new Error("No answer came back. Try again.")
+                }
+
+                latestAnswer = retry.output
+                paragraphs = normalizeParagraphs(latestAnswer.paragraphs)
+                insufficient = latestAnswer.insufficient
+                built = buildCitedMarkdown(paragraphs, allowed)
               }
 
-              if (isInsufficiencyAnswer(parsed.text || fullText)) {
-                const content = stripCitationMarkers(parsed.text || fullText)
+              emitInsufficient(insufficient)
+
+              if (insufficient) {
+                const content = joinParagraphText(paragraphs)
+
+                if (!content.trim()) {
+                  throw new Error("No answer came back. Try again.")
+                }
+
+                emitText(content)
                 await finalize({
                   content,
                   status: "complete",
+                  insufficient: true,
                   citations: [],
                 })
                 streamController.enqueue(encodeSse("done", {}))
@@ -334,10 +425,11 @@ Never cite chunk IDs that were not supplied.`
                 return
               }
 
-              if (validation.invalid.length) {
+              if (built.invalid.length || !built.content.trim()) {
                 await finalize({
-                  content: parsed.text || fullText,
+                  content: built.content || joinParagraphText(paragraphs),
                   status: "failed",
+                  insufficient: false,
                   errorMessage:
                     "The answer couldn't be verified against your sources. Try again.",
                 })
@@ -351,7 +443,9 @@ Never cite chunk IDs that were not supplied.`
                 return
               }
 
-              const citations = validation.valid.map((citation, order) => {
+              emitText(built.content)
+
+              const citations = built.citations.map((citation, order) => {
                 const evidence = evidencePack.evidence.find(
                   (item: (typeof evidencePack.evidence)[number]) =>
                     String(item.chunkId) === citation.chunkId,
@@ -385,15 +479,10 @@ Never cite chunk IDs that were not supplied.`
                   "Source",
               }))
 
-              const content = remapCitationMarkers(
-                parsed.text,
-                parsed.citations,
-                validation.valid,
-              )
-
               await finalize({
-                content,
+                content: built.content,
                 status: "complete",
+                insufficient: false,
                 citations: titled,
               })
 

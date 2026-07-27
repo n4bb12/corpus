@@ -29,6 +29,9 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   const [streamedCitations, setStreamedCitations] = useState<StreamCitation[]>(
     [],
   )
+  const [streamedInsufficient, setStreamedInsufficient] = useState<
+    boolean | null
+  >(null)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
   const abortRef = useRef<AbortController | null>(null)
@@ -85,6 +88,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     setError(null)
     setStreamedContent(null)
     setStreamedCitations([])
+    setStreamedInsufficient(null)
 
     if (!retryAssistantId) {
       setOptimisticSubmission({
@@ -129,6 +133,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
       const result = await consumeChatSse(response, {
         onText: setStreamedContent,
         onCitations: setStreamedCitations,
+        onInsufficient: setStreamedInsufficient,
       })
 
       if (result.error) {
@@ -171,6 +176,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     streaming,
     streamedContent,
     streamedCitations,
+    streamedInsufficient,
     canRetry,
     optimisticUserPrompt,
     send,

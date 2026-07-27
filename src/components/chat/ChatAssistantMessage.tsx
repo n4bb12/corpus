@@ -15,6 +15,7 @@ export type ChatAssistantMessageProps = {
   entries: ChatListEntry[] | undefined
   streamedContent: string | null
   streamedCitations: StreamCitation[]
+  streamedInsufficient: boolean | null
   canRetry: boolean
   onCite: (args: ChatCiteArgs) => void
   onRetry: (prompt: string, assistantId: string) => void
@@ -25,6 +26,7 @@ export function ChatAssistantMessage({
   entries,
   streamedContent,
   streamedCitations,
+  streamedInsufficient,
   canRetry,
   onCite,
   onRetry,
@@ -34,6 +36,8 @@ export function ChatAssistantMessage({
     : null
   const content = streamed?.content ?? entry.content
   const citations = streamed?.citations ?? entry.citations ?? []
+  const insufficient =
+    streamedContent !== null ? !!streamedInsufficient : !!entry.insufficient
   const latestFailed =
     canRetry &&
     (entry.status === "failed" ||
@@ -59,6 +63,7 @@ export function ChatAssistantMessage({
         <AssistantContent
           content={content}
           citations={citations}
+          insufficient={insufficient}
           onCite={onCite}
         />
       ) : null}
