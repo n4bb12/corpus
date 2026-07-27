@@ -8,8 +8,8 @@ import {
 import type { ReactNode } from "react"
 import { BrandLockup } from "src/components/layout/BrandLockup"
 import { ThemeScript } from "src/components/layout/ThemeScript"
-import { Button } from "src/components/ui/button"
-import { TooltipProvider } from "src/components/ui/tooltip"
+import { Button } from "src/components/ui/shadcn/button"
+import { TooltipProvider } from "src/components/ui/shadcn/tooltip"
 import { AppConvexProvider } from "src/integrations/convex/provider"
 import styles from "src/styles.css?url"
 

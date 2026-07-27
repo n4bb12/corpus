@@ -1,4 +1,4 @@
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 import { cn } from "src/lib/utils"
 

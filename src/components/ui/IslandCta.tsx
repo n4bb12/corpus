@@ -1,6 +1,6 @@
 import { ArrowUpRight } from "lucide-react"
 import type { ComponentProps, ReactNode } from "react"
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import { cn } from "src/lib/utils"
 
 export type IslandCtaProps = ComponentProps<typeof Button> & {

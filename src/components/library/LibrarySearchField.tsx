@@ -1,5 +1,5 @@
 import { Search, X } from "lucide-react"
-import { Input } from "src/components/ui/input"
+import { Input } from "src/components/ui/shadcn/input"
 
 export type LibrarySearchFieldProps = {
 	value: string

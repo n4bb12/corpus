@@ -1,9 +1,9 @@
 import { Layers, Square } from "lucide-react"
 import { Bezel } from "src/components/ui/Bezel"
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import { IslandCta } from "src/components/ui/IslandCta"
 import { PendingLabel } from "src/components/ui/PendingLabel"
-import { Textarea } from "src/components/ui/textarea"
+import { Textarea } from "src/components/ui/shadcn/textarea"
 import { LIMITS } from "src/lib/limits"
 
 export type ChatComposerProps = {

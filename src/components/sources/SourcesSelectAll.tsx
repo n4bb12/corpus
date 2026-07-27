@@ -1,4 +1,4 @@
-import { Checkbox } from "src/components/ui/checkbox"
+import { Checkbox } from "src/components/ui/shadcn/checkbox"
 import type { Id } from "src/convex/_generated/dataModel"
 
 export type SourcesSelectAllProps = {

@@ -1,4 +1,4 @@
-import { Popover, PopoverContent } from "src/components/ui/popover"
+import { Popover, PopoverContent } from "src/components/ui/shadcn/popover"
 import { markdownToPlainText } from "src/lib/markdown_plain"
 
 export type CitationExcerptPopoverProps = {

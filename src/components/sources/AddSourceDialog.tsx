@@ -7,7 +7,7 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-} from "src/components/ui/dialog"
+} from "src/components/ui/shadcn/dialog"
 import type { Id } from "src/convex/_generated/dataModel"
 
 export type AddSourceDialogProps = {

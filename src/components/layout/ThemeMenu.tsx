@@ -1,12 +1,12 @@
 import { Monitor, Moon, Sun } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "src/components/ui/dropdown-menu"
+} from "src/components/ui/shadcn/dropdown-menu"
 import {
 	applyTheme,
 	resolveTheme,

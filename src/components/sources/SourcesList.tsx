@@ -4,7 +4,7 @@ import { AddSourceCard } from "src/components/sources/AddSourceCard"
 import { SourceListItem } from "src/components/sources/SourceListItem"
 import { SourcesSelectAll } from "src/components/sources/SourcesSelectAll"
 import { UploadingSourceListItem } from "src/components/sources/UploadingSourceListItem"
-import { ScrollArea } from "src/components/ui/scroll-area"
+import { ScrollArea } from "src/components/ui/shadcn/scroll-area"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import type { UploadingSource } from "src/lib/uploading_sources"
 

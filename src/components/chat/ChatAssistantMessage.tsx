@@ -1,7 +1,7 @@
 import type { FunctionReturnType } from "convex/server"
 import { AssistantContent } from "src/components/chat/AssistantContent"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import type { api } from "src/convex/_generated/api"
 import {
 	resolveStreamedAssistantContent,

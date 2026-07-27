@@ -7,15 +7,15 @@ import {
 	Type,
 } from "lucide-react"
 import { memo } from "react"
-import { Button } from "src/components/ui/button"
-import { Checkbox } from "src/components/ui/checkbox"
+import { Button } from "src/components/ui/shadcn/button"
+import { Checkbox } from "src/components/ui/shadcn/checkbox"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "src/components/ui/dropdown-menu"
-import { Label } from "src/components/ui/label"
+} from "src/components/ui/shadcn/dropdown-menu"
+import { Label } from "src/components/ui/shadcn/label"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { formatTitle } from "src/lib/source_title"
 import { cn } from "src/lib/utils"

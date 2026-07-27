@@ -1,6 +1,6 @@
 import { LogOut, User } from "lucide-react"
 import { useState } from "react"
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "src/components/ui/dropdown-menu"
+} from "src/components/ui/shadcn/dropdown-menu"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 import { authClient } from "src/lib/auth-client"
 import { beginSignOut } from "src/lib/use-signed-in"

@@ -1,11 +1,11 @@
 import { MoreHorizontal } from "lucide-react"
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "src/components/ui/dropdown-menu"
+} from "src/components/ui/shadcn/dropdown-menu"
 
 export type NotebookCardMenuProps = {
 	label: string

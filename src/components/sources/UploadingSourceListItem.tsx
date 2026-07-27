@@ -1,5 +1,5 @@
 import { LoaderCircle } from "lucide-react"
-import { Checkbox } from "src/components/ui/checkbox"
+import { Checkbox } from "src/components/ui/shadcn/checkbox"
 import { formatTitle } from "src/lib/source_title"
 import type { UploadingSource } from "src/lib/uploading_sources"
 

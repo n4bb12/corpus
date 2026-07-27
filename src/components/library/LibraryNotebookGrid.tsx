@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from "date-fns"
 import { AddNotebookCard } from "src/components/library/AddNotebookCard"
 import { NotebookCard } from "src/components/library/NotebookCard"
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import type { Id } from "src/convex/_generated/dataModel"
 import { cn } from "src/lib/utils"
 

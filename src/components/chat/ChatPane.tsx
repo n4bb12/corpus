@@ -5,8 +5,8 @@ import {
 } from "src/components/chat/ChatMessageList"
 import { ClearChatDialog } from "src/components/chat/ClearChatDialog"
 import { useChatPane } from "src/components/chat/useChatPane"
-import { Button } from "src/components/ui/button"
-import { ScrollArea } from "src/components/ui/scroll-area"
+import { Button } from "src/components/ui/shadcn/button"
+import { ScrollArea } from "src/components/ui/shadcn/scroll-area"
 import type { Id } from "src/convex/_generated/dataModel"
 
 export type ChatPaneProps = {

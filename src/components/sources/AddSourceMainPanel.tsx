@@ -1,8 +1,8 @@
 import { motion } from "motion/react"
 import type { RefObject } from "react"
 import { AddSourceFileDropzone } from "src/components/sources/AddSourceFileDropzone"
-import { Button } from "src/components/ui/button"
-import { Input } from "src/components/ui/input"
+import { Button } from "src/components/ui/shadcn/button"
+import { Input } from "src/components/ui/shadcn/input"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 import { layoutTransition } from "src/lib/motion"
 

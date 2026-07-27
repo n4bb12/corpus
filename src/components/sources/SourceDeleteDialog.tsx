@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import {
 	Dialog,
 	DialogContent,
@@ -7,7 +7,7 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "src/components/ui/dialog"
+} from "src/components/ui/shadcn/dialog"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 
 export type SourceDeleteDialogProps = {

@@ -1,6 +1,6 @@
 import { IslandCta } from "src/components/ui/IslandCta"
-import { Input } from "src/components/ui/input"
-import { Label } from "src/components/ui/label"
+import { Input } from "src/components/ui/shadcn/input"
+import { Label } from "src/components/ui/shadcn/label"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 
 export type SignInEmailFormProps = {

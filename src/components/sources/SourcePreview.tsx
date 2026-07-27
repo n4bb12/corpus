@@ -1,8 +1,8 @@
 import { ArrowLeft } from "lucide-react"
 import { marked } from "marked"
 import { useEffect, useMemo, useRef } from "react"
-import { Button } from "src/components/ui/button"
-import { ScrollArea } from "src/components/ui/scroll-area"
+import { Button } from "src/components/ui/shadcn/button"
+import { ScrollArea } from "src/components/ui/shadcn/scroll-area"
 import {
 	type CitationOffsetRange,
 	resolveCitationOffsets,

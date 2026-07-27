@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { GoogleSignInButton } from "src/components/auth/GoogleSignInButton"
 import { SignInEmailForm } from "src/components/auth/SignInEmailForm"
 import { Eyebrow } from "src/components/ui/Eyebrow"
-import { Separator } from "src/components/ui/separator"
+import { Separator } from "src/components/ui/shadcn/separator"
 import { authClient } from "src/lib/auth-client"
 import {
 	setLastSignInMethod,

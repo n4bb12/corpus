@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Spinner } from "src/components/ui/spinner"
+import { Spinner } from "src/components/ui/shadcn/spinner"
 import { cn } from "src/lib/utils"
 
 export type PendingLabelProps = {

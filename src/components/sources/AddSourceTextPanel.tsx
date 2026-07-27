@@ -1,8 +1,8 @@
 import { motion } from "motion/react"
 import type { RefObject } from "react"
-import { Button } from "src/components/ui/button"
+import { Button } from "src/components/ui/shadcn/button"
 import { PendingLabel } from "src/components/ui/PendingLabel"
-import { Textarea } from "src/components/ui/textarea"
+import { Textarea } from "src/components/ui/shadcn/textarea"
 import { layoutTransition } from "src/lib/motion"
 
 export type AddSourceTextPanelProps = {
