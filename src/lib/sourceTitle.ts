@@ -1,32 +1,11 @@
+import { COMMON_HTML, EntityDecoder } from "@nodable/entities"
 import { markdownToPlainText } from "src/lib/markdownPlain"
 
-const NAMED_ENTITIES: Record<string, string> = {
-  amp: "&",
-  apos: "'",
-  gt: ">",
-  lt: "<",
-  nbsp: " ",
-  quot: '"',
-  mdash: "—",
-  ndash: "–",
-  hellip: "…",
-}
+const htmlEntityDecoder = new EntityDecoder({ namedEntities: COMMON_HTML })
 
+/** Decode numeric + common named HTML entities via @nodable/entities. */
 export function decodeHtmlEntities(value: string) {
-  return value
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => {
-      const codePoint = Number.parseInt(hex, 16)
-
-      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : _
-    })
-    .replace(/&#(\d+);/g, (_, dec: string) => {
-      const codePoint = Number(dec)
-
-      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : _
-    })
-    .replace(/&([a-z]+);/gi, (match, name: string) => {
-      return NAMED_ENTITIES[name.toLowerCase()] ?? match
-    })
+  return htmlEntityDecoder.decode(value)
 }
 
 /** Decode entities, collapse whitespace, truncate to 100 chars (or fallback). */
