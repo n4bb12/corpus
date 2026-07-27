@@ -17,6 +17,7 @@ import {
 import { formatTitle, titleFromSourceLabel } from "src/lib/sourceTitle"
 import { z } from "zod"
 import { internal } from "./_generated/api"
+import type { Id } from "./_generated/dataModel"
 import { internalAction } from "./_generated/server"
 
 const titleSchema = z.object({
@@ -76,8 +77,8 @@ export const maybeGenerateNotebookTitle = internalAction({
 })
 
 /**
- * Rebuild an automatic title from ready sources (digests preferred, markdown
- * fallback). No-op when the title is manual.
+ * Rebuild an automatic title from available source evidence, including digest
+ * drafts produced during indexing. No-op when the title is manual.
  */
 export const refreshNotebookTitle = internalAction({
   args: {
@@ -99,8 +100,9 @@ export const refreshNotebookTitle = internalAction({
         : (notebook.titleRefreshGeneration ?? 0)
 
     // Only skip starting work when a newer refresh was already scheduled.
-    // Finished results always apply — overlapping LLM calls must not leave
-    // the notebook untitled just because another source finished mid-flight.
+    // Finished results may still apply when their sources remain eligible —
+    // overlapping LLM calls must not leave the notebook untitled just because
+    // another source finished mid-flight.
     if (
       typeof args.generation === "number" &&
       isStaleTitleRefresh(notebook.titleRefreshGeneration, args.generation)
@@ -131,9 +133,9 @@ export const refreshNotebookTitle = internalAction({
         latest &&
         !isStaleTitleRefresh(latest.titleRefreshGeneration, generation)
       ) {
-        await ctx.runMutation(internal.titlesHelpers.setTitleState, {
+        await ctx.runMutation(internal.titlesHelpers.clearAutomaticTitle, {
           notebookId: args.notebookId,
-          titleGenerationState: "idle",
+          generation,
         })
       }
 
@@ -142,7 +144,7 @@ export const refreshNotebookTitle = internalAction({
 
     const excerpts: string[] = []
     const digests: string[] = []
-    const includedSourceIds: string[] = []
+    const includedSourceIds: Array<Id<"sources">> = []
     const sourceLabels: string[] = []
 
     for (const source of sources.slice(0, LIMITS.sourcesPerNotebook)) {
@@ -159,7 +161,7 @@ export const refreshNotebookTitle = internalAction({
         const sourceId = String(source._id)
         excerpts.push(`### source:${sourceId} — ${heading}\n${digest}`)
         digests.push(digest)
-        includedSourceIds.push(sourceId)
+        includedSourceIds.push(source._id)
         continue
       }
 
@@ -182,7 +184,7 @@ export const refreshNotebookTitle = internalAction({
         const sourceId = String(source._id)
         excerpts.push(`### source:${sourceId} — ${heading}\n${markdown}`)
         digests.push(markdown)
-        includedSourceIds.push(sourceId)
+        includedSourceIds.push(source._id)
       } catch {
         // Skip unreadable sources; others may still title the notebook.
       }
@@ -231,13 +233,14 @@ ${corpus}`,
       const title = cleanGeneratedTitle(result.output?.title ?? "")
       const coveredSourceIds = new Set(result.output?.sourceIds ?? [])
       const coversEverySource = includedSourceIds.every((sourceId) =>
-        coveredSourceIds.has(sourceId),
+        coveredSourceIds.has(String(sourceId)),
       )
 
       if (coversEverySource && acceptNotebookTitle(title, sourceLabels)) {
         await ctx.runMutation(internal.titlesHelpers.applyGeneratedTitle, {
           notebookId: args.notebookId,
           title,
+          sourceIds: includedSourceIds,
         })
         return
       }
@@ -253,6 +256,7 @@ ${corpus}`,
         await ctx.runMutation(internal.titlesHelpers.applyGeneratedTitle, {
           notebookId: args.notebookId,
           title: fallbackLabel,
+          sourceIds: includedSourceIds,
         })
         return
       }

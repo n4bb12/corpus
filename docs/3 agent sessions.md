@@ -8742,3 +8742,56 @@ Commits:
 
 All 86 tests and type checks pass; working tree is clean.
 
+# Notebook title update process
+_Exported on 7/28/2026 at 01:47:27 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Can we summarize and update notebook title before indexing or in parallel to indexing? That would give us a title earlier and speed up processing.
+
+---
+
+**Cursor**
+
+Yes. Currently the pipeline is strictly sequential:
+
+`extract → chunk → embed/index → summarize → ready → title refresh`
+
+A better flow is:
+
+`extract → chunk → [embed/index || summarize → title refresh] → ready`
+
+The digest only needs chunk text, not embeddings. To update the title before indexing finishes:
+
+1. Generate the digest using temporary chunk ordinals.
+2. Store its text as a draft and trigger title refresh immediately.
+3. Embed and insert chunks concurrently.
+4. Map digest citations to the inserted chunk IDs and finalize the digest.
+5. If indexing fails, refresh the title again to exclude that source.
+
+This requires title queries to include digest-ready sources that are still processing; they currently only include sources whose state is `"ready"`. It should reduce total latency from roughly `embedding + summarization + title` to `max(embedding, summarization/title)`.
+
+---
+
+**User**
+
+Yes
+
+---
+
+**Cursor**
+
+I’ll move digest generation onto the embedding critical path and use its draft text to trigger an early title refresh. I’ll also make failed indexing remove that draft from subsequent title generation.
+
+Implemented.
+
+- Digest generation now runs concurrently with embedding.
+- Draft digest text triggers notebook title generation while indexing continues.
+- Citations are remapped to persisted chunk IDs afterward.
+- Failed indexing removes draft-based titles safely.
+- Updated the source-digest plan.
+
+Verified with type checks, formatting, linting, and all 86 tests.
+

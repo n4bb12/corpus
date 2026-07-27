@@ -5,8 +5,36 @@ import {
 } from "src/lib/notebookTitlePolicy"
 import { internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
-import { mutation } from "./_generated/server"
+import { type MutationCtx, mutation } from "./_generated/server"
 import { requireSourceOwner } from "./lib/ownership"
+
+async function scheduleNotebookTitleRefresh(
+  ctx: MutationCtx,
+  notebookId: Id<"notebooks">,
+) {
+  const notebook = await ctx.db.get(notebookId)
+
+  if (!notebook || shouldSkipTitleRefresh(notebook.titleOrigin)) {
+    return
+  }
+
+  const generation = (notebook.titleRefreshGeneration ?? 0) + 1
+
+  await ctx.db.patch(notebook._id, {
+    titleRefreshGeneration: generation,
+    titleGenerationState: "pending",
+    updatedAt: Date.now(),
+  })
+
+  await ctx.scheduler.runAfter(
+    TITLE_REFRESH_DEBOUNCE_MS,
+    internal.titles.refreshNotebookTitle,
+    {
+      notebookId,
+      generation,
+    },
+  )
+}
 
 const processingState = v.union(
   v.literal("pending"),
@@ -150,6 +178,29 @@ export const setDigest = mutation({
   },
 })
 
+export const setDigestDraft = mutation({
+  args: {
+    sourceId: v.id("sources"),
+    digestText: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { source } = await requireSourceOwner(ctx, args.sourceId)
+
+    if (source.deletedAt || source.processingState === "failed") {
+      return
+    }
+
+    await ctx.db.patch(source._id, {
+      digestStatus: "pending",
+      digestText: args.digestText,
+      digestCitations: undefined,
+      updatedAt: Date.now(),
+    })
+
+    await scheduleNotebookTitleRefresh(ctx, source.notebookId)
+  },
+})
+
 export const markReady = mutation({
   args: {
     sourceId: v.id("sources"),
@@ -173,26 +224,7 @@ export const markReady = mutation({
       )
     }
 
-    const notebook = await ctx.db.get(source.notebookId)
-
-    if (notebook && !shouldSkipTitleRefresh(notebook.titleOrigin)) {
-      const generation = (notebook.titleRefreshGeneration ?? 0) + 1
-
-      await ctx.db.patch(notebook._id, {
-        titleRefreshGeneration: generation,
-        titleGenerationState: "pending",
-        updatedAt: Date.now(),
-      })
-
-      await ctx.scheduler.runAfter(
-        TITLE_REFRESH_DEBOUNCE_MS,
-        internal.titles.refreshNotebookTitle,
-        {
-          notebookId: source.notebookId,
-          generation,
-        },
-      )
-    }
+    await scheduleNotebookTitleRefresh(ctx, source.notebookId)
   },
 })
 
@@ -202,12 +234,15 @@ export const markFailed = mutation({
     errorCode: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireSourceOwner(ctx, args.sourceId)
-    await ctx.db.patch(args.sourceId, {
+    const { source } = await requireSourceOwner(ctx, args.sourceId)
+
+    await ctx.db.patch(source._id, {
       processingState: "failed",
       selected: false,
       errorCode: args.errorCode,
       updatedAt: Date.now(),
     })
+
+    await scheduleNotebookTitleRefresh(ctx, source.notebookId)
   },
 })

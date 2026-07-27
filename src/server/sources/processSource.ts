@@ -109,7 +109,7 @@ async function summarizeSource(args: {
   sourceTitle: string
   markdown: string
   chunks: Array<{
-    chunkId: Id<"chunks">
+    chunkId: string
     text: string
     ordinal: number
     startOffset: number
@@ -128,24 +128,10 @@ async function summarizeSource(args: {
   try {
     requireEnv("OPENAI_API_KEY")
 
-    let chunks = args.chunks
-
-    if (!chunks.length) {
-      chunks = await args.client.query(api.sources.listChunks, {
-        sourceId: args.sourceId,
-      })
-    }
-
     const digest = await generateSourceDigest({
       sourceTitle: args.sourceTitle,
       markdown: args.markdown,
-      chunks: chunks.map((chunk) => ({
-        chunkId: String(chunk.chunkId),
-        text: chunk.text,
-        startOffset: chunk.startOffset,
-        endOffset: chunk.endOffset,
-        ordinal: chunk.ordinal,
-      })),
+      chunks: args.chunks,
     })
 
     if (!digest) {
@@ -153,31 +139,15 @@ async function summarizeSource(args: {
         sourceId: args.sourceId,
         digestStatus: "failed",
       })
-      return
+      return null
     }
 
-    await args.client.mutation(api.ingestion.setDigest, {
+    await args.client.mutation(api.ingestion.setDigestDraft, {
       sourceId: args.sourceId,
-      digestStatus: "ready",
       digestText: digest.digestText,
-      digestCitations: digest.citations.flatMap((citation) => {
-        const chunk = chunks.find(
-          (entry) => String(entry.chunkId) === citation.chunkId,
-        )
-
-        if (!chunk) {
-          return []
-        }
-
-        return [
-          {
-            chunkId: chunk.chunkId,
-            quote: citation.quote,
-            locator: citation.locator,
-          },
-        ]
-      }),
     })
+
+    return digest
   } catch {
     try {
       await args.client.mutation(api.ingestion.setDigest, {
@@ -187,6 +157,8 @@ async function summarizeSource(args: {
     } catch {
       // Digest fields may not be deployed yet; chat still unlocks via markReady.
     }
+
+    return null
   }
 }
 
@@ -243,23 +215,39 @@ export async function processSourcePipeline(
     })
 
     const embeddingModel = voyage.textEmbedding(MODELS.embed)
-    const { embeddings: vectors } = await embedMany({
-      model: embeddingModel,
-      values: texts,
-      providerOptions: {
-        voyage: {
-          inputType: "document",
+    const draftChunks = texts.map((text, index) => ({
+      chunkId: `draft:${index}`,
+      text,
+      ordinal: locators[index]?.ordinal ?? index,
+      startOffset: locators[index]?.startOffset ?? 0,
+      endOffset: locators[index]?.endOffset ?? text.length,
+    }))
+    const [{ embeddings: vectors }, digest] = await Promise.all([
+      embedMany({
+        model: embeddingModel,
+        values: texts,
+        providerOptions: {
+          voyage: {
+            inputType: "document",
+          },
         },
-      },
-    })
+      }),
+      summarizeSource({
+        client,
+        sourceId,
+        sourceTitle: nextTitle,
+        markdown,
+        chunks: draftChunks,
+      }),
+    ])
 
     const inserted = await client.mutation(api.ingestion.replaceChunks, {
       sourceId,
-      chunks: texts.map((text, index) => ({
-        text,
-        ordinal: locators[index]?.ordinal ?? index,
-        startOffset: locators[index]?.startOffset ?? 0,
-        endOffset: locators[index]?.endOffset ?? text.length,
+      chunks: draftChunks.map((chunk, index) => ({
+        text: chunk.text,
+        ordinal: chunk.ordinal,
+        startOffset: chunk.startOffset,
+        endOffset: chunk.endOffset,
         embedding: vectors[index] ?? [],
       })),
     })
@@ -269,13 +257,32 @@ export async function processSourcePipeline(
         ? inserted
         : await client.query(api.sources.listChunks, { sourceId })
 
-    await summarizeSource({
-      client,
-      sourceId,
-      sourceTitle: nextTitle,
-      markdown,
-      chunks,
-    })
+    if (digest) {
+      const chunksByDraftId = new Map(
+        draftChunks.map((chunk, index) => [chunk.chunkId, chunks[index]]),
+      )
+
+      await client.mutation(api.ingestion.setDigest, {
+        sourceId,
+        digestStatus: "ready",
+        digestText: digest.digestText,
+        digestCitations: digest.citations.flatMap((citation) => {
+          const chunk = chunksByDraftId.get(citation.chunkId)
+
+          if (!chunk) {
+            return []
+          }
+
+          return [
+            {
+              chunkId: chunk.chunkId,
+              quote: citation.quote,
+              locator: citation.locator,
+            },
+          ]
+        }),
+      })
+    }
 
     await client.mutation(api.ingestion.markReady, {
       sourceId,
