@@ -39,7 +39,7 @@ export function ChatPane({
 
       <ScrollArea
         viewportRef={chat.scrollerRef}
-        className="min-h-0 flex-1 overflow-hidden px-4 pb-56"
+        className="min-h-0 flex-1 overflow-hidden px-4 pb-72"
         onViewportScroll={(event) => {
           const node = event.currentTarget
           chat.stickToBottom.current =

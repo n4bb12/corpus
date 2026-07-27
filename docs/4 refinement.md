@@ -3260,3 +3260,22 @@ Highlights:
 - Cheerio for HTML extraction; `@nodable/entities` for entity decoding (+ type shim for Convex)
 - Global agents (dotfiles + Dorkas): blank lines for JSX blocks and for commented/wrapped lines
 
+# Chat thread bottom spacing
+_Exported on 7/27/2026 at 13:07:36 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Increase chat thread bottom spacing.
+
+---
+
+**Cursor**
+
+I'll find the chat thread layout and bump the bottom spacing.
+
+Increasing the scroll area bottom padding so messages clear the floating composer more comfortably.
+
+Increased the chat thread bottom padding from `pb-56` to `pb-72` so the last messages sit farther above the composer.
+
