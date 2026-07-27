@@ -5991,3 +5991,28 @@ Created 9 commits:
 
 Working tree is clean.
 
+# Sign-in description copy
+_Exported on 7/27/2026 at 20:01:36 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Fix the sign-in description copy. "Calm place to read" is a design direction but doesn't make much sense to users.
+
+---
+
+**Cursor**
+
+I'll find the sign-in description copy and replace the design-direction phrasing with something clearer for users.
+
+Checking nearby product copy for tone so the rewrite stays consistent.
+
+Replacing the design-direction phrasing with clearer product language that matches the rest of the app.
+
+Updated the sign-in description to:
+
+> Gather your sources, ask precise questions, and follow every claim back to the passage that supports it.
+
+Same value props, without the “calm place” framing — and aligned with the library page’s “gather sources” language.
+

@@ -25,8 +25,8 @@ export function SignInPage() {
             Turn your sources into answers you can trust.
           </h1>
           <p className="mx-auto max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg lg:mx-0">
-            Corpus is a calm place to collect reading, ask precise questions,
-            and follow every claim back to the passage that supports it.
+            Gather your sources, ask precise questions, and follow every claim
+            back to the passage that supports it.
           </p>
         </motion.div>
 
