@@ -98,3 +98,9 @@ Use the latest version of Shadcn to install new components, like this command to
 ```bash
 pnpm dlx shadcn@latest add button
 ```
+
+## Scrollbars
+
+- Do not use native scrollbars or `scrollbar-gutter` for app UI — they paint a visible rail on classic scrollbar platforms.
+- Lock document scrolling (`html`/`body` overflow hidden). Visible scrolling must use the shadcn `ScrollArea` from `src/components/ui/shadcn/scroll-area`.
+- Do not use `overflow: scroll` / `overflow-y-auto` for app panes, lists, previews, or threads.
