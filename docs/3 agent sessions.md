@@ -8509,3 +8509,28 @@ Resize now refreshes the thread shadow and scroll-down control.
 
 The chat `ResizeObserver` only watched content height and bailed when you weren’t pinned, so viewport resizes (composer growth, pane/window size) never updated `atBottom`. It now observes both the content and the viewport, and always recomputes stick-to-bottom after optionally re-pinning.
 
+# Daily source additions limit
+_Exported on 7/28/2026 at 01:24:09 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+We need this to be less technical. Also, ideally display it before attempting to add sources, e.g. in the add sources modal.
+
+[Request ID: e229c08f4856efe1] Server Error Uncaught Error: Daily source additions limit reached. It resets after 2026-07-27 UTC. at assertIngestionQuota (../src/convex/sources.ts:66:0) at async handler (../src/convex/sources.ts:290:6)
+
+---
+
+**Cursor**
+
+I'll find where the daily source limit is enforced and how the add-sources modal works, so we can show a clearer message up front.
+
+Updating the quota copy and wiring the add-sources modal to show the limit before a failed attempt.
+
+Done. Two changes:
+
+1. **Friendlier copy** — instead of `Daily source additions limit reached. It resets after 2026-07-27 UTC.`, users see: *You've reached today's limit for adding sources. Try again tomorrow.* (Same tone for the chat limit.)
+
+2. **Shown up front** — the Add Source modal loads today’s quota and, when it’s used up, shows that message immediately and disables URL/file/paste actions so they don’t hit a failed attempt first.
+
