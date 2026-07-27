@@ -1,18 +1,10 @@
 import { api } from "src/convex/_generated/api"
-import {
-  fetchAuthAction,
-  fetchAuthMutation,
-  fetchAuthQuery,
-  getToken,
-} from "src/lib/authServer"
+import { fetchAuthMutation, fetchAuthQuery, getToken } from "src/lib/authServer"
 import { formatChatError } from "src/lib/chatErrors"
 import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import { createOpenAiAnswerGenerator } from "src/server/chat/openaiAnswerGenerator"
-import {
-  type EvidencePack,
-  runAnswerTurn,
-  type SourceRecord,
-} from "src/server/chat/runAnswerTurn"
+import { prepareEvidence } from "src/server/chat/prepareEvidence"
+import { runAnswerTurn, type SourceRecord } from "src/server/chat/runAnswerTurn"
 
 function encodeSse(event: string, data: unknown) {
   return new TextEncoder().encode(
@@ -204,41 +196,7 @@ export async function handleChatPost(request: Request) {
       try {
         await emitStatus(CHAT_PROGRESS.looking)
 
-        const evidencePack = (await fetchAuthAction(
-          api.retrieval.prepareEvidence,
-          {
-            notebookId: body.notebookId as never,
-            prompt: prepared.prompt,
-            sourceIds: prepared.sourceIds as never,
-            messageId: prepared.assistantMessageId as never,
-            generationId: prepared.generationId,
-          },
-        )) as EvidencePack
-
-        throwIfCanceled()
-
-        if (evidencePack.insufficient) {
-          fullText =
-            "The selected sources do not support an answer to that question."
-          emitInsufficient(true)
-          await finalize({
-            content: fullText,
-            status: "complete",
-            insufficient: true,
-            citations: [],
-          })
-          streamController.enqueue(encodeSse("text", { text: fullText }))
-          streamController.enqueue(encodeSse("done", {}))
-          streamController.close()
-          return
-        }
-
-        const evidenceSourceIds = [
-          ...new Set(evidencePack.evidence.map((item) => item.sourceId)),
-        ]
-        const titleSourceIds = [
-          ...new Set([...prepared.sourceIds, ...evidenceSourceIds]),
-        ]
+        const titleSourceIds = [...prepared.sourceIds]
         const sources = await Promise.all(
           titleSourceIds.map(async (sourceId) => {
             throwIfCanceled()
@@ -263,13 +221,58 @@ export async function handleChatPost(request: Request) {
           ]),
         )
 
+        const evidencePack = await prepareEvidence({
+          notebookId: body.notebookId,
+          prompt: prepared.prompt,
+          sourceIds: prepared.sourceIds,
+          messageId: prepared.assistantMessageId,
+          generationId: prepared.generationId,
+          sourceTitleById,
+        })
+
+        throwIfCanceled()
+
+        if (evidencePack.insufficient) {
+          fullText =
+            "The selected sources do not support an answer to that question."
+          emitInsufficient(true)
+          await finalize({
+            content: fullText,
+            status: "complete",
+            insufficient: true,
+            citations: [],
+          })
+          streamController.enqueue(encodeSse("text", { text: fullText }))
+          streamController.enqueue(encodeSse("done", {}))
+          streamController.close()
+          return
+        }
+
+        const evidenceSourceIds = [
+          ...new Set(evidencePack.evidence.map((item) => item.sourceId)),
+        ]
+
+        for (const sourceId of evidenceSourceIds) {
+          if (sourcesById.has(sourceId)) {
+            continue
+          }
+
+          throwIfCanceled()
+          const source = await fetchAuthQuery(api.sources.get, {
+            sourceId: sourceId as never,
+          }).catch(() => null)
+          sourcesById.set(sourceId, source as SourceRecord | null)
+          sourceTitleById.set(
+            sourceId,
+            typeof source?.title === "string" ? source.title : "",
+          )
+        }
+
         await emitStatus(CHAT_PROGRESS.writing)
 
         const turn = await runAnswerTurn({
           evidencePack,
-          sourceIds: prepared.sourceIds,
           sourcesById,
-          sourceTitleById,
           history: prepared.history,
           prompt: prepared.prompt,
           generateAnswer,

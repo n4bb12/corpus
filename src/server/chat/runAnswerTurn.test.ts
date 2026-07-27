@@ -36,6 +36,10 @@ const evidencePack = {
   insufficient: false,
   mode: "factual",
   evidenceKind: "chunks",
+  evidenceBlock:
+    "[1] chunk:chunk-1 source:source-1\nPine resin seals wounds on the trunk.",
+  systemAddendum: "",
+  useDigestEvidence: false,
 } satisfies EvidencePack
 
 describe("runAnswerTurn", () => {
@@ -43,11 +47,9 @@ describe("runAnswerTurn", () => {
     const texts: string[] = []
     const turn = await runAnswerTurn({
       evidencePack,
-      sourceIds: ["source-1"],
       sourcesById: new Map([
         ["source-1", { title: "Forest notes", deletedAt: null }],
       ]),
-      sourceTitleById: new Map([["source-1", "Forest notes"]]),
       history: [],
       prompt: "What seals wounds?",
       generateAnswer: fakeGenerator({
@@ -96,11 +98,9 @@ describe("runAnswerTurn", () => {
   test("returns insufficient answers without citations", async () => {
     const turn = await runAnswerTurn({
       evidencePack,
-      sourceIds: ["source-1"],
       sourcesById: new Map([
         ["source-1", { title: "Forest notes", deletedAt: null }],
       ]),
-      sourceTitleById: new Map([["source-1", "Forest notes"]]),
       history: [],
       prompt: "What about Mars?",
       generateAnswer: fakeGenerator({

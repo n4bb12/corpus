@@ -8,11 +8,6 @@ import {
   normalizeNumberedCitedMarkdown,
   parseCitationMarkers,
 } from "src/lib/citations"
-import {
-  formatCorpusEvidence,
-  formatFlatEvidence,
-} from "src/lib/evidencePrompt"
-import { formatDigestEvidence } from "src/lib/sourceDigest"
 import { z } from "zod"
 
 export const answerSchema = z.object({
@@ -62,6 +57,9 @@ export type EvidencePack = {
   mode: "factual" | "corpus"
   evidenceKind?: "digest" | "coverage" | "chunks"
   digestSections?: DigestSection[]
+  evidenceBlock: string
+  systemAddendum: string
+  useDigestEvidence: boolean
 }
 
 export type SourceRecord = {
@@ -217,38 +215,12 @@ function toStreamCitationCatalog(
 
 function buildPrompts(args: {
   evidencePack: EvidencePack
-  sourceIds: string[]
-  sourceTitleById: Map<string, string>
   history: Array<{
     user: { content?: string }
     assistant: { content?: string }
   }>
   prompt: string
 }) {
-  const distinctSourceCount = new Set(
-    args.evidencePack.evidence.map((item) => item.sourceId),
-  ).size
-  const useDigestEvidence =
-    args.evidencePack.evidenceKind === "digest" &&
-    !!args.evidencePack.digestSections?.length
-  const useCorpusLayout =
-    useDigestEvidence ||
-    args.evidencePack.mode === "corpus" ||
-    (distinctSourceCount > 1 && args.evidencePack.mode !== "factual")
-
-  const evidenceBlock = useDigestEvidence
-    ? formatDigestEvidence(
-        args.evidencePack.digestSections ?? [],
-        args.sourceIds,
-      )
-    : useCorpusLayout
-      ? formatCorpusEvidence(
-          args.evidencePack.evidence,
-          args.sourceTitleById,
-          args.sourceIds,
-        )
-      : formatFlatEvidence(args.evidencePack.evidence)
-
   const historyText = args.history
     .map(
       (pair) =>
@@ -256,36 +228,8 @@ function buildPrompts(args: {
     )
     .join("\n\n")
 
-  const sourceNames = args.sourceIds
-    .map((sourceId) => {
-      const title = args.sourceTitleById.get(sourceId)?.trim()
-
-      return title || sourceId
-    })
-    .join("; ")
-
-  const corpusAddendum = useDigestEvidence
-    ? `
-This question is a cross-cutting task over multiple sources.
-Selected sources: ${sourceNames || "(none)"}.
-Evidence is a per-source digest with supporting quotes. Synthesize from the digests; cite only the provided supporting quote chunk ids.
-You must cover every source section that has a digest—do not skip a source, and do not focus on only one source.
-For summaries and briefs, cover each source in turn (or clearly synthesize with citations from each).
-Ignore prior answers that omitted sources; re-answer from the digests below.
-`
-    : useCorpusLayout
-      ? `
-This question is a cross-cutting task over multiple sources.
-Selected sources: ${sourceNames || "(none)"}.
-Evidence is grouped under each source title. You must write at least one grounded paragraph with citations for every source section that has chunks—do not skip a source, and do not focus on only one source.
-For summaries and briefs, cover each source in turn (or clearly synthesize with citations from each).
-For contradictions or contested claims, state agreements and disagreements and cite each side.
-Ignore prior answers that omitted sources; re-answer from the evidence below.
-`
-      : ""
-
   const system = `You are Corpus, a strictly source-grounded assistant.
-Only answer using the supplied evidence ${useDigestEvidence ? "digests and supporting quotes" : "chunks"}.
+Only answer using the supplied evidence ${args.evidencePack.useDigestEvidence ? "digests and supporting quotes" : "chunks"}.
 Return a structured object with:
 - insufficient: true when the evidence cannot answer the question; false when it can.
 - paragraphs: ordered answer paragraphs. Each has text (markdown, no [[cite:…]] markers) then citations (evidence used by that paragraph).
@@ -296,9 +240,9 @@ When insufficient is true, use one clear paragraph and leave every citations arr
 When insufficient is false, every substantive factual paragraph must list the citations it relies on.
 Do not invent facts from general knowledge.
 Never include chunk IDs that were not supplied.
-Never invent or paraphrase quotes; copy them from the evidence.${corpusAddendum}`
+Never invent or paraphrase quotes; copy them from the evidence.${args.evidencePack.systemAddendum}`
 
-  const userPrompt = `Evidence:\n${evidenceBlock || "(none)"}\n\nRecent exchanges:\n${historyText || "(none)"}\n\nQuestion:\n${args.prompt}`
+  const userPrompt = `Evidence:\n${args.evidencePack.evidenceBlock || "(none)"}\n\nRecent exchanges:\n${historyText || "(none)"}\n\nQuestion:\n${args.prompt}`
 
   return { system, userPrompt }
 }
@@ -308,9 +252,7 @@ Never invent or paraphrase quotes; copy them from the evidence.${corpusAddendum}
  */
 export async function runAnswerTurn(args: {
   evidencePack: EvidencePack
-  sourceIds: string[]
   sourcesById: Map<string, SourceRecord | null | undefined>
-  sourceTitleById: Map<string, string>
   history: Array<{
     user: { content?: string }
     assistant: { content?: string }
@@ -330,8 +272,6 @@ export async function runAnswerTurn(args: {
 
   const { system, userPrompt } = buildPrompts({
     evidencePack: args.evidencePack,
-    sourceIds: args.sourceIds,
-    sourceTitleById: args.sourceTitleById,
     history: args.history,
     prompt: args.prompt,
   })

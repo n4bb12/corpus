@@ -1,7 +1,9 @@
 import { v } from "convex/values"
-import { internal } from "./_generated/api"
+import { api, internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
-import { internalAction, internalQuery } from "./_generated/server"
+import { action, internalQuery, query } from "./_generated/server"
+import { authComponent } from "./auth"
+import { requireNotebookOwner } from "./lib/ownership"
 
 type VectorHit = {
   chunkId: Id<"chunks">
@@ -13,12 +15,14 @@ type VectorHit = {
   ordinal: number
 }
 
-export const listSourceCharacterCounts = internalQuery({
+export const listSourceCharacterCounts = query({
   args: {
     notebookId: v.id("notebooks"),
     sourceIds: v.array(v.id("sources")),
   },
   handler: async (ctx, args) => {
+    await requireNotebookOwner(ctx, args.notebookId)
+
     const counts: Array<number | undefined> = []
 
     for (const sourceId of args.sourceIds) {
@@ -39,12 +43,14 @@ export const listSourceCharacterCounts = internalQuery({
   },
 })
 
-export const listSourceDigests = internalQuery({
+export const listSourceDigests = query({
   args: {
     notebookId: v.id("notebooks"),
     sourceIds: v.array(v.id("sources")),
   },
   handler: async (ctx, args) => {
+    await requireNotebookOwner(ctx, args.notebookId)
+
     const digests: Array<{
       sourceId: Id<"sources">
       title: string
@@ -88,13 +94,15 @@ export const listSourceDigests = internalQuery({
   },
 })
 
-export const listChunksForSources = internalQuery({
+export const listChunksForSources = query({
   args: {
     notebookId: v.id("notebooks"),
     sourceIds: v.array(v.id("sources")),
     maxChunksPerSource: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireNotebookOwner(ctx, args.notebookId)
+
     const chunks: Array<{
       chunkId: Id<"chunks">
       sourceId: Id<"sources">
@@ -110,13 +118,13 @@ export const listChunksForSources = internalQuery({
         : null
 
     for (const sourceId of args.sourceIds) {
-      const query = ctx.db
+      const queryBuilder = ctx.db
         .query("chunks")
         .withIndex("by_source_ordinal", (q) => q.eq("sourceId", sourceId))
 
       const sourceChunks = perSourceLimit
-        ? await query.take(perSourceLimit)
-        : await query.collect()
+        ? await queryBuilder.take(perSourceLimit)
+        : await queryBuilder.collect()
 
       for (const chunk of sourceChunks) {
         if (chunk.deletedAt || chunk.notebookId !== args.notebookId) {
@@ -138,11 +146,14 @@ export const listChunksForSources = internalQuery({
   },
 })
 
-export const getChunksByIds = internalQuery({
+export const getChunksByIds = query({
   args: {
+    notebookId: v.id("notebooks"),
     chunkIds: v.array(v.id("chunks")),
   },
   handler: async (ctx, args) => {
+    await requireNotebookOwner(ctx, args.notebookId)
+
     const chunks: Array<{
       chunkId: Id<"chunks">
       sourceId: Id<"sources">
@@ -155,7 +166,7 @@ export const getChunksByIds = internalQuery({
     for (const chunkId of args.chunkIds) {
       const chunk = await ctx.db.get(chunkId)
 
-      if (!chunk || chunk.deletedAt) {
+      if (!chunk || chunk.deletedAt || chunk.notebookId !== args.notebookId) {
         continue
       }
 
@@ -173,13 +184,15 @@ export const getChunksByIds = internalQuery({
   },
 })
 
-export const searchText = internalQuery({
+export const searchText = query({
   args: {
     notebookId: v.id("notebooks"),
     sourceIds: v.array(v.id("sources")),
     prompt: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireNotebookOwner(ctx, args.notebookId)
+
     const sourceSet = new Set(args.sourceIds.map(String))
     const hits = await ctx.db
       .query("chunks")
@@ -213,13 +226,23 @@ export const getChunk = internalQuery({
   },
 })
 
-export const searchVectors = internalAction({
+export const searchVectors = action({
   args: {
     notebookId: v.id("notebooks"),
     sourceIds: v.array(v.id("sources")),
     embedding: v.array(v.float64()),
   },
   handler: async (ctx, args): Promise<VectorHit[]> => {
+    const user = await authComponent.getAuthUser(ctx)
+
+    if (!user) {
+      throw new Error("You need to sign in to continue.")
+    }
+
+    await ctx.runQuery(api.notebooks.get, {
+      notebookId: args.notebookId,
+    })
+
     const results: Array<{ chunkId: Id<"chunks">; score: number }> = []
 
     for (const sourceId of args.sourceIds) {
