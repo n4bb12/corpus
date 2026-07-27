@@ -5567,3 +5567,26 @@ Split the working tree into **12 commits**. Working tree is clean.
 11. `b32b8b9` — docs: record auth, library, and scroll polish refinement session
 12. `1fd1d10` — chore: drop extra blank lines after streaming caret removal
 
+# Sign in page background effects
+_Exported on 7/27/2026 at 19:18:48 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Can we have the background images on the sign in page fade in smoothly or loaded with a blurhash or progressive JPEG?
+
+---
+
+**Cursor**
+
+I'll check how the sign-in page loads its background images, then add a smooth fade-in (or blurhash/progressive) so they don't pop in harshly.
+
+The JPEGs are already progressive; the pop is from waiting until decode before paint (especially with blur). I'll add a load fade-in so they ease in over the existing atmosphere.
+
+Yes. The backdrop JPEGs were already progressive; the abrupt pop was from the `<img>` waiting until decode (especially with blur) before painting.
+
+I added a **700ms fade-in** once each photo loads (including cached images), with reduced-motion snapping on immediately. The atmosphere wash stays visible underneath while they ease in.
+
+Refresh `/sign-in` to see it — no blurhash dependency needed for this.
+
