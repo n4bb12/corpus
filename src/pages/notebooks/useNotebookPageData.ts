@@ -32,7 +32,12 @@ export function useNotebookPageData() {
         localStore.setQuery(
           api.notebooks.get,
           { notebookId: args.notebookId },
-          { ...current, title },
+          {
+            ...current,
+            title,
+            titleOrigin: title ? "manual" : "placeholder",
+            titleGenerationState: title ? "complete" : "pending",
+          },
         )
       }
 

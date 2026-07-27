@@ -57,7 +57,8 @@ export function NotebookRenameDialog({
           <DialogHeader>
             <DialogTitle>Rename notebook</DialogTitle>
             <DialogDescription>
-              Use 1–100 characters. Another notebook can share the same title.
+              Use 1–100 characters, or clear the field to restore an automatic
+              title from your sources.
             </DialogDescription>
           </DialogHeader>
           <Input

@@ -472,6 +472,10 @@ export const remove = mutation({
       sourceId: source._id,
       cursor: null,
     })
+
+    await ctx.scheduler.runAfter(0, internal.titles.refreshNotebookTitle, {
+      notebookId: notebook._id,
+    })
   },
 })
 

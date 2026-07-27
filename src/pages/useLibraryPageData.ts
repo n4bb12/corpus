@@ -27,6 +27,13 @@ export function useLibraryPageData() {
   const renameNotebook = useMutation(api.notebooks.rename).withOptimisticUpdate(
     (localStore, args) => {
       const title = normalizeTitle(args.title, "")
+      const titlePatch = {
+        title,
+        titleOrigin: title ? ("manual" as const) : ("placeholder" as const),
+        titleGenerationState: title
+          ? ("complete" as const)
+          : ("pending" as const),
+      }
 
       for (const { args: queryArgs, value } of localStore.getAllQueries(
         api.notebooks.list,
@@ -39,7 +46,7 @@ export function useLibraryPageData() {
           ...value,
           page: value.page.map((notebook) =>
             notebook._id === args.notebookId
-              ? { ...notebook, title }
+              ? { ...notebook, ...titlePatch }
               : notebook,
           ),
         })
@@ -53,7 +60,7 @@ export function useLibraryPageData() {
         localStore.setQuery(
           api.notebooks.get,
           { notebookId: args.notebookId },
-          { ...current, title },
+          { ...current, ...titlePatch },
         )
       }
     },

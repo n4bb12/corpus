@@ -10,6 +10,27 @@ export const getNotebook = internalQuery({
   },
 })
 
+export const listReadySourcesForTitle = internalQuery({
+  args: {
+    notebookId: v.id("notebooks"),
+  },
+  handler: async (ctx, args) => {
+    const sources = await ctx.db
+      .query("sources")
+      .withIndex("by_notebook_createdAt", (q) =>
+        q.eq("notebookId", args.notebookId),
+      )
+      .collect()
+
+    return sources.filter(
+      (source) =>
+        !source.deletedAt &&
+        source.processingState === "ready" &&
+        !!source.normalizedStorageId,
+    )
+  },
+})
+
 export const setTitleState = internalMutation({
   args: {
     notebookId: v.id("notebooks"),
@@ -42,7 +63,11 @@ export const applyGeneratedTitle = internalMutation({
   handler: async (ctx, args) => {
     const notebook = await ctx.db.get(args.notebookId)
 
-    if (notebook?.titleOrigin !== "placeholder") {
+    if (
+      !notebook ||
+      (notebook.titleOrigin !== "placeholder" &&
+        notebook.titleOrigin !== "generated")
+    ) {
       return
     }
 

@@ -175,6 +175,22 @@ export const rename = mutation({
     const title = normalizeTitle(args.title, "")
     const now = Date.now()
 
+    if (!title) {
+      await ctx.db.patch(notebook._id, {
+        title: "",
+        titleOrigin: "placeholder",
+        titleGenerationState: "pending",
+        updatedAt: now,
+        lastUsedAt: now,
+      })
+
+      await ctx.scheduler.runAfter(0, internal.titles.refreshNotebookTitle, {
+        notebookId: notebook._id,
+      })
+
+      return
+    }
+
     await ctx.db.patch(notebook._id, {
       title,
       titleOrigin: "manual",

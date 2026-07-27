@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react"
+import { Pencil, Sparkles } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { displayNotebookTitle } from "src/lib/limits"
 import { cn } from "src/lib/utils"
@@ -6,7 +6,10 @@ import { cn } from "src/lib/utils"
 export type InlineNotebookTitleProps = {
   title: string
   onSave: (title: string) => Promise<void>
+  /** Skeleton while the notebook document is still loading. */
   loading?: boolean
+  /** Visible status while an automatic title is being generated. */
+  generating?: boolean
   className?: string
 }
 
@@ -14,12 +17,14 @@ export function InlineNotebookTitle({
   title,
   onSave,
   loading = false,
+  generating = false,
   className,
 }: InlineNotebookTitleProps) {
   const [draft, setDraft] = useState(title)
   const [editing, setEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const display = displayNotebookTitle(title)
+  const busy = loading || generating
 
   useEffect(() => {
     if (!editing) {
@@ -44,22 +49,46 @@ export function InlineNotebookTitle({
     }
   }
 
+  if (generating) {
+    return (
+      <div
+        className={cn("flex h-9 min-w-0 items-center gap-2 px-2", className)}
+        aria-busy
+      >
+        <Sparkles
+          size={16}
+          strokeWidth={1.5}
+          aria-hidden
+          className="shrink-0 text-primary"
+        />
+
+        <p
+          className="shimmer min-w-0 truncate text-sm font-medium text-primary"
+          role="status"
+        >
+          Generating title…
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div
       className={cn("group relative min-w-0", className)}
-      aria-busy={loading || undefined}
+      aria-busy={busy || undefined}
     >
       {loading ? (
         <span className="sr-only" role="status">
           Loading notebook title
         </span>
       ) : null}
+
       <input
         ref={inputRef}
         value={editing ? draft : display}
-        readOnly={!editing || loading}
+        readOnly={!editing || busy}
         onFocus={() => {
-          if (loading) {
+          if (busy) {
             return
           }
 
@@ -68,14 +97,14 @@ export function InlineNotebookTitle({
         }}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => {
-          if (loading) {
+          if (busy) {
             return
           }
 
           void commit()
         }}
         onKeyDown={(event) => {
-          if (loading) {
+          if (busy) {
             return
           }
 
@@ -93,7 +122,7 @@ export function InlineNotebookTitle({
         maxLength={100}
         aria-label="Notebook title"
         aria-hidden={loading || undefined}
-        title={loading ? undefined : "Click to rename"}
+        title={busy ? undefined : "Click to rename"}
         placeholder={displayNotebookTitle("")}
         className={cn(
           "h-9 w-full min-w-0 truncate rounded-lg border border-transparent bg-transparent py-1 pr-9 pl-2",
@@ -104,7 +133,8 @@ export function InlineNotebookTitle({
             : "hover:border-muted-foreground/70 hover:bg-muted/55 focus-visible:border-primary focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-primary/30",
         )}
       />
-      {loading ? null : (
+
+      {busy ? null : (
         <span
           aria-hidden
           className={cn(

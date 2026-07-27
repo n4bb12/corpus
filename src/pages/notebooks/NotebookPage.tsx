@@ -30,6 +30,11 @@ export function NotebookPage() {
             <InlineNotebookTitle
               title={page.notebook?.title ?? ""}
               loading={!page.notebook}
+              generating={
+                !!page.notebook &&
+                page.notebook.titleGenerationState === "pending" &&
+                !page.notebook.title.trim()
+              }
               onSave={async (title) => {
                 const notebook = page.notebook
 
