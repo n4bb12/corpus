@@ -32,7 +32,7 @@ export function SignInPage() {
         </motion.div>
 
         <motion.div
-          className="mx-auto w-full max-w-[22rem] sm:max-w-[26rem] md:max-w-[30rem] lg:mx-0 lg:max-w-none"
+          className="mx-auto w-full max-w-88 sm:max-w-104 md:max-w-120 lg:mx-0 lg:max-w-none"
           initial={pageEnterInitial}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={respectReducedMotion(reduceMotion, {

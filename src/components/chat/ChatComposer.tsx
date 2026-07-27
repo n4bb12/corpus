@@ -33,7 +33,7 @@ export function ChatComposer({
 
   return (
     <div className="pointer-events-none bg-linear-to-t from-background via-background/95 to-transparent px-4 pt-10 pb-4">
-      <div className="pointer-events-auto mx-auto w-full max-w-[50rem] space-y-2">
+      <div className="pointer-events-auto mx-auto w-full max-w-200 space-y-2">
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
         <Bezel className="shadow-(--shadow-pine)" innerClassName="p-3.5 md:p-4">

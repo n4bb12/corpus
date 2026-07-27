@@ -28,7 +28,7 @@ export function AddNotebookCard({
         innerClassName={cn(
           "flex h-full flex-col items-center justify-center gap-4 border border-dashed border-border/80 bg-card/70 p-5 text-center transition-colors duration-(--duration-hover) ease-spring group-hover:border-primary/40 group-hover:bg-muted/40",
           "max-sm:min-h-0 max-sm:flex-row max-sm:justify-start max-sm:gap-3 max-sm:text-left",
-          tall ? "min-h-[16rem] lg:min-h-[22rem]" : "min-h-[10.5rem]",
+          tall ? "min-h-64 lg:min-h-88" : "min-h-42",
         )}
       >
         <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-transform duration-(--duration-hover) ease-spring group-hover:-translate-y-0.5 group-hover:scale-105">

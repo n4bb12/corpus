@@ -41,7 +41,7 @@ export function NotebookWorkspace({
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <motion.aside
         className={cn(
-          "flex min-h-0 w-full flex-col overflow-hidden border-r border-border/60 bg-[color-mix(in_oklab,var(--background)_70%,var(--card))] md:w-[25rem] md:shrink-0",
+          "flex min-h-0 w-full flex-col overflow-hidden border-r border-border/60 bg-[color-mix(in_oklab,var(--background)_70%,var(--card))] md:w-100 md:shrink-0",
           tab === "sources" ? "flex" : "hidden md:flex",
         )}
         initial={pageEnterInitial}

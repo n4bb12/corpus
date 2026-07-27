@@ -44,7 +44,7 @@ export const ChatMessageList = memo(function ChatMessageList({
     !entries.some((entry) => entry.kind === "message")
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-[50rem] flex-col gap-6 py-4">
+    <div className="mx-auto flex min-h-full w-full max-w-200 flex-col gap-6 py-4">
       {empty ? (
         <ChatEmptyPrompt
           readySelectedCount={hasReadySources ? 1 : 0}
@@ -107,7 +107,7 @@ export const ChatMessageList = memo(function ChatMessageList({
 function ChatUserMessage({ content }: { content?: string }) {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[85%] rounded-2xl bg-card px-4 py-3 shadow-(--shadow-pine)">
+      <div className="max-w-17/20 rounded-2xl bg-card px-4 py-3 shadow-(--shadow-pine)">
         <p className="whitespace-pre-wrap text-sm">{content}</p>
       </div>
     </div>

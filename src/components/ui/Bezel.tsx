@@ -17,7 +17,7 @@ export function Bezel({ children, className, innerClassName }: BezelProps) {
     >
       <div
         className={cn(
-          "rounded-[1.125rem] bg-card shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]",
+          "rounded-lg bg-card shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]",
           innerClassName,
         )}
       >
