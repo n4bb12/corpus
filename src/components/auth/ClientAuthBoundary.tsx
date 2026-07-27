@@ -1,6 +1,6 @@
 import { Navigate } from "@tanstack/react-router"
 import { useConvexAuth } from "convex/react"
-import { type ReactNode, useEffect, useState } from "react"
+import type { ReactNode } from "react"
 import { AppPending } from "src/components/layout/AppPending"
 import { authClient } from "src/lib/authClient"
 import { useIsSigningOut } from "src/lib/useSignedIn"
@@ -14,14 +14,9 @@ export function ClientAuthBoundary({
   children,
   mode,
 }: ClientAuthBoundaryProps) {
-  const [mounted, setMounted] = useState(false)
   const { isAuthenticated, isLoading } = useConvexAuth()
   const session = authClient.useSession()
   const signingOut = useIsSigningOut()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Hold the pending shell through sign-out so we don't soft-navigate to
   // /sign-in and then remount it again after auth finishes clearing.
@@ -29,13 +24,13 @@ export function ClientAuthBoundary({
     return <AppPending />
   }
 
-  // Wait for Better Auth session too — a cached JWT can make Convex look
-  // authenticated before the session is ready, which races library queries.
-  const authPending =
-    !mounted || isLoading || (mode === "signed-in" && session.isPending)
+  // Never block first paint on auth. Pages render immediately; queries already
+  // skip via useSignedInQueryArgs until the session is ready. Redirect only
+  // once both Convex auth and Better Auth have settled.
+  const authReady = !isLoading && !session.isPending
 
-  if (authPending) {
-    return mode === "signed-in" ? <AppPending /> : children
+  if (!authReady) {
+    return children
   }
 
   const isSignedIn = isAuthenticated && !!session.data?.session
