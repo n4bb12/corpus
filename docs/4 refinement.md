@@ -5520,3 +5520,50 @@ Done. Two parts:
 
 1. **Debounce** — each new keystroke clears the pending timer (standard cancel-on-change).
 2. **Query** — while the draft is ahead of the debounce, `notebooks.list` is `"skip"` so the previous search unsubscribes instead of finishing late. Prior results stay on screen until the new term settles.
+
+# Atomic commits discussion
+_Exported on 7/27/2026 at 19:12:14 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll inspect the current uncommitted work and recent commit style, then split it into atomic commits.
+
+Next I'll read the full diffs by area so I can group them by intent.
+
+I'll dig into the remaining UI diffs so the commit groups stay clean.
+
+I have a clear commit plan. Saving multi-concern files so I can stage precise hunks safely.
+
+Starting with the simple commits, then splitting the multi-concern files.
+
+Building an intermediate `useChatPaneData` for the optimistic-cancel commit, then the streaming-layout commit.
+
+Preparing the scroll foundation commit with carefully split `__root` and `styles` hunks.
+
+Restoring the 404 polish that was dropped from `__root.tsx`, then continuing with the library and auth commits.
+
+Fixing leftover whitespace in `styles.css` so it matches the final tree.
+
+Split the working tree into **12 commits**. Working tree is clean.
+
+1. `e538222` — chore: ignore local .tmp scratch directory
+2. `9ded45d` — docs: require ScrollArea for app scrolling
+3. `495a147` — fix(auth): clear query cache on sign-out and wait for Better Auth session
+4. `d87639b` — feat(chat): optimistically cancel the active turn on stop
+5. `0a94fca` — fix(chat): animate progress height, pin scroll, and drop the streaming caret
+6. `1815909` — feat(library): debounce search and skip in-flight list queries while typing
+7. `98e5205` — feat(scroll): lock document scrolling and use trackless ScrollArea thumbs
+8. `fcf8ebf` — feat(library): slide pages and keep chrome stable under ScrollArea
+9. `eff6e13` — feat(auth): add forest backdrops and polish the sign-in form
+10. `c16d3dc` — polish(ui): align menus, spinners, 404, and pending shells
+11. `b32b8b9` — docs: record auth, library, and scroll polish refinement session
+12. `1fd1d10` — chore: drop extra blank lines after streaming caret removal
+
