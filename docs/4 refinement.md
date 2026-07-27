@@ -4210,3 +4210,96 @@ This is source boundary layout. Move it into the component. mx-auto flex w-full 
 
 Done. That layout now lives on the root of `ChatSourceBoundary`, and the extra wrapper in `ChatMessageList` is gone.
 
+# Message submission visual bug
+_Exported on 7/27/2026 at 17:10:58 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+When submitting a message, and the thread is scrollable, the message is skewed or has a weird shadow at for a second or so.
+
+---
+
+**Cursor**
+
+I'll dig into the chat message submit/scroll animation path — that transient skewed shadow usually comes from a transform or motion effect while the thread scrolls.
+
+The pine shadow on user bubbles is a strong candidate — I'll inspect that token and how scroll/layout interact when a message is submitted.
+
+I'll check message/boundary ordering and whether a parent filter or scroll jump is leaving that ghost shadow.
+
+That ghost matches a known Chromium issue: a permanent `filter: blur(0px)` on a Motion parent leaves a stale compositor layer during scroll. Ranking hypotheses next, then verifying.
+
+Ranked hypotheses — then I’ll verify #1 with a tight repro:
+
+1. **Permanent `filter: blur(0px)` on chat ancestors (Motion)** — `NotebookWorkspace` keeps an identity blur after enter; Chromium caches that effect layer, and a stick-to-bottom `scrollTop` jump leaves a stale ghost of the bubble/shadow. Fits “only when scrollable” + “~1s”.
+2. **Large `--shadow-pine` + instant scroll in `overflow: hidden`** — compositor paints the shadow at the pre-scroll position for a frame.
+3. **Optimistic message remount** — optimistic → server id swap leaves a brief double paint / offset shadow.
+4. **Source-boundary `AnimatePresence` height animation** — layout shift near the new bubble distorts nearby shadow painting.
+5. **Composer pine shadow bleeding upward** — less likely; would be constant, not flash-on-submit.
+
+Building a harness for #1 next.
+
+Confirmed: Motion leaves `filter:blur(0px)` on the chat shell permanently. Writing a red regression test, then clearing that residual filter.
+
+Exporting a shared page-enter animate pose so we can't accidentally reintroduce the residual blur.
+
+**Cause:** The chat pane lived under a Motion shell that kept `filter: blur(0px)` forever. An identity blur still creates a compositor layer, so when stick-to-bottom jumped `scrollTop` on send, Chromium briefly painted a stale ghost of the bubble’s pine shadow — the skewed blob in your screenshot. It only showed up when the thread was scrollable because that’s when the scroll jump happens.
+
+**Fix:** Drop residual blur from page-shell `animate` poses (`NotebookWorkspace`, notebook title, sign-in). `Reveal` still blurs in, then clears filter via `transitionEnd: { filter: "none" }`. Shared `pageEnterAnimate` / `pageEnterAnimateAside` lock this in, with a regression test in `motion.test.ts`.
+
+Reload and send in a scrollable thread — the ghost shadow should be gone.
+
+---
+
+**User**
+
+We currently have a hard cut at the bottom of the thread followed by a good amount of spacing at the bottom. I like that spacing but it should be IN the thread at the bottom, not part of the composer. When scrolling the thread and not at the bottom, there should be a soft shadow at the bottom and a round scroll down button.
+
+---
+
+**Cursor**
+
+I'll move the bottom spacing into the scrollable thread and add a soft edge shadow plus a scroll-down control when you're not stuck to the bottom.
+
+Implementing thread bottom padding, a tighter composer, and the scroll-down affordance.
+
+Fixing the exhaustive-deps warning by inlining stick-to-bottom scroll in the effect.
+
+Done. Three layout changes:
+
+1. **Spacing lives in the thread** — `pb-72` moved onto the message list so the gap above the composer scrolls with the conversation.
+2. **Composer is tight** — removed the fixed fade/`pt-10` band that caused the hard cut.
+3. **When not at bottom** — soft bottom fade + round scroll-down button (`ChatScrollAffordance`); click jumps to the latest messages.
+
+At the bottom you should only see thread padding and the floating composer, with no non-scrolling empty band.
+
+---
+
+**User**
+
+Text should not be visible behind the composer. The shadow should have more height.
+
+---
+
+**Cursor**
+
+I'll give the composer an opaque backdrop so thread text can't show through, and raise the soft shadow height.
+
+Composer dock is now a full-bleed opaque `bg-background` (including the bezel shell), so thread text can’t show through. The not-at-bottom fade is taller (`h-28`) and denser at the base so it meets that plate cleanly.
+
+---
+
+**User**
+
+The composer should have the same width as the message thread.
+
+---
+
+**Cursor**
+
+The composer’s `px-4` is inside `max-w-200`, so the bezel ends up narrower than the thread. I’ll match the thread’s padding-outside layout.
+
+Fixed — `px-4` is outside `max-w-200` now, same as the thread (`ScrollArea` padding + message list max width), so the bezel lines up with the messages.
+
