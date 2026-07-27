@@ -5944,3 +5944,50 @@ Adding a short bold spam-folder note to the post-send message.
 
 Added a bold **Check spam too.** note to the email-sent alert in `SignInEmailForm`.
 
+# Security review
+_Exported on 7/27/2026 at 19:55:14 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+/review-security 
+
+---
+
+**Cursor**
+
+Launching a security review of the branch changes.
+
+Security review found no issues.
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll inspect the working tree and recent commit style, then split the uncommitted work into atomic commits.
+
+Next I'll dig into the diffs so I can group them by intent.
+
+Grouping into nine atomic commits by intent, then staging and committing in dependency order.
+
+Created 9 commits:
+
+1. `b64d3e2` — refactor(ui): export shadcn components as named exports
+2. `1f0908c` — fix(auth): remount email input on theme change for autofill
+3. `fbf6e2d` — fix(auth): paint signed-in routes before auth settles
+4. `7e07d4e` — refactor(chat): extract handleChatPost behind a dynamic import
+5. `b5f390d` — refactor(sources): lazy-load cheerio and the ingest pipeline
+6. `a5055ae` — feat(ssr): prerender public routes and keep notebooks client-only
+7. `ed8e78a` — fix(deploy): serve Vercel HTML from the SPA shell
+8. `76720d9` — chore(deploy): pin Vercel functions to fra1
+9. `ff1bcc5` — docs: record autofill, SSR, and cold-start refinement
+
+Working tree is clean.
+
