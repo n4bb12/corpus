@@ -11,7 +11,7 @@ export function NotebookMobileTabs({
 }: NotebookMobileTabsProps) {
   return (
     <div className="sticky top-16 z-20 border-b border-border/40 bg-background/80 px-4 py-2 backdrop-blur-xl md:hidden">
-      <div className="grid grid-cols-2 rounded-xl bg-muted/70 p-1 ring-1 ring-foreground/5">
+      <div className="grid grid-cols-2 rounded-xl bg-muted/70 p-1 ring-1 ring-foreground/5 dark:bg-black/30 dark:ring-foreground/8">
         {(
           [
             { value: "sources", label: "Sources" },
@@ -24,7 +24,7 @@ export function NotebookMobileTabs({
             className={cn(
               "rounded-lg px-3 py-2 text-sm font-medium transition-all duration-(--duration-layout) ease-spring",
               tab === value
-                ? "bg-card text-foreground shadow-(--shadow-pine)"
+                ? "bg-card text-primary shadow-(--shadow-pine) ring-1 ring-border/70 dark:bg-muted/90 dark:ring-primary/20"
                 : "text-muted-foreground hover:text-foreground",
             )}
             aria-pressed={tab === value}

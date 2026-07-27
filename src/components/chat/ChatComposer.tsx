@@ -59,7 +59,7 @@ export function ChatComposer({
                 : "Select sources to start chatting"
             }
             disabled={!readySourceCount || sending}
-            className="min-h-24 max-h-60 resize-none border-0 bg-transparent p-1 text-base shadow-none focus-visible:ring-0 md:text-base"
+            className="min-h-12 max-h-60 resize-none border-0 bg-transparent p-1 text-base shadow-none focus-visible:ring-0 md:min-h-24 md:text-base"
           />
           <div className="mt-3 flex items-center justify-between gap-3">
             <div className="text-xs text-muted-foreground tabular-nums">
