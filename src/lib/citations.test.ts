@@ -166,11 +166,11 @@ describe("citations", () => {
         "citations": [
           {
             "chunkId": "c1",
-            "quote": "Elternkommunikation wird auf das Infoportal",
+            "quote": "Elternkommunikation wird auf das Infoportal umgestellt",
           },
           {
             "chunkId": "c1",
-            "quote": "Schulmanager wird durch das Infoportal",
+            "quote": "Schulmanager wird durch das Infoportal ersetzt",
           },
         ],
         "content": "Infoportal und Schulmanager. [[cite:1]] [[cite:2]]",
@@ -246,7 +246,7 @@ describe("citations", () => {
         "citations": [
           {
             "chunkId": "c1",
-            "quote": "alpha one",
+            "quote": "alpha one and alpha two",
           },
         ],
         "content": 

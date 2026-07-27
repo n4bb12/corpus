@@ -1,5 +1,8 @@
 import { normalizeCitationText } from "src/lib/citationMatch"
-import { passageIndexForQuote } from "src/lib/citationQuote"
+import {
+  mergeCitationQuotes,
+  passageIndexForQuote,
+} from "src/lib/citationQuote"
 
 export type CitationRef = {
   chunkId: string
@@ -64,7 +67,7 @@ function passageKey(
   return citation.chunkId
 }
 
-/** One slot per source paragraph within an answer paragraph. */
+/** One merged slot per source paragraph within an answer paragraph. */
 export function dedupeParagraphCitations(
   citations: AnswerCitation[],
   chunkTextById?: ReadonlyMap<string, string>,
@@ -83,6 +86,19 @@ export function dedupeParagraphCitations(
     }
 
     const existing = kept[duplicateIndex]
+    const chunkText = chunkTextById?.get(citation.chunkId)
+    const mergedQuote =
+      existing && chunkText
+        ? mergeCitationQuotes(chunkText, existing.quote, citation.quote)
+        : null
+
+    if (existing && mergedQuote) {
+      kept[duplicateIndex] = {
+        ...existing,
+        quote: mergedQuote,
+      }
+      continue
+    }
 
     if (
       existing &&

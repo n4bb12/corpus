@@ -254,6 +254,31 @@ export function passageIndexForQuote(chunkText: string, quote: string) {
   return null
 }
 
+/** Expand two quotes into one contiguous excerpt from their shared passage. */
+export function mergeCitationQuotes(
+  chunkText: string,
+  firstQuote: string,
+  secondQuote: string,
+) {
+  const first = locateQuote(chunkText, firstQuote)
+  const second = locateQuote(chunkText, secondQuote)
+
+  if (!first || !second) {
+    return null
+  }
+
+  const merged = chunkText.slice(
+    Math.min(first.start, second.start),
+    Math.max(first.end, second.end),
+  )
+
+  if (/\n\s*\n/.test(merged)) {
+    return null
+  }
+
+  return merged
+}
+
 function longestNeedleInParagraph(paragraph: string, quote: string) {
   const collapsedQuote = normalizeCitationText(quote)
   const plainParagraph = collapseMappedSpan(

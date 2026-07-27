@@ -7684,3 +7684,23 @@ Agreed — dropping the `<article>` preference so we don't discard the rest of t
 
 Done. Extraction is now `<main>` → `<body>` only — no `<article>` narrowing.
 
+# Merging citations in popovers
+_Exported on 7/27/2026 at 22:20:29 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Can we have citations that refer to the same passage merged as in updating the pill popover texts instead of just deduplicating/skipping duplicate pills?
+
+---
+
+**Cursor**
+
+I’ll keep one pill per source passage, but make its citation excerpt expand to cover all matching quotes in that passage. This preserves a single navigable locator while ensuring deduplication doesn’t discard supporting text.
+
+Implemented.
+
+Citations resolving to the same source passage now produce one pill whose popover excerpt expands to include all cited text between the matching quotes. Navigation uses the merged locator.
+
+Verified with citation tests, TypeScript, and lint checks.
