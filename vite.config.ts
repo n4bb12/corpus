@@ -16,7 +16,9 @@ const config = defineConfig({
       preset: "vercel",
       vercel: {
         functions: {
+          // Keep the fat ingest/chat function in the same EU region as the edge.
           maxDuration: 300,
+          regions: ["fra1"],
         },
       },
       // These resolve runtime files from their package dirs; bundling breaks those paths.
