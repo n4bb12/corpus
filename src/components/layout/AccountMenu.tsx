@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "src/components/ui/shadcn/dropdown-menu"
 import { authClient } from "src/lib/authClient"
-import { beginSignOut } from "src/lib/useSignedIn"
+import { beginSignOut, endSignOut } from "src/lib/useSignedIn"
 
 export type AccountMenuProps = {
   email?: string | null
@@ -23,15 +23,23 @@ export function AccountMenu({ email, name }: AccountMenuProps) {
 
   async function onSignOut() {
     setPending(true)
-    // Drop query subscriptions before Better Auth clears the Convex token.
+
+    // Skip queries, flush unmounts, and clear the convex-helpers cache first.
     beginSignOut()
+
+    // Let React finish useQuery cleanups before Better Auth clears the token.
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, 0)
+    })
 
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.assign("/sign-in")
+          // Session is cleared; drop the flag so ClientAuthBoundary can soft-redirect.
+          endSignOut()
         },
         onError: () => {
+          endSignOut()
           setPending(false)
         },
       },
