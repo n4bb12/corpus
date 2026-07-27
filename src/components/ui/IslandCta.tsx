@@ -17,12 +17,20 @@ export function IslandCta({
   return (
     <Button
       className={cn(
-        "group h-11 gap-2 rounded-full px-5 pr-2 font-medium",
+        "group h-11 gap-2 rounded-full font-medium",
+        showArrow ? "px-5 pr-2" : "px-5",
         className,
       )}
       {...props}
     >
-      <span className="inline-flex items-center pl-1">{children}</span>
+      <span
+        className={cn(
+          "inline-flex items-center",
+          showArrow ? "pl-1" : null,
+        )}
+      >
+        {children}
+      </span>
       {showArrow ? (
         <span className="flex size-8 items-center justify-center rounded-full bg-primary-foreground/15 transition-transform duration-(--duration-hover) ease-spring group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105 dark:bg-primary-foreground/20">
           <ArrowUpRight size={16} aria-hidden />

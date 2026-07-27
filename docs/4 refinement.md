@@ -3279,3 +3279,36 @@ Increasing the scroll area bottom padding so messages clear the floating compose
 
 Increased the chat thread bottom padding from `pb-56` to `pb-72` so the last messages sit farther above the composer.
 
+# Send button size alignment
+_Exported on 7/27/2026 at 13:08:13 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+The send button has 3 different sizes and paddings depending on state: "Send", "Sending", "Stop". Align. It's fine if "Send" is larger but the proportions should be the same. Especially, sending and stop should feel the same.
+
+---
+
+**Cursor**
+
+I'll find the send button and align its sizes across Send / Sending / Stop.
+
+Checking how other CTAs handle pending vs idle sizing, and whether PendingLabel swaps the visible label.
+
+Send uses `IslandCta` (h-11 + arrow), Sending drops the arrow but keeps asymmetric padding, and Stop is a default `Button` (h-10). I'll align Sending and Stop on the same `IslandCta` sizing.
+
+Removing the unused `Button` import if it's no longer needed.
+
+Reverting the label text change so this stays focused on sizing.
+
+Send / Sending / Stop now share the same control.
+
+**Cause:** Send used `IslandCta` (`h-11` + arrow), Sending dropped the arrow but kept asymmetric `pr-2`, and Stop was a default `Button` (`h-10` / `px-3`).
+
+**Fix:**
+- `IslandCta` uses symmetric `px-5` when there’s no arrow
+- Stop also uses `IslandCta` without the arrow, with the same `h-11` / padding and a matching 16px icon + `gap-2` layout
+
+Send can still be larger with the arrow; Sending and Stop should feel the same.
+
