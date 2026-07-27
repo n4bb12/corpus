@@ -9,6 +9,10 @@ import {
 } from "src/lib/libraryPagination"
 import { LIMITS } from "src/lib/limits"
 import { notebookMatchesSearch } from "src/lib/notebookSearch"
+import {
+  patchForClearedNotebookTitle,
+  TITLE_REFRESH_DEBOUNCE_MS,
+} from "src/lib/notebookTitlePolicy"
 import { normalizeTitle } from "src/lib/sourceTitle"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
@@ -176,17 +180,24 @@ export const rename = mutation({
     const now = Date.now()
 
     if (!title) {
+      const cleared = patchForClearedNotebookTitle()
+      const generation = (notebook.titleRefreshGeneration ?? 0) + 1
+
       await ctx.db.patch(notebook._id, {
-        title: "",
-        titleOrigin: "placeholder",
-        titleGenerationState: "pending",
+        ...cleared,
+        titleRefreshGeneration: generation,
         updatedAt: now,
         lastUsedAt: now,
       })
 
-      await ctx.scheduler.runAfter(0, internal.titles.refreshNotebookTitle, {
-        notebookId: notebook._id,
-      })
+      await ctx.scheduler.runAfter(
+        TITLE_REFRESH_DEBOUNCE_MS,
+        internal.titles.refreshNotebookTitle,
+        {
+          notebookId: notebook._id,
+          generation,
+        },
+      )
 
       return
     }

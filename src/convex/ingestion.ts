@@ -1,4 +1,8 @@
 import { v } from "convex/values"
+import {
+  shouldSkipTitleRefresh,
+  TITLE_REFRESH_DEBOUNCE_MS,
+} from "src/lib/notebookTitlePolicy"
 import { internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 import { mutation } from "./_generated/server"
@@ -169,9 +173,26 @@ export const markReady = mutation({
       )
     }
 
-    await ctx.scheduler.runAfter(0, internal.titles.refreshNotebookTitle, {
-      notebookId: source.notebookId,
-    })
+    const notebook = await ctx.db.get(source.notebookId)
+
+    if (notebook && !shouldSkipTitleRefresh(notebook.titleOrigin)) {
+      const generation = (notebook.titleRefreshGeneration ?? 0) + 1
+
+      await ctx.db.patch(notebook._id, {
+        titleRefreshGeneration: generation,
+        titleGenerationState: "pending",
+        updatedAt: Date.now(),
+      })
+
+      await ctx.scheduler.runAfter(
+        TITLE_REFRESH_DEBOUNCE_MS,
+        internal.titles.refreshNotebookTitle,
+        {
+          notebookId: source.notebookId,
+          generation,
+        },
+      )
+    }
   },
 })
 

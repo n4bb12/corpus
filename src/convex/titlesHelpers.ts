@@ -1,4 +1,8 @@
 import { v } from "convex/values"
+import {
+  canApplyGeneratedTitle,
+  shouldSkipTitleRefresh,
+} from "src/lib/notebookTitlePolicy"
 import { internalMutation, internalQuery } from "./_generated/server"
 
 export const getNotebook = internalQuery({
@@ -10,6 +14,7 @@ export const getNotebook = internalQuery({
   },
 })
 
+/** Ready sources for titling — digests preferred, markdown used when missing. */
 export const listReadySourcesForTitle = internalQuery({
   args: {
     notebookId: v.id("notebooks"),
@@ -26,7 +31,10 @@ export const listReadySourcesForTitle = internalQuery({
       (source) =>
         !source.deletedAt &&
         source.processingState === "ready" &&
-        !!source.normalizedStorageId,
+        (!!source.normalizedStorageId ||
+          (source.digestStatus === "ready" &&
+            typeof source.digestText === "string" &&
+            !!source.digestText.trim())),
     )
   },
 })
@@ -44,7 +52,7 @@ export const setTitleState = internalMutation({
   handler: async (ctx, args) => {
     const notebook = await ctx.db.get(args.notebookId)
 
-    if (!notebook || notebook.titleOrigin === "manual") {
+    if (!notebook || shouldSkipTitleRefresh(notebook.titleOrigin)) {
       return
     }
 
@@ -63,11 +71,7 @@ export const applyGeneratedTitle = internalMutation({
   handler: async (ctx, args) => {
     const notebook = await ctx.db.get(args.notebookId)
 
-    if (
-      !notebook ||
-      (notebook.titleOrigin !== "placeholder" &&
-        notebook.titleOrigin !== "generated")
-    ) {
+    if (!notebook || !canApplyGeneratedTitle(notebook.titleOrigin)) {
       return
     }
 

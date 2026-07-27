@@ -1,4 +1,5 @@
 import { COMMON_HTML, EntityDecoder } from "@nodable/entities"
+import { LIMITS } from "src/lib/limits"
 import { markdownToPlainText } from "src/lib/markdownPlain"
 
 const htmlEntityDecoder = new EntityDecoder({ namedEntities: COMMON_HTML })
@@ -219,4 +220,43 @@ export function titleFromMarkdown(markdown: string, fallback = "") {
   const firstUseful = lines.find((entry) => !isWeakTitle(entry)) ?? ""
 
   return compactTitle(firstUseful, fallback)
+}
+
+/**
+ * Emergency notebook title from a digest when the model fails.
+ * Keeps a full first line / sentence — does not hard-chop mid-phrase.
+ */
+export function fallbackTitleFromDigest(digest: string, fallback = "") {
+  const lines = digest
+    .split(/\r?\n/)
+    .map((line) => markdownToPlainText(line).trim())
+    .filter((line) => line && !isWeakTitle(line))
+
+  const first = lines[0]
+
+  if (!first) {
+    return fallback
+  }
+
+  if (
+    looksLikeFilename(first) ||
+    looksLikeUrl(first) ||
+    looksLikeDocumentCode(first)
+  ) {
+    return fallback
+  }
+
+  const sentence = first.match(/^(.+?[.!?])(?:\s|$)/)
+  const candidate =
+    sentence?.[1] && sentence[1].length <= LIMITS.maxTitleCharacters
+      ? sentence[1]
+      : first.length <= LIMITS.maxTitleCharacters
+        ? first
+        : ""
+
+  if (!candidate) {
+    return fallback
+  }
+
+  return formatTitle(candidate)
 }

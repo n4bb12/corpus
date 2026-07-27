@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
   compactTitle,
+  fallbackTitleFromDigest,
   humanizeFilenameTitle,
   isVerbatimSourcePhrase,
   isWeakTitle,
@@ -78,6 +79,13 @@ describe("source titles", () => {
     expect(looksLikeUrl("Mission – Biblebots")).toBe(false)
     expect(looksLikeDocumentCode("32460 004")).toBe(true)
     expect(looksLikeDocumentCode("Elternbrief Start Infoportal")).toBe(false)
+    expect(
+      fallbackTitleFromDigest(
+        "McLean (1989) describes seven new species of frogs from the region. Further notes follow.",
+      ),
+    ).toMatchInlineSnapshot(
+      `"McLean (1989) describes seven new species of frogs from the region."`,
+    )
   })
 
   test("rejects verbatim source phrases", () => {

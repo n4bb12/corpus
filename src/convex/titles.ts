@@ -1,37 +1,31 @@
 "use node"
 
 import { createOpenAI } from "@ai-sdk/openai"
-import { generateText } from "ai"
+import { generateText, Output } from "ai"
 import { v } from "convex/values"
 import { requireEnv } from "src/lib/env"
 import { LIMITS, MODELS } from "src/lib/limits"
 import {
-  formatTitle,
-  isWeakTitle,
-  looksLikeDocumentCode,
-  looksLikeFilename,
-  looksLikeUrl,
-  titleFromSourceLabel,
-} from "src/lib/sourceTitle"
+  isStaleTitleRefresh,
+  shouldSkipTitleRefresh,
+} from "src/lib/notebookTitlePolicy"
+import {
+  fallbackNotebookTitle,
+  isSingleSourceNotebookTitle,
+  isUsableNotebookTitle,
+} from "src/lib/notebookTitleQuality"
+import { formatTitle, titleFromSourceLabel } from "src/lib/sourceTitle"
+import { z } from "zod"
 import { internal } from "./_generated/api"
 import { internalAction } from "./_generated/server"
 
-/** Enough for a few short words; keeps the model from drafting a sentence. */
-const TITLE_MAX_OUTPUT_TOKENS = 24
+const titleSchema = z.object({
+  title: z.string(),
+  sourceIds: z.array(z.string()),
+})
 
 function cleanGeneratedTitle(raw: string) {
   return formatTitle(raw.replace(/^["'`“”]+|["'`“”]+$/g, ""))
-}
-
-function isUsableTitle(title: string) {
-  return (
-    !!title &&
-    title.length <= LIMITS.maxTitleCharacters &&
-    !looksLikeFilename(title) &&
-    !looksLikeUrl(title) &&
-    !looksLikeDocumentCode(title) &&
-    !isWeakTitle(title)
-  )
 }
 
 function preferredSourceLabel(source: {
@@ -41,20 +35,32 @@ function preferredSourceLabel(source: {
   const display = titleFromSourceLabel(source.title, "")
   const original = titleFromSourceLabel(source.originalTitle, "")
 
-  if (isUsableTitle(display)) {
+  if (isUsableNotebookTitle(display)) {
     return display
   }
 
-  if (isUsableTitle(original)) {
+  if (isUsableNotebookTitle(original)) {
     return original
   }
 
   return ""
 }
 
+function acceptNotebookTitle(title: string, sourceLabels: string[]) {
+  if (!isUsableNotebookTitle(title)) {
+    return false
+  }
+
+  if (isSingleSourceNotebookTitle(title, sourceLabels)) {
+    return false
+  }
+
+  return true
+}
+
 /**
  * First-source hook kept for callers that still pass a sourceId; titles are
- * built from all ready sources via refreshNotebookTitle.
+ * built from ready sources via refreshNotebookTitle.
  */
 export const maybeGenerateNotebookTitle = internalAction({
   args: {
@@ -69,17 +75,36 @@ export const maybeGenerateNotebookTitle = internalAction({
   },
 })
 
-/** Rebuild an automatic title from ready sources (no-op when title is manual). */
+/**
+ * Rebuild an automatic title from ready sources (digests preferred, markdown
+ * fallback). No-op when the title is manual.
+ */
 export const refreshNotebookTitle = internalAction({
   args: {
     notebookId: v.id("notebooks"),
+    generation: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const notebook = await ctx.runQuery(internal.titlesHelpers.getNotebook, {
       notebookId: args.notebookId,
     })
 
-    if (!notebook || notebook.titleOrigin === "manual") {
+    if (!notebook || shouldSkipTitleRefresh(notebook.titleOrigin)) {
+      return
+    }
+
+    const generation =
+      typeof args.generation === "number"
+        ? args.generation
+        : (notebook.titleRefreshGeneration ?? 0)
+
+    // Only skip starting work when a newer refresh was already scheduled.
+    // Finished results always apply — overlapping LLM calls must not leave
+    // the notebook untitled just because another source finished mid-flight.
+    if (
+      typeof args.generation === "number" &&
+      isStaleTitleRefresh(notebook.titleRefreshGeneration, args.generation)
+    ) {
       return
     }
 
@@ -98,21 +123,44 @@ export const refreshNotebookTitle = internalAction({
     )
 
     if (!sources.length) {
-      await ctx.runMutation(internal.titlesHelpers.setTitleState, {
+      const latest = await ctx.runQuery(internal.titlesHelpers.getNotebook, {
         notebookId: args.notebookId,
-        titleGenerationState: "idle",
       })
+
+      if (
+        latest &&
+        !isStaleTitleRefresh(latest.titleRefreshGeneration, generation)
+      ) {
+        await ctx.runMutation(internal.titlesHelpers.setTitleState, {
+          notebookId: args.notebookId,
+          titleGenerationState: "idle",
+        })
+      }
+
       return
     }
 
     const excerpts: string[] = []
-    const labels: string[] = []
+    const digests: string[] = []
+    const includedSourceIds: string[] = []
+    const sourceLabels: string[] = []
 
     for (const source of sources.slice(0, LIMITS.sourcesPerNotebook)) {
       const label = preferredSourceLabel(source)
 
       if (label) {
-        labels.push(label)
+        sourceLabels.push(label)
+      }
+
+      const digest = source.digestText?.trim()
+      const heading = label || source.title || "Untitled source"
+
+      if (digest) {
+        const sourceId = String(source._id)
+        excerpts.push(`### source:${sourceId} — ${heading}\n${digest}`)
+        digests.push(digest)
+        includedSourceIds.push(sourceId)
+        continue
       }
 
       if (!source.normalizedStorageId) {
@@ -130,17 +178,23 @@ export const refreshNotebookTitle = internalAction({
           800,
           Math.floor(4_000 / Math.min(sources.length, 4)),
         )
-        const heading = label || source.title || "Untitled"
-        excerpts.push(
-          `Source title: ${heading}\n${(await blob.text()).slice(0, perSource)}`,
-        )
+        const markdown = (await blob.text()).slice(0, perSource)
+        const sourceId = String(source._id)
+        excerpts.push(`### source:${sourceId} — ${heading}\n${markdown}`)
+        digests.push(markdown)
+        includedSourceIds.push(sourceId)
       } catch {
         // Skip unreadable sources; others may still title the notebook.
       }
     }
 
     const corpus = excerpts.join("\n\n").slice(0, 6_000)
-    const fallbackLabel = labels.find((label) => isUsableTitle(label))
+    const sourceCount = Math.max(excerpts.length, sources.length)
+    const labelList = sourceLabels.join("; ") || "(none usable)"
+    const fallbackLabel = fallbackNotebookTitle({
+      sourceLabels,
+      digests,
+    })
 
     try {
       if (!corpus.trim()) {
@@ -151,22 +205,36 @@ export const refreshNotebookTitle = internalAction({
         apiKey: requireEnv("OPENAI_API_KEY"),
       })
 
+      const multiSourceRules =
+        sourceCount > 1
+          ? `
+- There are ${sourceCount} sources. Title the notebook as a collection.
+- Reflect what the sources share or how they relate — do not copy only one source title
+- Do not start with vague words like excerpt, notes, document, or paper`
+          : `
+- Prefer a topical phrase grounded in the source content
+- Do not start with vague words like excerpt, notes, document, or paper`
+
       const result = await generateText({
         model: openai(MODELS.title),
-        maxOutputTokens: TITLE_MAX_OUTPUT_TOKENS,
-        prompt: `Write a very short notebook title for this collection of sources.
+        prompt: `Write a short notebook title for this collection of sources.
+Source names: ${labelList}
 Rules:
-- At most 5 words
-- Prefer a topical phrase grounded in the content or source titles
-- Do not use URLs, hostnames, file paths, or filenames
-- Return only the title
+- Keep it brief: a compact topical phrase, not a full sentence
+- No URLs, hostnames, file paths, filenames, or document codes
+- Return a title and the source IDs you considered${multiSourceRules}
 
 ${corpus}`,
+        output: Output.object({ schema: titleSchema }),
       })
 
-      const title = cleanGeneratedTitle(result.text)
+      const title = cleanGeneratedTitle(result.output?.title ?? "")
+      const coveredSourceIds = new Set(result.output?.sourceIds ?? [])
+      const coversEverySource = includedSourceIds.every((sourceId) =>
+        coveredSourceIds.has(sourceId),
+      )
 
-      if (isUsableTitle(title)) {
+      if (coversEverySource && acceptNotebookTitle(title, sourceLabels)) {
         await ctx.runMutation(internal.titlesHelpers.applyGeneratedTitle, {
           notebookId: args.notebookId,
           title,
@@ -175,8 +243,13 @@ ${corpus}`,
       }
 
       throw new Error("Empty or weak generated title.")
-    } catch {
-      if (fallbackLabel) {
+    } catch (error) {
+      console.error(
+        "[title-refresh]",
+        error instanceof Error ? error.message : "Unknown title error",
+      )
+
+      if (fallbackLabel && acceptNotebookTitle(fallbackLabel, sourceLabels)) {
         await ctx.runMutation(internal.titlesHelpers.applyGeneratedTitle, {
           notebookId: args.notebookId,
           title: fallbackLabel,

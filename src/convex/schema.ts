@@ -69,6 +69,7 @@ export default defineSchema({
     title: v.string(),
     titleOrigin: titleOrigin,
     titleGenerationState: titleGenerationState,
+    titleRefreshGeneration: v.optional(v.number()),
     chatEpoch: v.number(),
     sourceRevision: v.number(),
     chatSelectionHash: v.optional(v.string()),

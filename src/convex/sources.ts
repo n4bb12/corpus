@@ -1,6 +1,10 @@
 import { v } from "convex/values"
 import { shouldCreateSourceRevision } from "src/lib/chatHistory"
 import { LIMITS } from "src/lib/limits"
+import {
+  shouldSkipTitleRefresh,
+  TITLE_REFRESH_DEBOUNCE_MS,
+} from "src/lib/notebookTitlePolicy"
 import { quotaResetMessage, remainingQuota, utcDateKey } from "src/lib/quotas"
 import {
   normalizeTitle,
@@ -520,9 +524,25 @@ export const remove = mutation({
       cursor: null,
     })
 
-    await ctx.scheduler.runAfter(0, internal.titles.refreshNotebookTitle, {
-      notebookId: notebook._id,
-    })
+    if (!shouldSkipTitleRefresh(notebook.titleOrigin)) {
+      const generation = (notebook.titleRefreshGeneration ?? 0) + 1
+
+      await ctx.db.patch(notebook._id, {
+        titleRefreshGeneration: generation,
+        titleGenerationState: "pending",
+        updatedAt: now,
+        lastUsedAt: now,
+      })
+
+      await ctx.scheduler.runAfter(
+        TITLE_REFRESH_DEBOUNCE_MS,
+        internal.titles.refreshNotebookTitle,
+        {
+          notebookId: notebook._id,
+          generation,
+        },
+      )
+    }
   },
 })
 
