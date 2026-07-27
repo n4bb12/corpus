@@ -5,26 +5,26 @@ import type { DataModel } from "../_generated/dataModel"
 const PLUNK_API_URL = "https://next-api.useplunk.com/v1/send"
 
 function getPlunkApiKey() {
-	const key = requireEnv("PLUNK_API_KEY").trim()
+  const key = requireEnv("PLUNK_API_KEY").trim()
 
-	if (!key.startsWith("sk_")) {
-		throw new Error(
-			"PLUNK_API_KEY must be the secret key (sk_…). Public keys (pk_…) cannot send email.",
-		)
-	}
+  if (!key.startsWith("sk_")) {
+    throw new Error(
+      "PLUNK_API_KEY must be the secret key (sk_…). Public keys (pk_…) cannot send email.",
+    )
+  }
 
-	return key
+  return key
 }
 
 function getFromAddress() {
-	return {
-		from: requireEnv("PLUNK_FROM_EMAIL").trim(),
-		name: (process.env.PLUNK_FROM_NAME || "Corpus").trim(),
-	}
+  return {
+    from: requireEnv("PLUNK_FROM_EMAIL").trim(),
+    name: (process.env.PLUNK_FROM_NAME || "Corpus").trim(),
+  }
 }
 
 function emailShell(title: string, body: string, href: string, cta: string) {
-	return `<!doctype html>
+  return `<!doctype html>
 <html>
   <body style="background:#F1F3EE;font-family:Outfit,Helvetica,Arial,sans-serif;margin:0;padding:24px;">
     <div style="max-width:28rem;margin:0 auto;background:#FAFBF8;border-radius:16px;padding:32px;">
@@ -37,43 +37,43 @@ function emailShell(title: string, body: string, href: string, cta: string) {
 }
 
 export async function sendMagicLinkEmail(
-	_ctx: GenericCtx<DataModel>,
-	args: { to: string; url: string },
+  _ctx: GenericCtx<DataModel>,
+  args: { to: string; url: string },
 ) {
-	const from = getFromAddress()
-	const response = await fetch(PLUNK_API_URL, {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${getPlunkApiKey()}`,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			to: args.to,
-			from: from.from,
-			name: from.name,
-			subject: "Sign in to Corpus",
-			body: emailShell(
-				"Your sign-in link",
-				"Use the button below to sign in to Corpus. If you did not ask for this, you can ignore the message.",
-				args.url,
-				"Sign in",
-			),
-			type: "html",
-		}),
-	})
+  const from = getFromAddress()
+  const response = await fetch(PLUNK_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getPlunkApiKey()}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      to: args.to,
+      from: from.from,
+      name: from.name,
+      subject: "Sign in to Corpus",
+      body: emailShell(
+        "Your sign-in link",
+        "Use the button below to sign in to Corpus. If you did not ask for this, you can ignore the message.",
+        args.url,
+        "Sign in",
+      ),
+      type: "html",
+    }),
+  })
 
-	if (!response.ok) {
-		const payload = (await response.json().catch(() => null)) as {
-			message?: string
-		} | null
-		const message = payload?.message || "Couldn't send the sign-in email."
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as {
+      message?: string
+    } | null
+    const message = payload?.message || "Couldn't send the sign-in email."
 
-		if (response.status === 401) {
-			throw new Error(
-				`${message} Check that Convex PLUNK_API_KEY is the secret key (sk_…) from Plunk → Settings → API Keys.`,
-			)
-		}
+    if (response.status === 401) {
+      throw new Error(
+        `${message} Check that Convex PLUNK_API_KEY is the secret key (sk_…) from Plunk → Settings → API Keys.`,
+      )
+    }
 
-		throw new Error(message)
-	}
+    throw new Error(message)
+  }
 }

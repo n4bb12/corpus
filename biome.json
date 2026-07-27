@@ -1,63 +1,63 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"useIgnoreFile": true
-	},
-	"files": {
-		"ignoreUnknown": true,
-		"includes": [
-			"**/src/**/*",
-			"**/vite.config.ts",
-			"!**/src/routeTree.gen.ts",
-			"!**/src/styles.css",
-			"!**/src/convex/_generated/**/*"
-		]
-	},
-	"formatter": {
-		"enabled": true,
-		"indentStyle": "space"
-	},
-	"assist": {
-		"actions": {
-			"source": {
-				"organizeImports": "on"
-			}
-		}
-	},
-	"linter": {
-		"enabled": true,
-		"rules": {
-			"preset": "recommended",
-			"correctness": {
-				"useExhaustiveDependencies": "warn"
-			},
-			"a11y": {
-				"useSemanticElements": "warn",
-				"noSvgWithoutTitle": "warn",
-				"useHeadingContent": "off",
-				"noStaticElementInteractions": "off"
-			},
-			"security": {
-				"noDangerouslySetInnerHtml": "off"
-			},
-			"suspicious": {
-				"noExplicitAny": "off",
-				"noImplicitAnyLet": "off",
-				"noArrayIndexKey": "warn"
-			}
-		}
-	},
-	"css": {
-		"parser": {
-			"tailwindDirectives": true
-		}
-	},
-	"javascript": {
-		"formatter": {
-			"quoteStyle": "double",
-			"semicolons": "asNeeded"
-		}
-	}
+  "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**/src/**/*",
+      "**/vite.config.ts",
+      "!**/src/routeTree.gen.ts",
+      "!**/src/styles.css",
+      "!**/src/convex/_generated/**/*"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space"
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "correctness": {
+        "useExhaustiveDependencies": "warn"
+      },
+      "a11y": {
+        "useSemanticElements": "warn",
+        "noSvgWithoutTitle": "warn",
+        "useHeadingContent": "off",
+        "noStaticElementInteractions": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noImplicitAnyLet": "off",
+        "noArrayIndexKey": "warn"
+      }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "asNeeded"
+    }
+  }
 }

@@ -1,64 +1,64 @@
 import type { Id } from "src/convex/_generated/dataModel"
 
 export type IngestCreateUrlInput = {
-	action: "create"
-	kind: "url"
-	notebookId: Id<"notebooks">
-	url: string
+  action: "create"
+  kind: "url"
+  notebookId: Id<"notebooks">
+  url: string
 }
 
 export type IngestCreateTextInput = {
-	action: "create"
-	kind: "text"
-	notebookId: Id<"notebooks">
-	text: string
+  action: "create"
+  kind: "text"
+  notebookId: Id<"notebooks">
+  text: string
 }
 
 export type IngestCreateFileInput = {
-	action: "create"
-	kind: "file"
-	notebookId: Id<"notebooks">
-	storageId: Id<"_storage">
-	filename: string
-	mimeType?: string
+  action: "create"
+  kind: "file"
+  notebookId: Id<"notebooks">
+  storageId: Id<"_storage">
+  filename: string
+  mimeType?: string
 }
 
 export type IngestRetryInput = {
-	action: "retry"
-	sourceId: Id<"sources">
+  action: "retry"
+  sourceId: Id<"sources">
 }
 
 export type IngestStartInput =
-	| IngestCreateUrlInput
-	| IngestCreateTextInput
-	| IngestCreateFileInput
-	| IngestRetryInput
+  | IngestCreateUrlInput
+  | IngestCreateTextInput
+  | IngestCreateFileInput
+  | IngestRetryInput
 
 /**
  * Starts ingestion. Resolves once the source row exists (HTTP 202);
  * processing continues in the background via `waitUntil`.
  */
 export async function startSourceIngest(input: IngestStartInput) {
-	const response = await fetch("/api/sources/ingest", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(input),
-	})
+  const response = await fetch("/api/sources/ingest", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  })
 
-	const payload = (await response.json().catch(() => null)) as {
-		sourceId?: string
-		error?: string
-	} | null
+  const payload = (await response.json().catch(() => null)) as {
+    sourceId?: string
+    error?: string
+  } | null
 
-	if (!response.ok) {
-		throw new Error(payload?.error || "Couldn't add this source.")
-	}
+  if (!response.ok) {
+    throw new Error(payload?.error || "Couldn't add this source.")
+  }
 
-	const sourceId = input.action === "retry" ? input.sourceId : payload?.sourceId
+  const sourceId = input.action === "retry" ? input.sourceId : payload?.sourceId
 
-	if (!sourceId) {
-		throw new Error("Couldn't add this source.")
-	}
+  if (!sourceId) {
+    throw new Error("Couldn't add this source.")
+  }
 
-	return sourceId as Id<"sources">
+  return sourceId as Id<"sources">
 }

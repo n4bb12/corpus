@@ -5,42 +5,42 @@ import { authComponent } from "../auth"
 type Ctx = QueryCtx | MutationCtx
 
 export async function requireUser(ctx: Ctx) {
-	const user = await authComponent.getAuthUser(ctx)
+  const user = await authComponent.getAuthUser(ctx)
 
-	if (!user) {
-		throw new Error("You need to sign in to continue.")
-	}
+  if (!user) {
+    throw new Error("You need to sign in to continue.")
+  }
 
-	return user
+  return user
 }
 
 export async function requireNotebookOwner(
-	ctx: Ctx,
-	notebookId: Id<"notebooks">,
+  ctx: Ctx,
+  notebookId: Id<"notebooks">,
 ) {
-	const user = await requireUser(ctx)
-	const notebook = await ctx.db.get(notebookId)
+  const user = await requireUser(ctx)
+  const notebook = await ctx.db.get(notebookId)
 
-	if (!notebook || notebook.deletedAt || notebook.ownerId !== user._id) {
-		throw new Error("Notebook not found.")
-	}
+  if (!notebook || notebook.deletedAt || notebook.ownerId !== user._id) {
+    throw new Error("Notebook not found.")
+  }
 
-	return { user, notebook }
+  return { user, notebook }
 }
 
 export async function requireSourceOwner(ctx: Ctx, sourceId: Id<"sources">) {
-	const user = await requireUser(ctx)
-	const source = await ctx.db.get(sourceId)
+  const user = await requireUser(ctx)
+  const source = await ctx.db.get(sourceId)
 
-	if (!source || source.deletedAt || source.ownerId !== user._id) {
-		throw new Error("Source not found.")
-	}
+  if (!source || source.deletedAt || source.ownerId !== user._id) {
+    throw new Error("Source not found.")
+  }
 
-	const notebook = await ctx.db.get(source.notebookId)
+  const notebook = await ctx.db.get(source.notebookId)
 
-	if (!notebook || notebook.deletedAt || notebook.ownerId !== user._id) {
-		throw new Error("Notebook not found.")
-	}
+  if (!notebook || notebook.deletedAt || notebook.ownerId !== user._id) {
+    throw new Error("Notebook not found.")
+  }
 
-	return { user, source, notebook }
+  return { user, source, notebook }
 }

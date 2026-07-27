@@ -6,109 +6,109 @@ import { v } from "convex/values"
 import { CHAT_PROGRESS } from "src/lib/chat_progress"
 import { MODELS } from "src/lib/limits"
 import {
-	mergeRetrievalCandidates,
-	selectEvidenceWithinBudget,
+  mergeRetrievalCandidates,
+  selectEvidenceWithinBudget,
 } from "src/lib/retrieval"
 import { api, internal } from "./_generated/api"
 import { action } from "./_generated/server"
 import { authComponent } from "./auth"
 
 export const prepareEvidence = action({
-	args: {
-		notebookId: v.id("notebooks"),
-		prompt: v.string(),
-		sourceIds: v.array(v.id("sources")),
-		messageId: v.optional(v.id("chatEntries")),
-		generationId: v.optional(v.string()),
-	},
-	handler: async (ctx, args) => {
-		const user = await authComponent.getAuthUser(ctx)
+  args: {
+    notebookId: v.id("notebooks"),
+    prompt: v.string(),
+    sourceIds: v.array(v.id("sources")),
+    messageId: v.optional(v.id("chatEntries")),
+    generationId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx)
 
-		if (!user) {
-			throw new Error("You need to sign in to continue.")
-		}
+    if (!user) {
+      throw new Error("You need to sign in to continue.")
+    }
 
-		await ctx.runQuery(api.notebooks.get, {
-			notebookId: args.notebookId,
-		})
+    await ctx.runQuery(api.notebooks.get, {
+      notebookId: args.notebookId,
+    })
 
-		async function setProgress(progressLabel: string) {
-			if (!args.messageId || !args.generationId) {
-				return
-			}
+    async function setProgress(progressLabel: string) {
+      if (!args.messageId || !args.generationId) {
+        return
+      }
 
-			await ctx.runMutation(api.chat.setProgressLabel, {
-				messageId: args.messageId,
-				generationId: args.generationId,
-				progressLabel,
-			})
-		}
+      await ctx.runMutation(api.chat.setProgressLabel, {
+        messageId: args.messageId,
+        generationId: args.generationId,
+        progressLabel,
+      })
+    }
 
-		await setProgress(CHAT_PROGRESS.searching)
+    await setProgress(CHAT_PROGRESS.searching)
 
-		const { embedding: vector } = await embed({
-			model: voyage.textEmbedding(MODELS.embed),
-			value: args.prompt,
-			providerOptions: {
-				voyage: {
-					inputType: "query",
-				},
-			},
-		})
+    const { embedding: vector } = await embed({
+      model: voyage.textEmbedding(MODELS.embed),
+      value: args.prompt,
+      providerOptions: {
+        voyage: {
+          inputType: "query",
+        },
+      },
+    })
 
-		const vectorHits = await ctx.runAction(
-			internal.retrievalHelpers.searchVectors,
-			{
-				notebookId: args.notebookId,
-				sourceIds: args.sourceIds,
-				embedding: vector,
-			},
-		)
+    const vectorHits = await ctx.runAction(
+      internal.retrievalHelpers.searchVectors,
+      {
+        notebookId: args.notebookId,
+        sourceIds: args.sourceIds,
+        embedding: vector,
+      },
+    )
 
-		const textHits = await ctx.runQuery(internal.retrievalHelpers.searchText, {
-			notebookId: args.notebookId,
-			sourceIds: args.sourceIds,
-			prompt: args.prompt,
-		})
+    const textHits = await ctx.runQuery(internal.retrievalHelpers.searchText, {
+      notebookId: args.notebookId,
+      sourceIds: args.sourceIds,
+      prompt: args.prompt,
+    })
 
-		const merged = mergeRetrievalCandidates(vectorHits, textHits)
-		let ranked = merged
+    const merged = mergeRetrievalCandidates(vectorHits, textHits)
+    let ranked = merged
 
-		if (merged.length) {
-			await setProgress(CHAT_PROGRESS.ranking)
+    if (merged.length) {
+      await setProgress(CHAT_PROGRESS.ranking)
 
-			try {
-				const { ranking } = await rerank({
-					model: voyage.reranking(MODELS.rerank),
-					documents: merged.map((item) => item.text),
-					query: args.prompt,
-					topN: Math.min(12, merged.length),
-				})
+      try {
+        const { ranking } = await rerank({
+          model: voyage.reranking(MODELS.rerank),
+          documents: merged.map((item) => item.text),
+          query: args.prompt,
+          topN: Math.min(12, merged.length),
+        })
 
-				ranked = ranking
-					.map((item) => {
-						const candidate = merged[item.originalIndex]
+        ranked = ranking
+          .map((item) => {
+            const candidate = merged[item.originalIndex]
 
-						if (!candidate) {
-							return null
-						}
+            if (!candidate) {
+              return null
+            }
 
-						return {
-							...candidate,
-							score: item.score,
-						}
-					})
-					.filter((item): item is (typeof merged)[number] => Boolean(item))
-			} catch {
-				ranked = merged
-			}
-		}
+            return {
+              ...candidate,
+              score: item.score,
+            }
+          })
+          .filter((item): item is (typeof merged)[number] => Boolean(item))
+      } catch {
+        ranked = merged
+      }
+    }
 
-		const selected = selectEvidenceWithinBudget(ranked, 12_000)
+    const selected = selectEvidenceWithinBudget(ranked, 12_000)
 
-		return {
-			evidence: selected,
-			insufficient: !selected.length,
-		}
-	},
+    return {
+      evidence: selected,
+      insufficient: !selected.length,
+    }
+  },
 })

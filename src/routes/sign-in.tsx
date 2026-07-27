@@ -3,13 +3,13 @@ import { ClientAuthBoundary } from "src/components/auth/ClientAuthBoundary"
 import { SignInPage } from "src/pages/SignInPage"
 
 export const Route = createFileRoute("/sign-in")({
-	component: SignInRoute,
+  component: SignInRoute,
 })
 
 function SignInRoute() {
-	return (
-		<ClientAuthBoundary mode="signed-out">
-			<SignInPage />
-		</ClientAuthBoundary>
-	)
+  return (
+    <ClientAuthBoundary mode="signed-out">
+      <SignInPage />
+    </ClientAuthBoundary>
+  )
 }

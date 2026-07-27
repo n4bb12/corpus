@@ -4,16 +4,16 @@ import { NotebookPage } from "src/pages/notebooks/NotebookPage"
 import { z } from "zod"
 
 export const Route = createFileRoute("/notebooks/$notebookId")({
-	validateSearch: z.object({
-		tab: z.enum(["sources", "chat"]).optional(),
-	}),
-	component: NotebookRoute,
+  validateSearch: z.object({
+    tab: z.enum(["sources", "chat"]).optional(),
+  }),
+  component: NotebookRoute,
 })
 
 function NotebookRoute() {
-	return (
-		<ClientAuthBoundary mode="signed-in">
-			<NotebookPage />
-		</ClientAuthBoundary>
-	)
+  return (
+    <ClientAuthBoundary mode="signed-in">
+      <NotebookPage />
+    </ClientAuthBoundary>
+  )
 }

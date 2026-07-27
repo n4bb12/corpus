@@ -5,35 +5,35 @@ import { AppPending } from "src/components/layout/AppPending"
 import { useIsSigningOut } from "src/lib/use-signed-in"
 
 export type ClientAuthBoundaryProps = {
-	children: ReactNode
-	mode: "signed-in" | "signed-out"
+  children: ReactNode
+  mode: "signed-in" | "signed-out"
 }
 
 export function ClientAuthBoundary({
-	children,
-	mode,
+  children,
+  mode,
 }: ClientAuthBoundaryProps) {
-	const [mounted, setMounted] = useState(false)
-	const { isAuthenticated, isLoading } = useConvexAuth()
-	const signingOut = useIsSigningOut()
+  const [mounted, setMounted] = useState(false)
+  const { isAuthenticated, isLoading } = useConvexAuth()
+  const signingOut = useIsSigningOut()
 
-	useEffect(() => {
-		setMounted(true)
-	}, [])
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-	if (!mounted || isLoading) {
-		return mode === "signed-in" ? <AppPending /> : children
-	}
+  if (!mounted || isLoading) {
+    return mode === "signed-in" ? <AppPending /> : children
+  }
 
-	const isSignedIn = !signingOut && isAuthenticated
+  const isSignedIn = !signingOut && isAuthenticated
 
-	if (mode === "signed-in" && !isSignedIn) {
-		return <Navigate to="/sign-in" replace />
-	}
+  if (mode === "signed-in" && !isSignedIn) {
+    return <Navigate to="/sign-in" replace />
+  }
 
-	if (mode === "signed-out" && isSignedIn) {
-		return <Navigate to="/" replace />
-	}
+  if (mode === "signed-out" && isSignedIn) {
+    return <Navigate to="/" replace />
+  }
 
-	return children
+  return children
 }

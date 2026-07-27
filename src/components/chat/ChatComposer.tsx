@@ -1,107 +1,107 @@
 import { Layers, Square } from "lucide-react"
 import { Bezel } from "src/components/ui/Bezel"
-import { Button } from "src/components/ui/shadcn/button"
 import { IslandCta } from "src/components/ui/IslandCta"
 import { PendingLabel } from "src/components/ui/PendingLabel"
+import { Button } from "src/components/ui/shadcn/button"
 import { Textarea } from "src/components/ui/shadcn/textarea"
 import { LIMITS } from "src/lib/limits"
 
 export type ChatComposerProps = {
-	prompt: string
-	error: string | null
-	readySourceCount: number
-	sending: boolean
-	streaming: boolean
-	onPromptChange: (value: string) => void
-	onSend: () => void
-	onStop: () => void
-	onOpenSources: () => void
+  prompt: string
+  error: string | null
+  readySourceCount: number
+  sending: boolean
+  streaming: boolean
+  onPromptChange: (value: string) => void
+  onSend: () => void
+  onStop: () => void
+  onOpenSources: () => void
 }
 
 export function ChatComposer({
-	prompt,
-	error,
-	readySourceCount,
-	sending,
-	streaming,
-	onPromptChange,
-	onSend,
-	onStop,
-	onOpenSources,
+  prompt,
+  error,
+  readySourceCount,
+  sending,
+  streaming,
+  onPromptChange,
+  onSend,
+  onStop,
+  onOpenSources,
 }: ChatComposerProps) {
-	const remaining = LIMITS.maxPromptCharacters - prompt.length
+  const remaining = LIMITS.maxPromptCharacters - prompt.length
 
-	return (
-		<div className="pointer-events-none bg-linear-to-t from-background via-background/95 to-transparent px-4 pt-10 pb-4">
-			<div className="pointer-events-auto mx-auto w-full max-w-[50rem] space-y-2">
-				{error ? <p className="text-sm text-destructive">{error}</p> : null}
+  return (
+    <div className="pointer-events-none bg-linear-to-t from-background via-background/95 to-transparent px-4 pt-10 pb-4">
+      <div className="pointer-events-auto mx-auto w-full max-w-[50rem] space-y-2">
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-				<Bezel className="shadow-(--shadow-pine)" innerClassName="p-3.5 md:p-4">
-					<Textarea
-						value={prompt}
-						onChange={(event) =>
-							onPromptChange(
-								event.target.value.slice(0, LIMITS.maxPromptCharacters),
-							)
-						}
-						onKeyDown={(event) => {
-							if (event.key === "Enter" && !event.shiftKey) {
-								event.preventDefault()
-								onSend()
-							}
-						}}
-						placeholder={
-							readySourceCount
-								? "Ask your sources"
-								: "Select sources to start chatting"
-						}
-						disabled={!readySourceCount || sending}
-						className="min-h-24 max-h-60 resize-none border-0 bg-transparent p-1 text-base shadow-none focus-visible:ring-0 md:text-base"
-					/>
+        <Bezel className="shadow-(--shadow-pine)" innerClassName="p-3.5 md:p-4">
+          <Textarea
+            value={prompt}
+            onChange={(event) =>
+              onPromptChange(
+                event.target.value.slice(0, LIMITS.maxPromptCharacters),
+              )
+            }
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault()
+                onSend()
+              }
+            }}
+            placeholder={
+              readySourceCount
+                ? "Ask your sources"
+                : "Select sources to start chatting"
+            }
+            disabled={!readySourceCount || sending}
+            className="min-h-24 max-h-60 resize-none border-0 bg-transparent p-1 text-base shadow-none focus-visible:ring-0 md:text-base"
+          />
 
-					<div className="mt-3 flex items-center justify-between gap-3">
-						<div className="text-xs text-muted-foreground tabular-nums">
-							{remaining <= 200 ? `${remaining} left` : null}
-						</div>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="text-xs text-muted-foreground tabular-nums">
+              {remaining <= 200 ? `${remaining} left` : null}
+            </div>
 
-						<div className="flex items-center gap-2">
-							<Button
-								type="button"
-								variant="ghost"
-								size="sm"
-								className="rounded-full"
-								aria-label={`${readySourceCount} selected sources`}
-								onClick={onOpenSources}
-							>
-								<Layers size={16} strokeWidth={1.5} className="mr-1" />
-								{readySourceCount} sources
-							</Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-full"
+                aria-label={`${readySourceCount} selected sources`}
+                onClick={onOpenSources}
+              >
+                <Layers size={16} strokeWidth={1.5} className="mr-1" />
+                {readySourceCount} sources
+              </Button>
 
-							{streaming ? (
-								<Button
-									type="button"
-									className="min-w-20 rounded-full"
-									onClick={onStop}
-								>
-									<Square size={14} className="mr-1" />
-									Stop
-								</Button>
-							) : (
-								<IslandCta
-									type="button"
-									disabled={!readySourceCount || !prompt.trim() || sending}
-									onClick={onSend}
-									showArrow={!sending}
-								>
-									<PendingLabel pending={sending} pendingLabel="Sending">
-										Send
-									</PendingLabel>
-								</IslandCta>
-							)}
-						</div>
-					</div>
-				</Bezel>
-			</div>
-		</div>
-	)
+              {streaming ? (
+                <Button
+                  type="button"
+                  className="min-w-20 rounded-full"
+                  onClick={onStop}
+                >
+                  <Square size={14} className="mr-1" />
+                  Stop
+                </Button>
+              ) : (
+                <IslandCta
+                  type="button"
+                  disabled={!readySourceCount || !prompt.trim() || sending}
+                  onClick={onSend}
+                  showArrow={!sending}
+                >
+                  <PendingLabel pending={sending} pendingLabel="Sending">
+                    Send
+                  </PendingLabel>
+                </IslandCta>
+              )}
+            </div>
+          </div>
+        </Bezel>
+      </div>
+    </div>
+  )
 }

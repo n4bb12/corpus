@@ -4,17 +4,17 @@ import { LibraryPage } from "src/pages/LibraryPage"
 import { z } from "zod"
 
 export const Route = createFileRoute("/")({
-	validateSearch: z.object({
-		q: z.string().optional(),
-		cursor: z.string().optional(),
-	}),
-	component: LibraryRoute,
+  validateSearch: z.object({
+    q: z.string().optional(),
+    cursor: z.string().optional(),
+  }),
+  component: LibraryRoute,
 })
 
 function LibraryRoute() {
-	return (
-		<ClientAuthBoundary mode="signed-in">
-			<LibraryPage />
-		</ClientAuthBoundary>
-	)
+  return (
+    <ClientAuthBoundary mode="signed-in">
+      <LibraryPage />
+    </ClientAuthBoundary>
+  )
 }

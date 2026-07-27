@@ -5,39 +5,39 @@ import type { Id } from "src/convex/_generated/dataModel"
 import { useSignedInQueryArgs } from "src/lib/use-signed-in"
 
 export function useSourcePreviewMarkdown(previewSourceId?: string | null) {
-	const previewUrl = useQuery(
-		api.sources.getNormalizedContent,
-		useSignedInQueryArgs(
-			previewSourceId ? { sourceId: previewSourceId as Id<"sources"> } : "skip",
-		),
-	)
-	const [previewMarkdown, setPreviewMarkdown] = useState<string | null>(null)
+  const previewUrl = useQuery(
+    api.sources.getNormalizedContent,
+    useSignedInQueryArgs(
+      previewSourceId ? { sourceId: previewSourceId as Id<"sources"> } : "skip",
+    ),
+  )
+  const [previewMarkdown, setPreviewMarkdown] = useState<string | null>(null)
 
-	useEffect(() => {
-		if (!previewUrl) {
-			setPreviewMarkdown(null)
-			return
-		}
+  useEffect(() => {
+    if (!previewUrl) {
+      setPreviewMarkdown(null)
+      return
+    }
 
-		let cancelled = false
+    let cancelled = false
 
-		void fetch(previewUrl)
-			.then((response) => response.text())
-			.then((text) => {
-				if (!cancelled) {
-					setPreviewMarkdown(text)
-				}
-			})
-			.catch(() => {
-				if (!cancelled) {
-					setPreviewMarkdown("Couldn't load this source.")
-				}
-			})
+    void fetch(previewUrl)
+      .then((response) => response.text())
+      .then((text) => {
+        if (!cancelled) {
+          setPreviewMarkdown(text)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPreviewMarkdown("Couldn't load this source.")
+        }
+      })
 
-		return () => {
-			cancelled = true
-		}
-	}, [previewUrl])
+    return () => {
+      cancelled = true
+    }
+  }, [previewUrl])
 
-	return previewMarkdown
+  return previewMarkdown
 }

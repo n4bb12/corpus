@@ -11,103 +11,103 @@ import { useIsSignedIn, useSignedInQueryArgs } from "src/lib/use-signed-in"
 const routeApi = getRouteApi("/notebooks/$notebookId")
 
 export function useNotebookPage() {
-	const { notebookId } = routeApi.useParams()
-	const search = routeApi.useSearch()
-	const navigate = useNavigate()
-	const isSignedIn = useIsSignedIn()
-	const session = authClient.useSession()
-	const notebookArgs = useSignedInQueryArgs({
-		notebookId: notebookId as Id<"notebooks">,
-	})
-	const notebook = useQuery(api.notebooks.get, notebookArgs)
-	const sources = useQuery(api.sources.listByNotebook, notebookArgs)
-	const rename = useMutation(api.notebooks.rename).withOptimisticUpdate(
-		(localStore, args) => {
-			const title = normalizeTitle(args.title, "")
-			const current = localStore.getQuery(api.notebooks.get, {
-				notebookId: args.notebookId,
-			})
+  const { notebookId } = routeApi.useParams()
+  const search = routeApi.useSearch()
+  const navigate = useNavigate()
+  const isSignedIn = useIsSignedIn()
+  const session = authClient.useSession()
+  const notebookArgs = useSignedInQueryArgs({
+    notebookId: notebookId as Id<"notebooks">,
+  })
+  const notebook = useQuery(api.notebooks.get, notebookArgs)
+  const sources = useQuery(api.sources.listByNotebook, notebookArgs)
+  const rename = useMutation(api.notebooks.rename).withOptimisticUpdate(
+    (localStore, args) => {
+      const title = normalizeTitle(args.title, "")
+      const current = localStore.getQuery(api.notebooks.get, {
+        notebookId: args.notebookId,
+      })
 
-			if (current) {
-				localStore.setQuery(
-					api.notebooks.get,
-					{ notebookId: args.notebookId },
-					{ ...current, title },
-				)
-			}
+      if (current) {
+        localStore.setQuery(
+          api.notebooks.get,
+          { notebookId: args.notebookId },
+          { ...current, title },
+        )
+      }
 
-			for (const { args: queryArgs, value } of localStore.getAllQueries(
-				api.notebooks.list,
-			)) {
-				if (!value) {
-					continue
-				}
+      for (const { args: queryArgs, value } of localStore.getAllQueries(
+        api.notebooks.list,
+      )) {
+        if (!value) {
+          continue
+        }
 
-				localStore.setQuery(api.notebooks.list, queryArgs, {
-					...value,
-					page: value.page.map((entry) =>
-						entry._id === args.notebookId ? { ...entry, title } : entry,
-					),
-				})
-			}
-		},
-	)
-	const touch = useMutation(api.notebooks.touch)
-	const [previewSourceId, setPreviewSourceId] = useState<string | null>(null)
-	const [highlight, setHighlight] = useState<{
-		start?: number
-		end?: number
-		excerpt: string
-	} | null>(null)
-	const [excerptOnly, setExcerptOnly] = useState<string | null>(null)
-	const [addSourceOpen, setAddSourceOpen] = useState(false)
+        localStore.setQuery(api.notebooks.list, queryArgs, {
+          ...value,
+          page: value.page.map((entry) =>
+            entry._id === args.notebookId ? { ...entry, title } : entry,
+          ),
+        })
+      }
+    },
+  )
+  const touch = useMutation(api.notebooks.touch)
+  const [previewSourceId, setPreviewSourceId] = useState<string | null>(null)
+  const [highlight, setHighlight] = useState<{
+    start?: number
+    end?: number
+    excerpt: string
+  } | null>(null)
+  const [excerptOnly, setExcerptOnly] = useState<string | null>(null)
+  const [addSourceOpen, setAddSourceOpen] = useState(false)
 
-	useEffect(() => {
-		if (!isSignedIn) {
-			return
-		}
+  useEffect(() => {
+    if (!isSignedIn) {
+      return
+    }
 
-		void touch({ notebookId: notebookId as Id<"notebooks"> })
-	}, [isSignedIn, notebookId, touch])
+    void touch({ notebookId: notebookId as Id<"notebooks"> })
+  }, [isSignedIn, notebookId, touch])
 
-	useEffect(() => {
-		if (search.tab) {
-			return
-		}
+  useEffect(() => {
+    if (search.tab) {
+      return
+    }
 
-		const hasSources = (sources?.length ?? 0) > 0
-		void navigate({
-			to: "/notebooks/$notebookId",
-			params: { notebookId },
-			search: { tab: hasSources ? "chat" : "sources" },
-			replace: true,
-		})
-	}, [navigate, notebookId, search.tab, sources?.length])
+    const hasSources = (sources?.length ?? 0) > 0
+    void navigate({
+      to: "/notebooks/$notebookId",
+      params: { notebookId },
+      search: { tab: hasSources ? "chat" : "sources" },
+      replace: true,
+    })
+  }, [navigate, notebookId, search.tab, sources?.length])
 
-	const tab = search.tab ?? "sources"
+  const tab = search.tab ?? "sources"
 
-	function setTab(next: "sources" | "chat") {
-		void navigate({
-			to: "/notebooks/$notebookId",
-			params: { notebookId },
-			search: { tab: next },
-		})
-	}
+  function setTab(next: "sources" | "chat") {
+    void navigate({
+      to: "/notebooks/$notebookId",
+      params: { notebookId },
+      search: { tab: next },
+    })
+  }
 
-	return {
-		notebookId,
-		session,
-		notebook,
-		rename,
-		previewSourceId,
-		setPreviewSourceId,
-		highlight,
-		setHighlight,
-		excerptOnly,
-		setExcerptOnly,
-		addSourceOpen,
-		setAddSourceOpen,
-		tab,
-		setTab,
-	}
+  return {
+    notebookId,
+    session,
+    notebook,
+    rename,
+    previewSourceId,
+    setPreviewSourceId,
+    highlight,
+    setHighlight,
+    excerptOnly,
+    setExcerptOnly,
+    addSourceOpen,
+    setAddSourceOpen,
+    tab,
+    setTab,
+  }
 }

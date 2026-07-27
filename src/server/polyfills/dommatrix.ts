@@ -6,14 +6,14 @@ import { createRequire } from "node:module"
  * pure JS and is enough for module evaluation / text extraction.
  */
 export function ensureDomMatrix() {
-	if (globalThis.DOMMatrix) {
-		return
-	}
+  if (globalThis.DOMMatrix) {
+    return
+  }
 
-	const require = createRequire(import.meta.url)
-	const { DOMMatrix } = require("@napi-rs/canvas/geometry.js") as {
-		DOMMatrix: typeof globalThis.DOMMatrix
-	}
+  const require = createRequire(import.meta.url)
+  const { DOMMatrix } = require("@napi-rs/canvas/geometry.js") as {
+    DOMMatrix: typeof globalThis.DOMMatrix
+  }
 
-	globalThis.DOMMatrix = DOMMatrix
+  globalThis.DOMMatrix = DOMMatrix
 }

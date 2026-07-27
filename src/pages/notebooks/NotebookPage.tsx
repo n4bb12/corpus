@@ -5,66 +5,66 @@ import { InlineNotebookTitle } from "src/components/notebook/InlineNotebookTitle
 import { NotebookMobileTabs } from "src/components/notebook/NotebookMobileTabs"
 import { NotebookWorkspace } from "src/components/notebook/NotebookWorkspace"
 import {
-	layoutTransition,
-	pageEnterInitial,
-	respectReducedMotion,
+  layoutTransition,
+  pageEnterInitial,
+  respectReducedMotion,
 } from "src/lib/motion"
 import { useNotebookPage } from "src/pages/notebooks/useNotebookPage"
 
 export function NotebookPage() {
-	const page = useNotebookPage()
-	const reduceMotion = useReducedMotion()
+  const page = useNotebookPage()
+  const reduceMotion = useReducedMotion()
 
-	return (
-		<div className="atmosphere flex h-dvh flex-col overflow-hidden">
-			<AppHeader
-				email={page.session.data?.user.email}
-				name={page.session.data?.user.name}
-				notebookTitle={
-					<motion.div
-						initial={pageEnterInitial}
-						animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-						transition={respectReducedMotion(reduceMotion, layoutTransition)}
-					>
-						<InlineNotebookTitle
-							title={page.notebook?.title ?? ""}
-							loading={!page.notebook}
-							onSave={async (title) => {
-								const notebook = page.notebook
+  return (
+    <div className="atmosphere flex h-dvh flex-col overflow-hidden">
+      <AppHeader
+        email={page.session.data?.user.email}
+        name={page.session.data?.user.name}
+        notebookTitle={
+          <motion.div
+            initial={pageEnterInitial}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={respectReducedMotion(reduceMotion, layoutTransition)}
+          >
+            <InlineNotebookTitle
+              title={page.notebook?.title ?? ""}
+              loading={!page.notebook}
+              onSave={async (title) => {
+                const notebook = page.notebook
 
-								if (!notebook) {
-									return
-								}
+                if (!notebook) {
+                  return
+                }
 
-								await page.rename({
-									notebookId: notebook._id,
-									title,
-								})
-							}}
-						/>
-					</motion.div>
-				}
-			/>
+                await page.rename({
+                  notebookId: notebook._id,
+                  title,
+                })
+              }}
+            />
+          </motion.div>
+        }
+      />
 
-			<NotebookMobileTabs tab={page.tab} onTabChange={page.setTab} />
+      <NotebookMobileTabs tab={page.tab} onTabChange={page.setTab} />
 
-			<NotebookWorkspace
-				notebookId={page.notebookId}
-				tab={page.tab}
-				previewSourceId={page.previewSourceId}
-				highlight={page.highlight}
-				addSourceOpen={page.addSourceOpen}
-				onPreviewSource={page.setPreviewSourceId}
-				onAddSourceOpenChange={page.setAddSourceOpen}
-				onTabChange={page.setTab}
-				onExcerptOnly={page.setExcerptOnly}
-				onHighlight={page.setHighlight}
-			/>
+      <NotebookWorkspace
+        notebookId={page.notebookId}
+        tab={page.tab}
+        previewSourceId={page.previewSourceId}
+        highlight={page.highlight}
+        addSourceOpen={page.addSourceOpen}
+        onPreviewSource={page.setPreviewSourceId}
+        onAddSourceOpenChange={page.setAddSourceOpen}
+        onTabChange={page.setTab}
+        onExcerptOnly={page.setExcerptOnly}
+        onHighlight={page.setHighlight}
+      />
 
-			<CitationExcerptPopover
-				excerpt={page.excerptOnly}
-				onOpenChange={(open) => !open && page.setExcerptOnly(null)}
-			/>
-		</div>
-	)
+      <CitationExcerptPopover
+        excerpt={page.excerptOnly}
+        onOpenChange={(open) => !open && page.setExcerptOnly(null)}
+      />
+    </div>
+  )
 }

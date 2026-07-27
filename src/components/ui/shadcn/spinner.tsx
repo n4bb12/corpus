@@ -3,14 +3,14 @@ import type { ComponentProps } from "react"
 import { cn } from "src/lib/utils"
 
 function Spinner({ className, ...props }: ComponentProps<"svg">) {
-	return (
-		<Loader2Icon
-			role="status"
-			aria-label="Loading"
-			className={cn("size-4 animate-spin", className)}
-			{...props}
-		/>
-	)
+  return (
+    <Loader2Icon
+      role="status"
+      aria-label="Loading"
+      className={cn("size-4 animate-spin", className)}
+      {...props}
+    />
+  )
 }
 
 export { Spinner }

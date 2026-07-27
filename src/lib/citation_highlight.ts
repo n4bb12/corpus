@@ -1,76 +1,76 @@
 import { markdownToPlainText } from "src/lib/markdown_plain"
 
 export type CitationOffsetRange = {
-	start: number
-	end: number
+  start: number
+  end: number
 }
 
 function rangeOverlapsVisibleText(
-	markdown: string,
-	start: number,
-	end: number,
+  markdown: string,
+  start: number,
+  end: number,
 ) {
-	const slice = markdown.slice(start, end)
+  const slice = markdown.slice(start, end)
 
-	return /\S/.test(slice)
+  return /\S/.test(slice)
 }
 
 function findExcerptRange(
-	markdown: string,
-	excerpt: string,
+  markdown: string,
+  excerpt: string,
 ): CitationOffsetRange | null {
-	const needles = [
-		excerpt,
-		excerpt.trim(),
-		markdownToPlainText(excerpt),
-		excerpt.trim().slice(0, 96),
-	]
+  const needles = [
+    excerpt,
+    excerpt.trim(),
+    markdownToPlainText(excerpt),
+    excerpt.trim().slice(0, 96),
+  ]
 
-	const seen = new Set<string>()
+  const seen = new Set<string>()
 
-	for (const needle of needles) {
-		if (!needle || seen.has(needle)) {
-			continue
-		}
+  for (const needle of needles) {
+    if (!needle || seen.has(needle)) {
+      continue
+    }
 
-		seen.add(needle)
-		const index = markdown.indexOf(needle)
+    seen.add(needle)
+    const index = markdown.indexOf(needle)
 
-		if (index >= 0) {
-			return {
-				start: index,
-				end:
-					index +
-					Math.min(needle.length, excerpt.trim().length || needle.length),
-			}
-		}
-	}
+    if (index >= 0) {
+      return {
+        start: index,
+        end:
+          index +
+          Math.min(needle.length, excerpt.trim().length || needle.length),
+      }
+    }
+  }
 
-	return null
+  return null
 }
 
 export function resolveCitationOffsets(
-	markdown: string,
-	locator?: CitationOffsetRange | null,
-	excerpt?: string | null,
+  markdown: string,
+  locator?: CitationOffsetRange | null,
+  excerpt?: string | null,
 ): CitationOffsetRange | null {
-	if (
-		locator &&
-		typeof locator.start === "number" &&
-		typeof locator.end === "number" &&
-		locator.end > locator.start
-	) {
-		const start = Math.max(0, locator.start)
-		const end = Math.min(markdown.length, locator.end)
+  if (
+    locator &&
+    typeof locator.start === "number" &&
+    typeof locator.end === "number" &&
+    locator.end > locator.start
+  ) {
+    const start = Math.max(0, locator.start)
+    const end = Math.min(markdown.length, locator.end)
 
-		if (end > start && rangeOverlapsVisibleText(markdown, start, end)) {
-			return { start, end }
-		}
-	}
+    if (end > start && rangeOverlapsVisibleText(markdown, start, end)) {
+      return { start, end }
+    }
+  }
 
-	if (typeof excerpt === "string" && excerpt.trim()) {
-		return findExcerptRange(markdown, excerpt)
-	}
+  if (typeof excerpt === "string" && excerpt.trim()) {
+    return findExcerptRange(markdown, excerpt)
+  }
 
-	return null
+  return null
 }

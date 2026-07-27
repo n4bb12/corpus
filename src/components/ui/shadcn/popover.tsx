@@ -6,79 +6,79 @@ import type { ComponentProps } from "react"
 import { cn } from "src/lib/utils.ts"
 
 function Popover({ ...props }: ComponentProps<typeof PopoverPrimitive.Root>) {
-	return <PopoverPrimitive.Root data-slot="popover" {...props} />
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }
 
 function PopoverTrigger({
-	...props
+  ...props
 }: ComponentProps<typeof PopoverPrimitive.Trigger>) {
-	return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
 }
 
 function PopoverContent({
-	className,
-	align = "center",
-	sideOffset = 4,
-	...props
+  className,
+  align = "center",
+  sideOffset = 4,
+  ...props
 }: ComponentProps<typeof PopoverPrimitive.Content>) {
-	return (
-		<PopoverPrimitive.Portal>
-			<PopoverPrimitive.Content
-				data-slot="popover-content"
-				align={align}
-				sideOffset={sideOffset}
-				className={cn(
-					"z-50 flex w-72 origin-(--radix-popover-content-transform-origin) flex-col gap-4 rounded-2xl bg-popover p-4 text-sm text-popover-foreground shadow-(--shadow-pine) ring-1 ring-foreground/5 outline-hidden duration-(--duration-menu) ease-spring data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-[98.5%] data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-[98.5%]",
-					className,
-				)}
-				{...props}
-			/>
-		</PopoverPrimitive.Portal>
-	)
+  return (
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        data-slot="popover-content"
+        align={align}
+        sideOffset={sideOffset}
+        className={cn(
+          "z-50 flex w-72 origin-(--radix-popover-content-transform-origin) flex-col gap-4 rounded-2xl bg-popover p-4 text-sm text-popover-foreground shadow-(--shadow-pine) ring-1 ring-foreground/5 outline-hidden duration-(--duration-menu) ease-spring data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-[98.5%] data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-[98.5%]",
+          className,
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
+  )
 }
 
 function PopoverAnchor({
-	...props
+  ...props
 }: ComponentProps<typeof PopoverPrimitive.Anchor>) {
-	return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
 }
 
 function PopoverHeader({ className, ...props }: ComponentProps<"div">) {
-	return (
-		<div
-			data-slot="popover-header"
-			className={cn("flex flex-col gap-1 text-sm", className)}
-			{...props}
-		/>
-	)
+  return (
+    <div
+      data-slot="popover-header"
+      className={cn("flex flex-col gap-1 text-sm", className)}
+      {...props}
+    />
+  )
 }
 
 function PopoverTitle({ className, ...props }: ComponentProps<"h2">) {
-	return (
-		<div
-			data-slot="popover-title"
-			className={cn("text-base font-medium", className)}
-			{...props}
-		/>
-	)
+  return (
+    <div
+      data-slot="popover-title"
+      className={cn("text-base font-medium", className)}
+      {...props}
+    />
+  )
 }
 
 function PopoverDescription({ className, ...props }: ComponentProps<"p">) {
-	return (
-		<p
-			data-slot="popover-description"
-			className={cn("text-muted-foreground", className)}
-			{...props}
-		/>
-	)
+  return (
+    <p
+      data-slot="popover-description"
+      className={cn("text-muted-foreground", className)}
+      {...props}
+    />
+  )
 }
 
 export {
-	Popover,
-	PopoverAnchor,
-	PopoverContent,
-	PopoverDescription,
-	PopoverHeader,
-	PopoverTitle,
-	PopoverTrigger,
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
 }
