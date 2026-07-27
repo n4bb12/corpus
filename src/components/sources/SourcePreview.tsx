@@ -210,7 +210,7 @@ export function SourcePreview({
                 aria-hidden
               >
                 {PREVIEW_PLACEHOLDER_BLOCKS.map((text) => (
-                  <p key={text} className="placeholder-shimmer">
+                  <p key={text} className="rounded-lg placeholder-shimmer">
                     {text}
                   </p>
                 ))}

@@ -7533,3 +7533,27 @@ Two commits:
 
 1. `b631933` — **refactor(sources): split useSourcesPaneData into focused hooks**
 2. `2c88c7b` — **refactor(sources): extract SourceListItemMenu dropdown**
+
+# Placeholder shimmer override
+_Exported on 7/27/2026 at 21:42:37 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+placeholder-shimmer sometimes overrides rounded-full
+
+---
+
+**Cursor**
+
+I'll check how `placeholder-shimmer` and `rounded-full` interact in the styles and components.
+
+The shimmer class hardcodes `border-radius: 0.5rem`, which fights `rounded-full`. Checking the call sites that rely on that default.
+
+Removing the hardcoded `border-radius` from `.placeholder-shimmer` so Tailwind rounding utilities can win.
+
+`.placeholder-shimmer` had a hardcoded `border-radius: 0.5rem`, which beat Tailwind’s `rounded-full` in the cascade.
+
+Removed that from the utility and added `rounded-lg` on the SourcePreview placeholders that depended on the old default. Call sites that already set rounding (`rounded-full`, `rounded-lg`) keep control.
+
