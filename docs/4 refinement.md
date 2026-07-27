@@ -3193,3 +3193,70 @@ Positioning now uses Floating UI directly:
 - `flip({ fallbackAxisSideDirection: "start" })` falls back to **top/bottom** when neither side fits
 - `shift` slides it in (effectively reducing the offset) so it stays in the viewport
 
+# Codebase adjustments and fixes
+_Exported on 7/27/2026 at 12:58:17 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Make these fixes and adjustments. Make commits for each change as you go.
+
+- Some files in src/components/ui are not shadcn components. Move shadcn components to src/components/ui/shadcn (requires configuration changes).
+- Introduce empty lines between blocks of JSX for readability (example, betwen button and input in AddSourceFileDropzone, SourceListItem, etc.). A block is 2 lines of code or more. Add this rule to my global agents file.
+- Remove tab indentation in biome. Use spaces. Do the reformatting in a separate commit.
+- We have lots of rem-based one-off classes, e.g. md:w-[25rem]. Change these to tailwind default classes, e.g. md:w-100. There are other tailwind warnings to fix as well.
+- Treat lines of code with comments above them or that wrap to multiple lines as code blocks and separate them with an empty line above/below. Add this rule to my global agents file.
+- Add a note to themeBootScript
+- If the chat response is not ok, get res.text(), try parse, fallback to plain text.
+- Avoid underscore case and dash case file names such as "chat_sse.ts" and "use-event-callback.ts". Use camelCase. Keep in mind that convex forbids dashes in file names.
+- Add brief JSDoc to complex functions, e.g. parseCitationMarkers, especially in lib, that gives an instant understanding of how the function works. Stenographic description is fine.
+- Split helpers.test.ts into one test file per tested file.
+- Rename component data hooks xxxData. E.g. useNotebookPage. The hook returns data and functions to manipulate the data, not a notebook object. This is just an example. Extract __root head links to a typed constant in __root.tsx.
+- Replace RegExp-based main content extraction with cheerio.
+- Replace decodeHtmlEntities with @nodable/entities.
+
+
+---
+
+**Cursor**
+
+Large multi-commit refactor. I'll explore the repo structure and start applying the changes one commit at a time.
+
+Starting with the shadcn move, then gathering the other files I'll need for the remaining commits.
+
+Next: JSX block spacing and the global agents rules. Reading the relevant files.
+
+Corpus JSX commit landed. Committing the agents file updates outside the workspace next.
+
+Next: switch Biome to spaces, then reformat in a separate commit.
+
+Converting rem one-offs to spacing-scale utilities.
+
+Next: themeBootScript note, chat error handling, then the larger renames.
+
+Renaming underscore/dash lib files to camelCase and updating imports.
+
+Adding JSDoc to complex lib functions, then splitting tests.
+
+Splitting `helpers.test.ts` into per-module test files.
+
+Renaming data hooks and extracting `__root` head links.
+
+Replacing RegExp HTML extraction with cheerio, then swapping in `@nodable/entities`.
+
+Committing the cheerio and entities changes separately.
+
+Convex tsconfig isn't picking up the entities type shim — fixing that.
+
+All requested changes are in, each as its own commit on `main` (14 ahead of origin). `bun fix` and `bun run test` pass.
+
+Highlights:
+- Shadcn → `src/components/ui/shadcn` (+ `components.json`)
+- Biome: spaces, then a separate reformat commit
+- Rem one-offs → spacing scale (`md:w-100`, `max-w-200`, …); `ring-[3px]` → `ring-3`
+- Lib files → camelCase; data hooks → `*Data`; `rootHeadLinks` typed in `__root.tsx`
+- Chat errors: `res.text()` → JSON parse → plain text
+- Cheerio for HTML extraction; `@nodable/entities` for entity decoding (+ type shim for Convex)
+- Global agents (dotfiles + Dorkas): blank lines for JSX blocks and for commented/wrapped lines
+
