@@ -8427,3 +8427,39 @@ I'll drop the tooltip and use a sparkles icon instead so the generating state re
 
 Removed the tooltip. Generating state is now just sparkles + “Generating title…”.
 
+# Atomic commits discussion
+_Exported on 7/28/2026 at 00:14:09 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll analyze the uncommitted changes and split them into atomic commits.
+
+Gathering diffs, commit style, and change intent so I can group them.
+
+Inspecting diffs by area to identify semantic commit groups.
+
+Unstaged and regrouping. Starting the commit sequence, splitting `sources.ts` where upload order and title-refresh concerns meet.
+
+Commit 3 incorrectly changed `addText`'s `createdAt`. Soft-resetting and recommitting that group cleanly.
+
+Created **8 commits** from the uncommitted work:
+
+1. `a7df0e3` — **fix(sources): improve PDF text extraction with layout-aware line grouping**
+2. `9e1d9a9` — **feat(titles): tighten source title quality heuristics**
+3. `1c36d35` — **feat(sources): preserve upload order and stable list row identity**
+4. `2900382` — **feat(chat): classify corpus questions and pack coverage evidence**
+5. `729606f` — **feat(titles): refresh notebook titles from ready sources**
+6. `0f99671` — **style: polish mobile chat chrome, notebook tabs, and ghost hover**
+7. `4d5724a` — **docs: plan source digests for corpus summaries and titles**
+8. `ffdf786` — **docs: update agent sessions**
+
+Working tree is clean.
+
