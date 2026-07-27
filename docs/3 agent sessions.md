@@ -7727,3 +7727,50 @@ Updated `SignInCard` copy:
 
 Type-check and formatting checks pass.
 
+# Notebook plus card height
+_Exported on 7/27/2026 at 22:47:29 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+The new notebook plus card changes height as soon as there is a second notebook. Maybe we should just set it to 2 cards height from the start. I also wonder whether we need the empty state if we already have the plus card. What do you think?
+
+---
+
+**Cursor**
+
+I'll look at how the notebook plus card and empty state are implemented so we can judge the height jump and whether both are needed.
+
+Agree on both.
+
+**Height:** The jump comes from the plus card only becoming a true two-row hero once a second notebook fills the lower row. With one notebook it’s basically one featured row tall (`min-h-88` / featured card); with two it spans two regular rows. Pinning it to two-card height from the start (even with zero or one notebook) keeps the grid stable.
+
+**Empty state:** I’d drop it. The plus card already is the empty state — same action, same mental model. Right now empty users get the page CTA *and* `LibraryEmptyState`, then after the first notebook the plus card appears; that’s a layout swap for no real gain. Showing the grid with only the tall plus card when empty would also make “create first” → “create second” feel continuous.
+
+One caveat: keep a no-matches state for search (you already have that). Only the zero-notebook empty state is redundant.
+
+Want me to wire that up — always tall plus card, no `LibraryEmptyState`?
+
+---
+
+**User**
+
+yes
+
+---
+
+**Cursor**
+
+I'll remove the empty state and keep the plus card at two-card height from the start, including when the library is empty.
+
+I'll update the library page and plus-card height, then remove the unused empty state.
+
+Featured cards are taller than regular ones, so I'll match the plus-card height to featured + gap + regular, then delete the empty state.
+
+Done. Changes:
+
+1. **Empty library** shows the grid with just the tall plus card — `LibraryEmptyState` removed.
+2. **Plus card height** locked to featured + gap + regular (`14rem + 1.5rem + 10.5rem`) from the start, and `self-start` removed so it fills the two-row span.
+3. **Regular notebook cards** get `min-h-42` so that math stays stable when the second card appears.
+

@@ -41,7 +41,7 @@ export function NotebookCard({
           <Bezel
             className="h-full shadow-(--shadow-pine) transition-[box-shadow] duration-(--duration-hover) ease-spring group-hover:shadow-[0_32px_64px_rgb(36_88_68_/_14%),0_4px_16px_rgb(36_88_68_/_8%)] dark:group-hover:shadow-[0_32px_64px_rgb(0_0_0_/_48%),0_4px_16px_rgb(0_0_0_/_32%)]"
             innerClassName={cn(
-              "relative h-full p-5 max-sm:flex max-sm:items-center max-sm:gap-3",
+              "relative h-full min-h-42 p-5 max-sm:flex max-sm:items-center max-sm:gap-3",
               featured && "md:min-h-56 md:p-7",
             )}
           >

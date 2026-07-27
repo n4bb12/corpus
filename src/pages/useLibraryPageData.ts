@@ -120,9 +120,8 @@ export function useLibraryPageData() {
   const page = (displayResult?.page ?? []).filter(
     (notebook) => notebook._id !== creatingNotebookId,
   )
-  // Keep empty / no-match from the last published display so skipping the query
-  // while typing does not blank the results pane.
-  const isEmpty = hasResolvedOnce.current && !displaySearchTerm && !page.length
+  // Keep no-match from the last published display so skipping the query while
+  // typing does not blank the results pane.
   const noMatches =
     hasResolvedOnce.current && !!displaySearchTerm && !page.length
   const currentPage = displayResult?.pageIndex ?? pageIndex
@@ -183,7 +182,6 @@ export function useLibraryPageData() {
     currentPage,
     pageCount,
     isLoading: isInitialLoading,
-    isEmpty,
     noMatches,
     showPagination,
     showSearch,

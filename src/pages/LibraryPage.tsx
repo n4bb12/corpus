@@ -1,5 +1,4 @@
 import { AppHeader } from "src/components/layout/AppHeader"
-import { LibraryEmptyState } from "src/components/library/LibraryEmptyState"
 import { LibraryNotebookGrid } from "src/components/library/LibraryNotebookGrid"
 import { LibrarySearchField } from "src/components/library/LibrarySearchField"
 import { Eyebrow } from "src/components/ui/Eyebrow"
@@ -65,13 +64,6 @@ export function LibraryPage() {
                   />
                 ) : null}
 
-                {library.isEmpty ? (
-                  <LibraryEmptyState
-                    creating={library.creating}
-                    onCreate={() => void library.onCreate()}
-                  />
-                ) : null}
-
                 {library.noMatches ? (
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
@@ -85,11 +77,7 @@ export function LibraryPage() {
                       Clear search
                     </Button>
                   </div>
-                ) : null}
-
-                {!library.isEmpty &&
-                !library.noMatches &&
-                library.page.length > 0 ? (
+                ) : (
                   <LibraryNotebookGrid
                     page={library.page}
                     searchQuery={library.searchTerm}
@@ -110,7 +98,7 @@ export function LibraryPage() {
                       await library.removeNotebook({ notebookId })
                     }}
                   />
-                ) : null}
+                )}
               </Reveal>
             ) : null}
           </main>
