@@ -130,6 +130,34 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     setAtBottom(true)
   }, [entries, streamedContent, progressLabel])
 
+  useEffect(() => {
+    const viewport = scrollerRef.current
+
+    if (!viewport) {
+      return
+    }
+
+    const content = viewport.firstElementChild
+
+    if (!content) {
+      return
+    }
+
+    const keepPinned = () => {
+      if (!stickToBottom.current) {
+        return
+      }
+
+      viewport.scrollTop = viewport.scrollHeight
+      setAtBottom(true)
+    }
+
+    const observer = new ResizeObserver(keepPinned)
+    observer.observe(content)
+
+    return () => observer.disconnect()
+  }, [])
+
   async function markFailed(message: string) {
     setError(message)
 

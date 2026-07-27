@@ -18,7 +18,6 @@ export type AssistantContentProps = {
   content: string
   citations: ChatCitation[]
   insufficient?: boolean
-  streaming?: boolean
   onCite: (args: ChatCiteArgs) => void
 }
 
@@ -26,15 +25,11 @@ export function AssistantContent({
   content,
   citations,
   insufficient = false,
-  streaming = false,
   onCite,
 }: AssistantContentProps) {
   const visibleCitations = insufficient ? [] : citations
   const displayContent = insufficient ? stripCitationMarkers(content) : content
   const hasInlineMarkers = /\[\[cite:\d+\]\]/.test(displayContent)
-  const caret = streaming ? (
-    <span className="streaming-caret" aria-hidden="true" />
-  ) : null
 
   if (!visibleCitations.length || !hasInlineMarkers) {
     const html = marked.parse(stripCitationMarkers(displayContent), {
@@ -42,7 +37,7 @@ export function AssistantContent({
     }) as string
 
     return (
-      <div className="relative space-y-3">
+      <div className="space-y-3">
         <div
           className="prose prose-sm dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: html }}
@@ -54,7 +49,6 @@ export function AssistantContent({
             onCite={onCite}
           />
         ) : null}
-        {caret}
       </div>
     )
   }
@@ -62,8 +56,9 @@ export function AssistantContent({
   const paragraphs = splitCitedParagraphs(displayContent)
 
   return (
-    <div className="relative space-y-3">
+    <div className="space-y-3">
       {paragraphs.map((paragraph) => {
+        const hasPills = !!paragraph.citationIndexes.length
         const html = paragraph.text
           ? (marked.parse(paragraph.text, { async: false }) as string)
           : ""
@@ -77,7 +72,7 @@ export function AssistantContent({
                 dangerouslySetInnerHTML={{ __html: html }}
               />
             ) : null}
-            {paragraph.citationIndexes.length ? (
+            {hasPills ? (
               <CitationPills
                 citations={visibleCitations}
                 indexes={paragraph.citationIndexes}
@@ -87,7 +82,6 @@ export function AssistantContent({
           </div>
         )
       })}
-      {caret}
     </div>
   )
 }

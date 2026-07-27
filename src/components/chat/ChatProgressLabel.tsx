@@ -17,26 +17,14 @@ export function ChatProgressLabel({
 
   return (
     <motion.div
-      initial={
-        skipEntrance
-          ? false
-          : {
-              opacity: 0,
-              gridTemplateRows: "0fr",
-            }
-      }
-      animate={{
-        opacity: 1,
-        gridTemplateRows: "1fr",
-      }}
+      initial={skipEntrance ? false : { height: 0, opacity: 0 }}
+      animate={{ height: "auto", opacity: 1 }}
       transition={fadeTransition}
-      className="grid"
+      className="overflow-hidden"
     >
-      <div className="min-h-0 overflow-hidden">
-        <p className="shimmer text-sm font-medium text-primary" role="status">
-          {label}
-        </p>
-      </div>
+      <p className="shimmer text-sm font-medium text-primary" role="status">
+        {label}
+      </p>
     </motion.div>
   )
 }

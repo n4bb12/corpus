@@ -55,7 +55,6 @@ export function ChatAssistantMessage({
     entry.status === "pending" || entry.status === "streaming" || retrying
   const resolvedProgress = progressLabel ?? entry.progressLabel ?? null
   const showProgress = !content && isStreaming && !!resolvedProgress
-  const showStreamingCaret = !!content && isStreaming
   const showFailure =
     !retrying &&
     (entry.status === "failed" ||
@@ -73,7 +72,6 @@ export function ChatAssistantMessage({
           content={content}
           citations={citations}
           insufficient={insufficient}
-          streaming={showStreamingCaret}
           onCite={onCite}
         />
       ) : null}

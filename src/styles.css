@@ -201,27 +201,12 @@
 	background-size: 200% 100%;
 }
 
-.streaming-caret {
-	position: absolute;
-	top: calc(100% + 0.5rem);
-	left: 0;
-	width: 0.125rem;
-	height: 0.9em;
-	border-radius: 999px;
-	background: var(--primary);
-	animation: streaming-caret-blink 1.1s steps(1, end) infinite;
-	pointer-events: none;
-}
 
 @media (prefers-reduced-motion: reduce) {
 	.placeholder-shimmer {
 		animation: none;
 	}
 
-	.streaming-caret {
-		animation: none;
-		opacity: 0.7;
-	}
 }
 
 @keyframes shimmer {
@@ -233,16 +218,6 @@
 	}
 }
 
-@keyframes streaming-caret-blink {
-	0%,
-	45% {
-		opacity: 1;
-	}
-	50%,
-	100% {
-		opacity: 0;
-	}
-}
 
 .citation-highlight {
 	position: relative;
