@@ -5590,3 +5590,338 @@ I added a **700ms fade-in** once each photo loads (including cached images), wit
 
 Refresh `/sign-in` to see it — no blurhash dependency needed for this.
 
+# Autofill background contrast bug
+_Exported on 7/27/2026 at 19:40:57 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+When auto-filling the email on dark mode then switching to light mode, the dark mode autofill backgrond stays and has bad contrast.
+
+---
+
+**Cursor**
+
+I'll look at how autofill and theme styles are applied on the email input so we can fix the contrast when switching from dark to light.
+
+Chrome often freezes the autofill inset shadow across theme changes. I'll check the theme tokens and apply a fix that forces the shadow to recompute.
+
+Chrome caches the autofill inset shadow when it uses a CSS variable, so theme switches update the text color but leave the dark background. Splitting light/dark rules with literal colors forces a recompute.
+
+Fixed. Chrome was keeping the dark-mode autofill inset shadow after the theme flip because it doesn’t recompute `var(--card)` on `:-webkit-autofill`.
+
+Light and dark now use separate autofill rules with the literal `--card` colors (`#fafbf8` / `#1b231f`), so toggling `.dark` forces a fresh background. Text still follows `--foreground`.
+
+Repro: autofill in dark → switch to light — the field should stay light with readable text.
+
+---
+
+**User**
+
+The same is true in dark mode (reverse order of actions)
+
+---
+
+**Cursor**
+
+The CSS variable split wasn’t enough — Chrome still keeps the first autofill paint. I’ll force a recompute on theme toggle with separate light/dark autofill animations.
+
+The inset shadow likely isn’t winning (Chrome’s light-blue wash is still showing). Moving autofill rules out of `@layer base`, adding `!important`, and restarting via light/dark animations.
+
+Adding a theme-toggle kick so Chrome re-evaluates autofill paint in both directions.
+
+Using a double `requestAnimationFrame` so the clear actually paints before styles reapply.
+
+Hardened both directions. Chrome was keeping the first autofill paint; text updated with the theme but the background didn’t.
+
+Now:
+1. Unlayered light/dark autofill rules with literal colors + `!important`
+2. Separate animations so the shadow is forced to recompute
+3. On theme toggle, a brief clear/reapply (`autofill-pending`) so light→dark and dark→light both refresh
+
+Try autofill in light, switch to dark (and the reverse) — the field background should follow the theme.
+
+---
+
+**User**
+
+Unfortunately, it looks EXACTLY the same as before.
+
+---
+
+**Cursor**
+
+CSS overrides aren't sticking across theme flips — I'll remount the input on theme change so Chrome reapplies autofill under the current theme.
+
+CSS can’t fix this — Chrome freezes autofill paint. Remounting the input on theme change drops the sticky wash; controlled values stay via React state.
+
+CSS can’t fix this — Chrome freezes the autofill paint and ignores theme updates.
+
+New approach: on light↔dark change, **remount** the input. That drops the sticky autofill wash; the email value stays via React state, and normal `bg-card` styling applies.
+
+Try autofill → switch theme again. The field should match the new theme.
+
+---
+
+**User**
+
+The requested module '/src/components/ui/shadcn/input.tsx?t=1785173797137' does not provide an export named 'Input'
+
+---
+
+**Cursor**
+
+The shadcn `Input` importing theme likely broke Vite HMR. Reverting `Input` to a pure component and remounting only on the sign-in email field.
+
+Fixed. `Input` is a plain export again — the theme remount key now lives only on the sign-in email field, which was breaking Vite’s module graph.
+
+# Same-line named exports
+_Exported on 7/27/2026 at 19:51:47 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Change all imports like export { Input } to same-line named exports.
+
+---
+
+**Cursor**
+
+I'll find `export { ... }` patterns and convert them to same-line named exports.
+
+Converting bottom `export { ... }` re-exports to `export` on the declarations. Checking all affected files.
+
+Reading the shadcn components to convert bottom `export { ... }` blocks into inline `export` declarations.
+
+Converting all shadcn components to inline `export function` / `export const` declarations.
+
+Updated all 15 shadcn UI files: trailing `export { … }` blocks are now inline `export function` / `export const` on the declarations. Private helpers (`assignRef`, `alertVariants`) stay unexported.
+
+# Cold start caching issue
+_Exported on 7/27/2026 at 19:51:54 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+One more thing, I sometimes noticed a cold start on https://corpus-n4bb12.vercel.app/ . The / and /sign-in page must be static and cached on the CDN if that is not the case.
+
+---
+
+**Cursor**
+
+I'll check how `/` and `/sign-in` are rendered and whether anything forces dynamic rendering that would block CDN caching.
+
+This is TanStack Start on Vite, not Next.js — I'll inspect route config and Vercel headers next.
+
+Prerender is already configured — next I'll verify the build output and whether Vercel is still routing those pages through the serverless function.
+
+**Already true for production.** `/` and `/sign-in` are prerendered static HTML and served from the CDN — not the serverless function.
+
+Evidence from live responses:
+
+| Page | Evidence |
+|------|----------|
+| `/` | `x-vercel-cache: HIT`, `age: ~12400`, body matches `index.html` (~2604 bytes) |
+| `/sign-in` | Same — HIT on the prerendered `sign-in/index.html` |
+
+Build config already does this in `vite.config.ts` (`pages: ["/", "/sign-in"]` + `prerender.enabled`), and Nitro’s Vercel routes serve filesystem first, then fall back to `_shell.html` for other URLs. Only `/api/*` and `/_serverFn/*` hit `__server`.
+
+What you’re feeling as a “cold start” is almost certainly **client bootstrap**, not origin cold start: the static HTML ships an `AppPending` shell (`Loading`), then JS + auth hydrate. HTML uses Vercel’s default `cache-control: public, max-age=0, must-revalidate` (browsers revalidate; the edge still caches, hence the HITs).
+
+No change needed for static/CDN serving of those two routes. If you want, we can next either tighten CDN/browser cache headers for the HTML shells, or reduce the post-load pending flash on `/`.
+
+---
+
+**User**
+
+A 5 second delay on first load and then instant load on reload is not a client bootstrap issue.
+
+---
+
+**Cursor**
+
+You're right — a ~5s first hit that vanishes on reload points to origin/CDN cold path, not hydration. I'll measure first-load vs reload timings end-to-end.
+
+HTML is ~100ms from the CDN — the 5s is likely the first warm-up of `/api/auth` or another serverless call. Checking that path next.
+
+Reproduced it: `/api/auth/get-session` spiked to **5.36s** while HTML stayed ~100ms. Digging into why auth shares the fat serverless bundle.
+
+Confirmed: HTML is fine; `/api/auth/get-session` is hitching a ride on a 51MB function (pdfjs/jsdom). Checking how to peel auth off that bundle.
+
+Root cause: every page load calls `/api/auth/get-session` through the 51MB `__server` function in `iad1` (US), while Convex is in `eu-west-1`. I reproduced a **5.36s** spike on that path. Moving auth to a tiny Edge proxy and pinning the heavy function to an EU region.
+
+The `compiled` hook runs too early — finding which hook runs after Nitro writes `config.json`.
+
+The build routes look wrong — pages may be hitting `__server` instead of the static shell. Checking that now.
+
+Nitro’s catch-all is sending HTML to the 51MB `__server` instead of `_shell.html`. I’ll fix routing so auth hits the Edge proxy and pages stay on the static shell.
+
+You were right. The HTML was already static; the **5s** was `/api/auth/get-session` cold-starting the **51MB** `__server` function (pdfjs/jsdom/markitdown) in **iad1**, then proxying to Convex in **eu-west-1**.
+
+I reproduced it: auth spiked to **5.36s**, while `/` stayed ~100ms CDN HIT.
+
+**Fix (needs deploy):**
+1. **Tiny Edge auth proxy** (~1KB) — `/api/auth/*` no longer touches the fat function
+2. **SPA shell restored** — HTML catch-all → `_shell.html`, not `__server`
+3. **`__server` pinned to `fra1`** — chat/ingest stay EU-local
+
+After deploy, first load of `/` or `/sign-in` should only wait on Convex (~150ms), not a Bun cold start of the ingest bundle.
+
+---
+
+**User**
+
+<timestamp>Monday, Jul 27, 2026, 7:23 PM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: success
+task_id: 647539
+title: Force longer idle and probe JWKS
+tool_call_id: call-589bd96e-6cb8-4ff2-b540-59f66db3b078-42
+fc_07ee419e-3934-9632-8bca-4fca1fb6312d_2
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/647539.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+<timestamp>Monday, Jul 27, 2026, 7:23 PM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: success
+task_id: 647540
+title: Compare direct Convex vs Vercel auth latency
+tool_call_id: call-1a4046ca-c78a-44fa-bf69-a2f83e46984a-51
+fc_26113846-70f7-98f8-8fc5-619f5e512300_1
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/647540.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+---
+
+**Cursor**
+
+Those idle probes finished and matched the diagnosis: after 90–120s, auth via Vercel stayed ~350–400ms when warm, while hitting Convex directly was ~140–200ms. The earlier **5.3s** spike was the cold path through the fat `__server` function — which the Edge auth proxy fix removes once deployed.
+
+---
+
+**User**
+
+Great, however authentication shouldn't block page load at all. It shouldn't even be in the path in the first place.
+
+---
+
+**Cursor**
+
+Auth shouldn't gate first paint — I'll inspect how `ClientAuthBoundary` blocks render and pull session checks off the page-load path.
+
+`ClientAuthBoundary` currently holds `AppPending` until auth resolves, and that pending shell is what gets prerendered. I'll render the page immediately and only redirect once auth is known.
+
+Prerender is still emitting `AppPending` because SPA mode leaves matches `pending` — checking how to get real page HTML into the static build.
+
+Prerender still ships `AppPending` because `defaultSsr: false` — enabling SSR for `/` and `/sign-in` so the static HTML is the real page, not an auth/pending gate.
+
+Auth is off the critical path now.
+
+**Runtime:** `ClientAuthBoundary` always paints the page. It only redirects after Convex + Better Auth have settled. Queries still skip until signed in.
+
+**Static HTML:** `defaultSsr: true` so `/` and `/sign-in` prerender the real UI (library chrome / sign-in) instead of the auth `Loading` shell. Notebooks stay client-only behind the SPA shell.
+
+Session checks still run in the background for redirects and data — they just no longer gate first paint.
+
+---
+
+**User**
+
+What does injectVercelAuthProxy do
+
+---
+
+**Cursor**
+
+It’s a **post-build patch** for the Vercel output. After Nitro finishes, it:
+
+1. **Writes a ~1KB Edge function** (`auth-proxy.func`) that forwards `/api/auth/*` to your Convex site URL, with the Better Auth forwarded-host headers so cookies/redirects stay on the app origin.
+
+2. **Rewrites `config.json` routes** so traffic is split like this:
+   - static assets / filesystem first  
+   - `/api/auth/*` → that Edge proxy (not the fat server)  
+   - `/api/*` and `/_serverFn/*` → `__server` (chat/ingest)  
+   - everything else → `_shell.html`
+
+That’s what pulls session checks off the 51MB Bun function and stops HTML navigations from cold-starting it. `runInjectVercelAuthProxy.ts` just loads `VITE_CONVEX_SITE_URL` and calls it at the end of `bun run build`.
+
+---
+
+**User**
+
+Instead of this kind of magic, can we await import heavy libraries on use?
+
+---
+
+**Cursor**
+
+Lazy `import()` can keep heavy deps off the auth cold path — I'll find the top-level pulls and swap them for on-use imports, then we can drop the build inject.
+
+Lazy `import()` helps, but it won’t fully replace the Edge split — I’ll check whether we can defer the heavy graph enough for auth, and what we’d still need for routing.
+
+Short answer: lazy `import()` helps defer evaluation, but it won’t fully replace the Edge split — the fat packages still ship inside `__server`. I’ll push lazy imports as far as they’ll go, drop the Edge proxy, and keep only a small SPA route patch.
+
+Replacing the Edge inject with a SPA route-only patch and cleaning up the build.
+
+**Partly.** Lazy `import()` defers *evaluating* heavy code until chat/ingest run — it does **not** shrink the Vercel function artifact (`pdfjs`/`jsdom` still get traced into `__server` ~51MB), so auth still boots that same function.
+
+What I changed instead of the Edge proxy:
+
+1. **`/api/chat`** — thin route, `await import` of the AI handler  
+2. **`/api/sources/ingest`** — `await import` of `processSource` only when scheduling work  
+3. **cheerio / markitdown / pdfjs** — already (or now) loaded only inside those pipelines  
+4. **Removed** the Edge auth-proxy inject  
+
+Left a small post-build **SPA route patch** only: Nitro still catch-alls HTML to `__server`; that patch sends documents to `_shell.html` instead. Unrelated to auth libs.
+
+So: auth cold starts should be lighter (thin init graph), but not eliminated the way a separate Edge function would.
+
+---
+
+**User**
+
+I'm used to getting separate cloud functions for each API route using Next.js. Is this not how the TanStack adapter bundles the server output as well?
+
+---
+
+**Cursor**
+
+Checking how Nitro’s Vercel preset actually emits functions versus Next’s per-route model.
+
+**No — not with the Nitro Vercel adapter TanStack Start uses.**
+
+Next.js (App Router) typically emits **one serverless function per route segment**, so `/api/auth` and `/api/chat` can cold-start independently with different bundles.
+
+This build emits **one** function: `__server.func`. All of `/api/*` and `/_serverFn/*` rewrite to it. That’s why auth shares a cold start with chat/ingest even after lazy `import()` — those are async chunks inside the same deployment, not separate functions.
+
+Nitro’s `vercel.functionRules` can create **extra function directories** (often symlinked to the same server) for per-route `maxDuration` / `regions` / observability. That’s routing/config splitting, not Next-style isolated bundles.
+
+So the Edge auth-proxy idea was compensating for that monolith; lazy imports only defer work *inside* it.
+
+---
+
+**User**
+
+Oh wow, that's a bummer. But good to know.
+
+---
+
+**Cursor**
+
+Yeah — it’s one of the sharper differences vs Next on Vercel. The lazy imports and SPA/static split still help, but they can’t give you per-route isolation the way App Router does.
+
