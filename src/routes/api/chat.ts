@@ -10,6 +10,7 @@ import {
 } from "src/lib/authServer"
 import { formatChatError } from "src/lib/chatErrors"
 import { CHAT_PROGRESS } from "src/lib/chatProgress"
+import { resolveCitationQuote } from "src/lib/citationQuote"
 import {
   type AnswerParagraph,
   buildCitedMarkdown,
@@ -24,8 +25,13 @@ const answerSchema = z.object({
   insufficient: z.boolean(),
   paragraphs: z.array(
     z.object({
-      // chunkIds first so citations bind before paragraph text streams in.
-      chunkIds: z.array(z.string()),
+      // citations first so chunk IDs bind before paragraph text streams in.
+      citations: z.array(
+        z.object({
+          chunkId: z.string(),
+          quote: z.string(),
+        }),
+      ),
       text: z.string(),
     }),
   ),
@@ -53,15 +59,31 @@ function normalizeParagraphs(paragraphs: unknown): AnswerParagraph[] {
       "text" in paragraph && typeof paragraph.text === "string"
         ? paragraph.text
         : ""
-    const chunkIds =
-      "chunkIds" in paragraph && Array.isArray(paragraph.chunkIds)
-        ? paragraph.chunkIds.filter(
-            (chunkId: unknown): chunkId is string =>
-              typeof chunkId === "string",
-          )
+    const citations =
+      "citations" in paragraph && Array.isArray(paragraph.citations)
+        ? paragraph.citations.flatMap((citation: unknown) => {
+            if (!citation || typeof citation !== "object") {
+              return []
+            }
+
+            const chunkId =
+              "chunkId" in citation && typeof citation.chunkId === "string"
+                ? citation.chunkId
+                : ""
+            const quote =
+              "quote" in citation && typeof citation.quote === "string"
+                ? citation.quote
+                : ""
+
+            if (!chunkId) {
+              return []
+            }
+
+            return [{ chunkId, quote }]
+          })
         : []
 
-    return [{ text, chunkIds }]
+    return [{ text, citations }]
   })
 }
 
@@ -308,11 +330,13 @@ export const Route = createFileRoute("/api/chat")({
 Only answer using the supplied evidence chunks.
 Return a structured object with:
 - insufficient: true when the evidence cannot answer the question; false when it can.
-- paragraphs: ordered answer paragraphs. Each has chunkIds (evidence chunk IDs that support that paragraph) and text (markdown, no [[cite:…]] markers).
-When insufficient is true, use one clear paragraph and leave every chunkIds array empty.
-When insufficient is false, every substantive factual paragraph must list the chunk IDs it relies on.
+- paragraphs: ordered answer paragraphs. Each has citations (evidence used by that paragraph) and text (markdown, no [[cite:…]] markers).
+Each citation must include chunkId and quote. The quote must be a short verbatim span copied from that chunk—ideally one sentence or less—that actually supports the paragraph.
+When insufficient is true, use one clear paragraph and leave every citations array empty.
+When insufficient is false, every substantive factual paragraph must list the citations it relies on.
 Do not invent facts from general knowledge.
-Never include chunk IDs that were not supplied.`
+Never include chunk IDs that were not supplied.
+Never invent or paraphrase quotes; copy them from the evidence.`
 
               const userPrompt = `Evidence:\n${evidenceBlock || "(none)"}\n\nRecent exchanges:\n${historyText || "(none)"}\n\nQuestion:\n${prepared.prompt}`
               const answerOutput = Output.object({ schema: answerSchema })
@@ -507,22 +531,36 @@ Never include chunk IDs that were not supplied.`
                     String(item.chunkId) === citation.chunkId,
                 )
 
+                const wholeChunkLocator =
+                  evidence &&
+                  typeof evidence.startOffset === "number" &&
+                  typeof evidence.endOffset === "number" &&
+                  typeof evidence.ordinal === "number"
+                    ? {
+                        startOffset: evidence.startOffset,
+                        endOffset: evidence.endOffset,
+                        ordinal: evidence.ordinal,
+                      }
+                    : undefined
+
+                const resolved =
+                  evidence && typeof citation.quote === "string"
+                    ? resolveCitationQuote({
+                        chunkText: evidence.text,
+                        startOffset: evidence.startOffset,
+                        endOffset: evidence.endOffset,
+                        ordinal: evidence.ordinal,
+                        quote: citation.quote,
+                      })
+                    : null
+
                 return {
                   sourceId: evidence?.sourceId as never,
                   chunkId: citation.chunkId as never,
                   sourceTitleSnapshot: "Source",
-                  excerpt: evidence?.text.slice(0, 400) || "",
-                  locator:
-                    evidence &&
-                    typeof evidence.startOffset === "number" &&
-                    typeof evidence.endOffset === "number" &&
-                    typeof evidence.ordinal === "number"
-                      ? {
-                          startOffset: evidence.startOffset,
-                          endOffset: evidence.endOffset,
-                          ordinal: evidence.ordinal,
-                        }
-                      : undefined,
+                  excerpt:
+                    resolved?.excerpt || evidence?.text.slice(0, 400) || "",
+                  locator: resolved?.locator ?? wholeChunkLocator,
                   order,
                 }
               })
@@ -534,6 +572,25 @@ Never include chunk IDs that were not supplied.`
                   citation.excerpt.slice(0, 48) ||
                   "Source",
               }))
+
+              const refinedCatalog = titled.map((citation) => {
+                const source = sourcesById.get(String(citation.sourceId))
+
+                return {
+                  _id: String(citation.chunkId),
+                  chunkId: String(citation.chunkId),
+                  sourceId: citation.sourceId,
+                  liveTitle:
+                    source?.title || citation.excerpt.slice(0, 48) || "Source",
+                  excerpt: citation.excerpt,
+                  canNavigate: !!source && !source.deletedAt,
+                  locator: citation.locator,
+                }
+              })
+
+              streamController.enqueue(
+                encodeSse("citations", { citations: refinedCatalog }),
+              )
 
               await finalize({
                 content: numbered.text,

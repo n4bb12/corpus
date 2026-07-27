@@ -52,9 +52,19 @@ describe("citations", () => {
     expect(
       buildCitedMarkdown(
         [
-          { text: "First claim.", chunkIds: ["c1"] },
-          { text: "Second claim.", chunkIds: ["c2", "c1", "bad"] },
-          { text: "  ", chunkIds: ["c3"] },
+          {
+            text: "First claim.",
+            citations: [{ chunkId: "c1", quote: "alpha" }],
+          },
+          {
+            text: "Second claim.",
+            citations: [
+              { chunkId: "c2", quote: "beta" },
+              { chunkId: "c1", quote: "alpha again" },
+              { chunkId: "bad", quote: "nope" },
+            ],
+          },
+          { text: "  ", citations: [{ chunkId: "c3", quote: "gamma" }] },
         ],
         new Set(["c1", "c2"]),
       ),
@@ -63,9 +73,11 @@ describe("citations", () => {
         "citations": [
           {
             "chunkId": "c1",
+            "quote": "alpha",
           },
           {
             "chunkId": "c2",
+            "quote": "beta",
           },
         ],
         "content": 

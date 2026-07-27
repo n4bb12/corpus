@@ -1,11 +1,17 @@
 export type CitationRef = {
   chunkId: string
   excerpt?: string
+  quote?: string
+}
+
+export type AnswerCitation = {
+  chunkId: string
+  quote: string
 }
 
 export type AnswerParagraph = {
   text: string
-  chunkIds: string[]
+  citations: AnswerCitation[]
 }
 
 const CITATION_PATTERN = /\[\[cite:([^\]]+)\]\]/g
@@ -26,7 +32,7 @@ export function joinParagraphText(
 }
 
 /**
- * Validate structured paragraph chunkIds and inject `[[cite:chunkId]]` markers.
+ * Validate structured paragraph citations and inject `[[cite:chunkId]]` markers.
  * First-seen valid chunk order is preserved in `citations` for later numbering.
  */
 export function buildCitedMarkdown(
@@ -47,18 +53,21 @@ export function buildCitedMarkdown(
 
       const markers: string[] = []
 
-      for (const chunkId of paragraph.chunkIds) {
-        if (!allowedChunkIds.has(chunkId)) {
-          invalid.push(chunkId)
+      for (const citation of paragraph.citations) {
+        if (!allowedChunkIds.has(citation.chunkId)) {
+          invalid.push(citation.chunkId)
           continue
         }
 
-        if (!seen.has(chunkId)) {
-          seen.add(chunkId)
-          citations.push({ chunkId })
+        if (!seen.has(citation.chunkId)) {
+          seen.add(citation.chunkId)
+          citations.push({
+            chunkId: citation.chunkId,
+            quote: citation.quote,
+          })
         }
 
-        markers.push(`[[cite:${chunkId}]]`)
+        markers.push(`[[cite:${citation.chunkId}]]`)
       }
 
       if (!markers.length) {

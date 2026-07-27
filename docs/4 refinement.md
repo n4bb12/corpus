@@ -4041,3 +4041,81 @@ Chunking is now local and structural — no Voyage calls during “Preparing.”
 
 **Removed** the `semantic-chunker` dependency.
 
+# Citation breadth issue
+_Exported on 7/27/2026 at 15:47:21 GMT+2 from Cursor (3.13.10)_
+
+---
+
+**User**
+
+Citations are sometimes quite broad (referring to multiple paragraphs that barely contribute).
+
+---
+
+**Cursor**
+
+Citations spanning too many low-value paragraphs — I'll check how citation ranges are produced and what the refinement notes say about tightening them.
+
+Next I’ll check how excerpts and highlights are chosen versus full chunk spans — that usually explains overly broad citations.
+
+Plan mode rejected — staying in agent. Root cause looks like multi-paragraph chunks plus full-chunk locators; checking ingest sizes and how highlights use them.
+
+Citations currently highlight the **whole retrieval chunk**, and chunks pack up to ~1200 characters — often several paragraphs. The saved excerpt is just the first 400 chars of that chunk, so the pill can point at a lot of barely-relevant text.
+
+Two levers:
+
+1. **Tighter chunks** — pack closer to paragraph size (e.g. ~400–500 max) so each cite maps to less source text. Existing sources need re-ingest.
+2. **Exact supporting quotes** — have the model return a short verbatim quote per cite, then store that as excerpt + tight locator. Works with current chunk sizes; matches the “exact cited excerpt” plan.
+
+I’d do **2** (optionally with slightly tighter packing later). Want that, **1**, or both?
+
+---
+
+**User**
+
+2
+
+---
+
+**Cursor**
+
+Implementing exact supporting quotes for citations. Reading the TDD skill and the citation finalize path next.
+
+Per TDD, one seam to confirm before writing tests:
+
+**Seam:** a pure `resolveCitationQuote({ chunkText, startOffset, endOffset, ordinal, quote }) → { excerpt, locator } | null` — finds a verbatim quote inside the evidence chunk (with light normalize: trim / whitespace collapse), returns a tight source locator; falls back to `null` when the quote isn’t in the chunk (caller can keep the whole-chunk locator or drop it).
+
+Model schema change (not under that unit test): each paragraph cite becomes `{ chunkId, quote }` instead of bare `chunkId`.
+
+Does that seam look right?
+
+Waiting on your OK for that seam before the red test.
+
+---
+
+**User**
+
+yes
+
+---
+
+**Cursor**
+
+Confirmed. Starting with a failing `resolveCitationQuote` test, then the minimal implementation.
+
+Red confirmed. Implementing the minimal resolver next.
+
+Green on exact match. Next slice: whitespace-normalized quote matching.
+
+Wiring quotes into the answer schema and chat finalize path.
+
+Fixing the non-null assertion lint warning.
+
+Exact supporting quotes are wired through.
+
+**`resolveCitationQuote`** — finds a verbatim quote in the evidence chunk (trim + whitespace collapse) and returns a tight source locator.
+
+**Answer schema** — each cite is `{ chunkId, quote }` instead of a bare id. The model must copy a short span from the chunk.
+
+**Finalize** — stores that quote as the excerpt and locator; if the quote doesn’t match, falls back to the whole chunk. A refined `citations` SSE event is emitted before `done` so streaming pills update immediately.
+
