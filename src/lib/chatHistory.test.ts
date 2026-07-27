@@ -4,6 +4,7 @@ import {
   canRetryLatestAssistant,
   getOptimisticUserPrompt,
   hashSourceSelection,
+  patchChatEntriesForCancel,
   planSourceBoundary,
   planSourceBoundaryFromEntries,
   readySelectedSourceIds,
@@ -36,6 +37,85 @@ describe("chat history", () => {
         submission,
       ),
     ).toMatchInlineSnapshot(`null`)
+  })
+
+  test("marks the latest active assistant canceled on stop", () => {
+    const entries = [
+      {
+        kind: "message" as const,
+        role: "user" as const,
+        content: "Summarize",
+        createdAt: 1,
+      },
+      {
+        kind: "message" as const,
+        role: "assistant" as const,
+        status: "streaming" as const,
+        content: "Partial",
+        progressLabel: "Writing…",
+        createdAt: 2,
+      },
+    ]
+
+    expect(
+      patchChatEntriesForCancel(entries, "Partial answer"),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "content": "Summarize",
+          "createdAt": 1,
+          "kind": "message",
+          "role": "user",
+        },
+        {
+          "content": "Partial answer",
+          "createdAt": 2,
+          "kind": "message",
+          "progressLabel": undefined,
+          "role": "assistant",
+          "status": "canceled",
+        },
+      ]
+    `)
+    expect(patchChatEntriesForCancel(entries)).toMatchInlineSnapshot(`
+      [
+        {
+          "content": "Summarize",
+          "createdAt": 1,
+          "kind": "message",
+          "role": "user",
+        },
+        {
+          "content": "Partial",
+          "createdAt": 2,
+          "kind": "message",
+          "progressLabel": undefined,
+          "role": "assistant",
+          "status": "canceled",
+        },
+      ]
+    `)
+    expect(
+      patchChatEntriesForCancel([
+        {
+          kind: "message",
+          role: "assistant",
+          status: "complete",
+          content: "Done",
+          createdAt: 1,
+        },
+      ]),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "content": "Done",
+          "createdAt": 1,
+          "kind": "message",
+          "role": "assistant",
+          "status": "complete",
+        },
+      ]
+    `)
   })
 
   test("shows optimistic progress until a live assistant appears", () => {

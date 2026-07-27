@@ -8,6 +8,7 @@ import {
   canRetryLatestAssistant,
   getOptimisticUserPrompt,
   type OptimisticChatSubmission,
+  patchChatEntriesForCancel,
 } from "src/lib/chatHistory"
 import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import { consumeChatSse, type StreamCitation } from "src/lib/chatSse"
@@ -19,7 +20,23 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   const entries = useQuery(api.chat.list, notebookArgs)
   const sources = useQuery(api.sources.listByNotebook, notebookArgs)
   const clearChat = useMutation(api.notebooks.clearChat)
-  const cancelGeneration = useMutation(api.chat.cancelGeneration)
+  const cancelGeneration = useMutation(
+    api.chat.cancelGeneration,
+  ).withOptimisticUpdate((localStore, args) => {
+    for (const { args: queryArgs, value } of localStore.getAllQueries(
+      api.chat.list,
+    )) {
+      if (!value || queryArgs.notebookId !== args.notebookId) {
+        continue
+      }
+
+      localStore.setQuery(
+        api.chat.list,
+        queryArgs,
+        patchChatEntriesForCancel(value, args.content),
+      )
+    }
+  })
   const failActiveGeneration = useMutation(api.chat.failActiveGeneration)
   const [prompt, setPrompt] = useState("")
   const [sending, setSending] = useState(false)
@@ -248,17 +265,28 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   }
 
   async function stop() {
+    const content = streamedContentRef.current ?? undefined
+
     acceptingStreamRef.current = false
     abortRef.current?.abort()
     abortRef.current = null
+    setSending(false)
+    setOptimisticSubmission(null)
     setProgressLabel(null)
     setRetryAssistantId(null)
 
+    const cancelPromise = cancelGeneration({
+      notebookId,
+      content,
+    })
+
+    streamedContentRef.current = null
+    setStreamedContent(null)
+    setStreamedCitations([])
+    setStreamedInsufficient(null)
+
     try {
-      await cancelGeneration({
-        notebookId,
-        content: streamedContentRef.current ?? undefined,
-      })
+      await cancelPromise
     } catch {
       // Server may already have finalized the turn.
     }

@@ -4,6 +4,7 @@ export type ChatEntryLike = {
   status?: "pending" | "streaming" | "complete" | "failed" | "canceled"
   exchangeId?: string
   content?: string
+  progressLabel?: string
   createdAt: number
 }
 
@@ -127,6 +128,44 @@ export function canRetryLatestAssistant(entries: ChatEntryLike[]) {
   // Recover turns that finished with no visible answer (e.g. provider errors
   // previously finalized as empty complete).
   return latest.status === "complete" && !latest.content?.trim()
+}
+
+/** Mark the latest active assistant as canceled for an optimistic stop. */
+export function patchChatEntriesForCancel<T extends ChatEntryLike>(
+  entries: T[],
+  content?: string,
+) {
+  let activeIndex = -1
+
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index]
+
+    if (
+      entry?.kind === "message" &&
+      entry.role === "assistant" &&
+      (entry.status === "pending" || entry.status === "streaming")
+    ) {
+      activeIndex = index
+      break
+    }
+  }
+
+  if (activeIndex < 0) {
+    return entries
+  }
+
+  return entries.map((entry, index) => {
+    if (index !== activeIndex) {
+      return entry
+    }
+
+    return {
+      ...entry,
+      status: "canceled" as const,
+      progressLabel: undefined,
+      ...(typeof content === "string" ? { content } : {}),
+    }
+  })
 }
 
 export type SourceRevisionEvent = {
