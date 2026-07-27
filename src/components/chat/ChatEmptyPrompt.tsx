@@ -3,7 +3,7 @@ import { IslandCta } from "src/components/ui/IslandCta"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 
 const SUGGESTIONS = [
-  "Summarize the sources for me.",
+  "Give me a concise brief of the sources.",
   "What are the key takeaways?",
   "Where do these sources disagree?",
   "Explain this like I'm new to the topic.",

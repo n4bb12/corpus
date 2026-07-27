@@ -27,7 +27,7 @@ export type RetrievalCandidate = {
   sourceId: string
   text: string
   score: number
-  channel: "vector" | "text" | "both" | "inline" | "coverage"
+  channel: "vector" | "text" | "both" | "inline" | "coverage" | "digest"
   startOffset: number
   endOffset: number
   ordinal: number

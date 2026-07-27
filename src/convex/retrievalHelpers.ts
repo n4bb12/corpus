@@ -39,6 +39,55 @@ export const listSourceCharacterCounts = internalQuery({
   },
 })
 
+export const listSourceDigests = internalQuery({
+  args: {
+    notebookId: v.id("notebooks"),
+    sourceIds: v.array(v.id("sources")),
+  },
+  handler: async (ctx, args) => {
+    const digests: Array<{
+      sourceId: Id<"sources">
+      title: string
+      digestStatus?: "pending" | "ready" | "failed"
+      digestText?: string
+      digestCitations?: Array<{
+        chunkId: Id<"chunks">
+        quote: string
+        locator?: {
+          startOffset: number
+          endOffset: number
+          ordinal: number
+        }
+      }>
+      normalizedStorageId?: Id<"_storage">
+    }> = []
+
+    for (const sourceId of args.sourceIds) {
+      const source = await ctx.db.get(sourceId)
+
+      if (
+        !source ||
+        source.deletedAt ||
+        source.notebookId !== args.notebookId ||
+        source.processingState !== "ready"
+      ) {
+        continue
+      }
+
+      digests.push({
+        sourceId: source._id,
+        title: source.title,
+        digestStatus: source.digestStatus,
+        digestText: source.digestText,
+        digestCitations: source.digestCitations,
+        normalizedStorageId: source.normalizedStorageId,
+      })
+    }
+
+    return digests
+  },
+})
+
 export const listChunksForSources = internalQuery({
   args: {
     notebookId: v.id("notebooks"),
@@ -83,6 +132,41 @@ export const listChunksForSources = internalQuery({
           ordinal: chunk.ordinal,
         })
       }
+    }
+
+    return chunks
+  },
+})
+
+export const getChunksByIds = internalQuery({
+  args: {
+    chunkIds: v.array(v.id("chunks")),
+  },
+  handler: async (ctx, args) => {
+    const chunks: Array<{
+      chunkId: Id<"chunks">
+      sourceId: Id<"sources">
+      text: string
+      startOffset: number
+      endOffset: number
+      ordinal: number
+    }> = []
+
+    for (const chunkId of args.chunkIds) {
+      const chunk = await ctx.db.get(chunkId)
+
+      if (!chunk || chunk.deletedAt) {
+        continue
+      }
+
+      chunks.push({
+        chunkId: chunk._id,
+        sourceId: chunk.sourceId,
+        text: chunk.text,
+        startOffset: chunk.startOffset,
+        endOffset: chunk.endOffset,
+        ordinal: chunk.ordinal,
+      })
     }
 
     return chunks

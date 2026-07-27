@@ -22,6 +22,7 @@ import {
   formatFlatEvidence,
 } from "src/lib/evidencePrompt"
 import { MODELS } from "src/lib/limits"
+import { formatDigestEvidence } from "src/lib/sourceDigest"
 import {
   mapAnswerCitations,
   toStreamCitationCatalog,
@@ -303,6 +304,21 @@ export async function handleChatPost(request: Request) {
           }>
           insufficient: boolean
           mode: "factual" | "corpus"
+          evidenceKind?: "digest" | "coverage" | "chunks"
+          digestSections?: Array<{
+            sourceId: string
+            title: string
+            digestText: string
+            citations: Array<{
+              chunkId: string
+              quote: string
+              locator?: {
+                startOffset: number
+                endOffset: number
+                ordinal: number
+              }
+            }>
+          }>
         }
 
         throwIfCanceled()
@@ -359,17 +375,26 @@ export async function handleChatPost(request: Request) {
             (item: (typeof evidencePack.evidence)[number]) => item.sourceId,
           ),
         ).size
+        const useDigestEvidence =
+          evidencePack.evidenceKind === "digest" &&
+          !!evidencePack.digestSections?.length
         const useCorpusLayout =
+          useDigestEvidence ||
           evidencePack.mode === "corpus" ||
           (distinctSourceCount > 1 && evidencePack.mode !== "factual")
 
-        const evidenceBlock = useCorpusLayout
-          ? formatCorpusEvidence(
-              evidencePack.evidence,
-              sourceTitleById,
+        const evidenceBlock = useDigestEvidence
+          ? formatDigestEvidence(
+              evidencePack.digestSections ?? [],
               prepared.sourceIds,
             )
-          : formatFlatEvidence(evidencePack.evidence)
+          : useCorpusLayout
+            ? formatCorpusEvidence(
+                evidencePack.evidence,
+                sourceTitleById,
+                prepared.sourceIds,
+              )
+            : formatFlatEvidence(evidencePack.evidence)
 
         const historyText = prepared.history
           .map(
@@ -385,8 +410,17 @@ export async function handleChatPost(request: Request) {
           })
           .join("; ")
 
-        const corpusAddendum = useCorpusLayout
+        const corpusAddendum = useDigestEvidence
           ? `
+This question is a cross-cutting task over multiple sources.
+Selected sources: ${sourceNames || "(none)"}.
+Evidence is a per-source digest with supporting quotes. Synthesize from the digests; cite only the provided supporting quote chunk ids.
+You must cover every source section that has a digest—do not skip a source, and do not focus on only one source.
+For summaries and briefs, cover each source in turn (or clearly synthesize with citations from each).
+Ignore prior answers that omitted sources; re-answer from the digests below.
+`
+          : useCorpusLayout
+            ? `
 This question is a cross-cutting task over multiple sources.
 Selected sources: ${sourceNames || "(none)"}.
 Evidence is grouped under each source title. You must write at least one grounded paragraph with citations for every source section that has chunks—do not skip a source, and do not focus on only one source.
@@ -394,10 +428,10 @@ For summaries and briefs, cover each source in turn (or clearly synthesize with 
 For contradictions or contested claims, state agreements and disagreements and cite each side.
 Ignore prior answers that omitted sources; re-answer from the evidence below.
 `
-          : ""
+            : ""
 
         const system = `You are Corpus, a strictly source-grounded assistant.
-Only answer using the supplied evidence chunks.
+Only answer using the supplied evidence ${useDigestEvidence ? "digests and supporting quotes" : "chunks"}.
 Return a structured object with:
 - insufficient: true when the evidence cannot answer the question; false when it can.
 - paragraphs: ordered answer paragraphs. Each has text (markdown, no [[cite:…]] markers) then citations (evidence used by that paragraph).
