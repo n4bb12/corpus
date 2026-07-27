@@ -110,12 +110,19 @@ export function useChatPane(notebookId: Id<"notebooks">) {
       })
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as {
-          error?: string
-        } | null
-        throw new Error(
-          payload?.error || "Couldn't start the answer. Try again.",
-        )
+        const text = await response.text()
+        let message = "Couldn't start the answer. Try again."
+
+        try {
+          const payload = JSON.parse(text) as { error?: string }
+          message = payload.error || text || message
+        } catch {
+          if (text.trim()) {
+            message = text
+          }
+        }
+
+        throw new Error(message)
       }
 
       setPrompt("")
