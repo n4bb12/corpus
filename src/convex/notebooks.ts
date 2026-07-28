@@ -9,10 +9,7 @@ import {
 } from "src/lib/libraryPagination"
 import { LIMITS } from "src/lib/limits"
 import { notebookMatchesSearch } from "src/lib/notebookSearch"
-import {
-  patchForClearedNotebookTitle,
-  TITLE_REFRESH_DEBOUNCE_MS,
-} from "src/lib/notebookTitlePolicy"
+import { patchForClearedNotebookTitle } from "src/lib/notebookTitlePolicy"
 import { normalizeTitle } from "src/lib/sourceTitle"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
@@ -21,6 +18,7 @@ import {
   requireNotebookOwner,
   requireUser,
 } from "./lib/ownership"
+import { scheduleNotebookTitleRefresh } from "./titles"
 
 export const list = query({
   args: {
@@ -181,25 +179,20 @@ export const rename = mutation({
 
     if (!title) {
       const cleared = patchForClearedNotebookTitle()
-      const generation = (notebook.titleRefreshGeneration ?? 0) + 1
 
       await ctx.db.patch(notebook._id, {
         ...cleared,
-        titleRefreshGeneration: generation,
         updatedAt: now,
         lastUsedAt: now,
       })
 
-      await ctx.scheduler.runAfter(
-        TITLE_REFRESH_DEBOUNCE_MS,
-        internal.titles.refreshNotebookTitle,
-        {
-          notebookId: notebook._id,
-          generation,
-        },
-      )
+      const generation = await scheduleNotebookTitleRefresh(ctx, notebook._id)
 
-      return
+      return {
+        cleared: true,
+        notebookId: notebook._id,
+        titleRefreshGeneration: generation,
+      }
     }
 
     await ctx.db.patch(notebook._id, {
@@ -209,6 +202,8 @@ export const rename = mutation({
       updatedAt: now,
       lastUsedAt: now,
     })
+
+    return { cleared: false, notebookId: notebook._id }
   },
 })
 

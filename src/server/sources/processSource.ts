@@ -9,6 +9,7 @@ import { requireEnv } from "src/lib/env"
 import { LIMITS, MODELS } from "src/lib/limits"
 import { titleFromUrl } from "src/lib/sourceTitle"
 import { createAuthedConvexClient } from "src/server/convexClient"
+import { scheduleBackground } from "src/server/scheduleBackground"
 import {
   assertSafeUrl,
   extractReadableHtml,
@@ -19,6 +20,7 @@ import {
   normalizeBufferToMarkdown,
   normalizeHtmlToMarkdown,
 } from "src/server/sources/normalize"
+import { refreshNotebookTitle } from "src/server/titles/refreshNotebookTitle"
 
 async function uploadMarkdown(client: ConvexHttpClient, markdown: string) {
   const uploadUrl = await client.mutation(api.sources.generateUploadUrl, {})
@@ -284,16 +286,50 @@ export async function processSourcePipeline(
       })
     }
 
-    await client.mutation(api.ingestion.markReady, {
+    const readyResult = await client.mutation(api.ingestion.markReady, {
       sourceId,
     })
+
+    const titleKick = readyResult
+
+    if (
+      titleKick &&
+      typeof titleKick === "object" &&
+      "titleRefreshGeneration" in titleKick &&
+      typeof titleKick.titleRefreshGeneration === "number"
+    ) {
+      scheduleBackground(
+        refreshNotebookTitle({
+          notebookId: String(titleKick.notebookId),
+          generation: titleKick.titleRefreshGeneration,
+          token,
+        }),
+      )
+    }
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Couldn't process this source."
 
-    await client.mutation(api.ingestion.markFailed, {
+    const failedResult = await client.mutation(api.ingestion.markFailed, {
       sourceId,
       errorCode: message.slice(0, 200),
     })
+
+    const titleKick = failedResult
+
+    if (
+      titleKick &&
+      typeof titleKick === "object" &&
+      "titleRefreshGeneration" in titleKick &&
+      typeof titleKick.titleRefreshGeneration === "number"
+    ) {
+      scheduleBackground(
+        refreshNotebookTitle({
+          notebookId: String(titleKick.notebookId),
+          generation: titleKick.titleRefreshGeneration,
+          token,
+        }),
+      )
+    }
   }
 }

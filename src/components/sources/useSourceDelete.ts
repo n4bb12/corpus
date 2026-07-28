@@ -1,11 +1,8 @@
-import { useMutation } from "convex/react"
 import { useState } from "react"
-import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { useEventCallback } from "src/lib/useEventCallback"
 
 export function useSourceDelete() {
-  const removeSource = useMutation(api.sources.remove)
   const [deleteId, setDeleteId] = useState<Id<"sources"> | null>(null)
 
   async function confirmDelete() {
@@ -13,7 +10,19 @@ export function useSourceDelete() {
       return
     }
 
-    await removeSource({ sourceId: deleteId })
+    const response = await fetch("/api/sources/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sourceId: deleteId }),
+    })
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string
+      } | null
+      throw new Error(payload?.error || "Couldn't delete this source.")
+    }
+
     setDeleteId(null)
   }
 

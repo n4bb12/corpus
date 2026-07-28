@@ -92,6 +92,29 @@ export function LibraryPage() {
                     onPrevious={() => library.goToPage(library.currentPage - 1)}
                     onNext={() => library.goToPage(library.currentPage + 1)}
                     onRename={async (notebookId, title) => {
+                      if (!title.trim()) {
+                        const response = await fetch(
+                          "/api/notebooks/clear-title",
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ notebookId }),
+                          },
+                        )
+
+                        if (!response.ok) {
+                          const payload = (await response
+                            .json()
+                            .catch(() => null)) as { error?: string } | null
+                          throw new Error(
+                            payload?.error ||
+                              "Couldn't clear the notebook title.",
+                          )
+                        }
+
+                        return
+                      }
+
                       await library.renameNotebook({ notebookId, title })
                     }}
                     onDelete={async (notebookId) => {

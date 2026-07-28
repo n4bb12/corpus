@@ -1,0 +1,64 @@
+import { createFileRoute } from "@tanstack/react-router"
+import { api } from "src/convex/_generated/api"
+import type { Id } from "src/convex/_generated/dataModel"
+import { fetchAuthMutation, getToken } from "src/lib/authServer"
+import { scheduleBackground } from "src/server/scheduleBackground"
+import { refreshNotebookTitle } from "src/server/titles/refreshNotebookTitle"
+import { z } from "zod"
+
+const bodySchema = z.object({
+  sourceId: z.string(),
+})
+
+export const Route = createFileRoute("/api/sources/delete")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const token = await getToken()
+
+        if (!token) {
+          return Response.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        let body: z.infer<typeof bodySchema>
+
+        try {
+          body = bodySchema.parse(await request.json())
+        } catch {
+          return Response.json({ error: "Invalid request." }, { status: 400 })
+        }
+
+        try {
+          const result = (await fetchAuthMutation(api.sources.remove, {
+            sourceId: body.sourceId as Id<"sources">,
+          })) as {
+            notebookId: Id<"notebooks">
+            titleRefreshGeneration: number | null
+          }
+
+          if (result && typeof result.titleRefreshGeneration === "number") {
+            scheduleBackground(
+              refreshNotebookTitle({
+                notebookId: String(result.notebookId),
+                generation: result.titleRefreshGeneration,
+                token,
+              }),
+            )
+          }
+
+          return Response.json({ ok: true }, { status: 202 })
+        } catch (error) {
+          return Response.json(
+            {
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Couldn't delete this source.",
+            },
+            { status: 400 },
+          )
+        }
+      },
+    },
+  },
+})

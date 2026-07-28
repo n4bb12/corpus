@@ -14,6 +14,8 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as NotebooksNotebookIdRouteImport } from './routes/notebooks/$notebookId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiNotebooksClearTitleRouteImport } from './routes/api/notebooks/clear-title'
+import { Route as ApiSourcesDeleteRouteImport } from './routes/api/sources/delete'
 import { Route as ApiSourcesIngestRouteImport } from './routes/api/sources/ingest'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +43,16 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiNotebooksClearTitleRoute = ApiNotebooksClearTitleRouteImport.update({
+  id: '/api/notebooks/clear-title',
+  path: '/api/notebooks/clear-title',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSourcesDeleteRoute = ApiSourcesDeleteRouteImport.update({
+  id: '/api/sources/delete',
+  path: '/api/sources/delete',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSourcesIngestRoute = ApiSourcesIngestRouteImport.update({
   id: '/api/sources/ingest',
   path: '/api/sources/ingest',
@@ -53,6 +65,8 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/notebooks/$notebookId': typeof NotebooksNotebookIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/notebooks/clear-title': typeof ApiNotebooksClearTitleRoute
+  '/api/sources/delete': typeof ApiSourcesDeleteRoute
   '/api/sources/ingest': typeof ApiSourcesIngestRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +75,8 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/notebooks/$notebookId': typeof NotebooksNotebookIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/notebooks/clear-title': typeof ApiNotebooksClearTitleRoute
+  '/api/sources/delete': typeof ApiSourcesDeleteRoute
   '/api/sources/ingest': typeof ApiSourcesIngestRoute
 }
 export interface FileRoutesById {
@@ -70,6 +86,8 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/notebooks/$notebookId': typeof NotebooksNotebookIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/notebooks/clear-title': typeof ApiNotebooksClearTitleRoute
+  '/api/sources/delete': typeof ApiSourcesDeleteRoute
   '/api/sources/ingest': typeof ApiSourcesIngestRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +98,8 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/notebooks/$notebookId'
     | '/api/auth/$'
+    | '/api/notebooks/clear-title'
+    | '/api/sources/delete'
     | '/api/sources/ingest'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +108,8 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/notebooks/$notebookId'
     | '/api/auth/$'
+    | '/api/notebooks/clear-title'
+    | '/api/sources/delete'
     | '/api/sources/ingest'
   id:
     | '__root__'
@@ -96,6 +118,8 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/notebooks/$notebookId'
     | '/api/auth/$'
+    | '/api/notebooks/clear-title'
+    | '/api/sources/delete'
     | '/api/sources/ingest'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +129,8 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   NotebooksNotebookIdRoute: typeof NotebooksNotebookIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiNotebooksClearTitleRoute: typeof ApiNotebooksClearTitleRoute
+  ApiSourcesDeleteRoute: typeof ApiSourcesDeleteRoute
   ApiSourcesIngestRoute: typeof ApiSourcesIngestRoute
 }
 
@@ -145,6 +171,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/notebooks/clear-title': {
+      id: '/api/notebooks/clear-title'
+      path: '/api/notebooks/clear-title'
+      fullPath: '/api/notebooks/clear-title'
+      preLoaderRoute: typeof ApiNotebooksClearTitleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/sources/delete': {
+      id: '/api/sources/delete'
+      path: '/api/sources/delete'
+      fullPath: '/api/sources/delete'
+      preLoaderRoute: typeof ApiSourcesDeleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/sources/ingest': {
       id: '/api/sources/ingest'
       path: '/api/sources/ingest'
@@ -161,6 +201,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   NotebooksNotebookIdRoute: NotebooksNotebookIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiNotebooksClearTitleRoute: ApiNotebooksClearTitleRoute,
+  ApiSourcesDeleteRoute: ApiSourcesDeleteRoute,
   ApiSourcesIngestRoute: ApiSourcesIngestRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,10 +1,6 @@
 import { v } from "convex/values"
 import { shouldCreateSourceRevision } from "src/lib/chatHistory"
 import { LIMITS } from "src/lib/limits"
-import {
-  shouldSkipTitleRefresh,
-  TITLE_REFRESH_DEBOUNCE_MS,
-} from "src/lib/notebookTitlePolicy"
 import { quotaResetMessage, remainingQuota, utcDateKey } from "src/lib/quotas"
 import {
   normalizeTitle,
@@ -23,6 +19,7 @@ import {
   applySourceSelectionBoundary,
   getReadySelectedIds,
 } from "./lib/sourceBoundaries"
+import { scheduleNotebookTitleRefresh } from "./titles"
 
 async function bumpUsage(
   ctx: { db: any },
@@ -524,24 +521,11 @@ export const remove = mutation({
       cursor: null,
     })
 
-    if (!shouldSkipTitleRefresh(notebook.titleOrigin)) {
-      const generation = (notebook.titleRefreshGeneration ?? 0) + 1
+    const generation = await scheduleNotebookTitleRefresh(ctx, notebook._id)
 
-      await ctx.db.patch(notebook._id, {
-        titleRefreshGeneration: generation,
-        titleGenerationState: "pending",
-        updatedAt: now,
-        lastUsedAt: now,
-      })
-
-      await ctx.scheduler.runAfter(
-        TITLE_REFRESH_DEBOUNCE_MS,
-        internal.titles.refreshNotebookTitle,
-        {
-          notebookId: notebook._id,
-          generation,
-        },
-      )
+    return {
+      notebookId: notebook._id,
+      titleRefreshGeneration: generation,
     }
   },
 })

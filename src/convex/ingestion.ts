@@ -1,40 +1,9 @@
 import { v } from "convex/values"
-import {
-  shouldSkipTitleRefresh,
-  TITLE_REFRESH_DEBOUNCE_MS,
-} from "src/lib/notebookTitlePolicy"
 import { internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
-import { type MutationCtx, mutation } from "./_generated/server"
+import { mutation } from "./_generated/server"
 import { requireSourceOwner } from "./lib/ownership"
-
-async function scheduleNotebookTitleRefresh(
-  ctx: MutationCtx,
-  notebookId: Id<"notebooks">,
-) {
-  const notebook = await ctx.db.get(notebookId)
-
-  if (!notebook || shouldSkipTitleRefresh(notebook.titleOrigin)) {
-    return
-  }
-
-  const generation = (notebook.titleRefreshGeneration ?? 0) + 1
-
-  await ctx.db.patch(notebook._id, {
-    titleRefreshGeneration: generation,
-    titleGenerationState: "pending",
-    updatedAt: Date.now(),
-  })
-
-  await ctx.scheduler.runAfter(
-    TITLE_REFRESH_DEBOUNCE_MS,
-    internal.titles.refreshNotebookTitle,
-    {
-      notebookId,
-      generation,
-    },
-  )
-}
+import { scheduleNotebookTitleRefresh } from "./titles"
 
 const processingState = v.union(
   v.literal("pending"),
@@ -197,7 +166,15 @@ export const setDigestDraft = mutation({
       updatedAt: Date.now(),
     })
 
-    await scheduleNotebookTitleRefresh(ctx, source.notebookId)
+    const generation = await scheduleNotebookTitleRefresh(
+      ctx,
+      source.notebookId,
+    )
+
+    return {
+      notebookId: source.notebookId,
+      titleRefreshGeneration: generation,
+    }
   },
 })
 
@@ -224,7 +201,15 @@ export const markReady = mutation({
       )
     }
 
-    await scheduleNotebookTitleRefresh(ctx, source.notebookId)
+    const generation = await scheduleNotebookTitleRefresh(
+      ctx,
+      source.notebookId,
+    )
+
+    return {
+      notebookId: source.notebookId,
+      titleRefreshGeneration: generation,
+    }
   },
 })
 
@@ -243,6 +228,14 @@ export const markFailed = mutation({
       updatedAt: Date.now(),
     })
 
-    await scheduleNotebookTitleRefresh(ctx, source.notebookId)
+    const generation = await scheduleNotebookTitleRefresh(
+      ctx,
+      source.notebookId,
+    )
+
+    return {
+      notebookId: source.notebookId,
+      titleRefreshGeneration: generation,
+    }
   },
 })
