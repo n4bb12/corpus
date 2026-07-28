@@ -10410,3 +10410,74 @@ Hardcoding center alignment and dropping the unused `align` option and type surf
 
 Done. Center is hardcoded; the `align` option is gone.
 
+# Source processing phase naming
+_Exported on 7/28/2026 at 23:15:10 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Why do we have a "Waiting" source processing phase? That seems oddly named.
+
+---
+
+**Cursor**
+
+I'll look up how the "Waiting" source processing phase is defined and used in the codebase.
+
+**“Waiting” is just the UI label for the internal `pending` state** — the gap after a Source row exists in Convex and before ingest advances it to `extracting` (“Reading”).
+
+It was renamed from **Queued** in a copy pass so researchers wouldn’t see pipeline jargon (`Queued` / `Extracting` / `Chunking` / `Embedding` → `Waiting` / `Reading` / `Preparing` / `Indexing`). Mapping lives in `SourceListItem`:
+
+```12:20:src/components/sources/SourceListItem.tsx
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Waiting",
+  extracting: "Reading",
+  chunking: "Preparing",
+  embedding: "Indexing",
+  summarizing: "Summarizing",
+  ready: "Ready",
+  failed: "Couldn't process",
+}
+```
+
+So it’s not a product “phase” with its own work — it’s “created, not started yet.” Uploads use a separate client label (“Uploading”); once the real source is inserted with `processingState: "pending"`, you get “Waiting” until `processSource` sets `extracting`.
+
+The oddness is fair: “Waiting” doesn’t say *for what*. Something like “Starting…” would match the same state more clearly.
+
+---
+
+**User**
+
+Seemed like it was visible for more than a moment. Suggest a few alternatives.
+
+---
+
+**Cursor**
+
+Checking how long sources typically stay in `pending` so the alternatives fit the real dwell time.
+
+It can linger past a flash: the row is written as `pending` before `processSourcePipeline` is scheduled and reaches `extracting` (ingest round-trip, dynamic import, `waitUntil`).
+
+Alternatives that fit the other gerund-style labels:
+
+1. **Starting** — clearest match for “created, work not underway yet”
+2. **Loading** — familiar; slightly vague next to Uploading / Reading
+3. **Setting up** — honest about prep-before-work; a bit soft
+4. **Opening** — good for files/URLs; weaker for pasted text
+5. **Processing** — safe umbrella if you don’t care about phase specificity this early
+
+I’d pick **Starting**.
+
+---
+
+**User**
+
+Starting
+
+---
+
+**Cursor**
+
+Updated: `pending` now shows **Starting**.
+

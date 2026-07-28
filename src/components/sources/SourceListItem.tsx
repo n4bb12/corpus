@@ -10,7 +10,7 @@ import type { SourcesListEntry } from "src/lib/uploadingSources"
 import { cn } from "src/lib/utils"
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: "Waiting",
+  pending: "Starting",
   extracting: "Reading",
   chunking: "Preparing",
   embedding: "Indexing",
