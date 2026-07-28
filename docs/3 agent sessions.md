@@ -9970,3 +9970,233 @@ Fixed. `pb-4` was on the same element as `citation-highlight`, so the highlight 
 
 Spacing stays on the outer measured wrapper; the highlight class is only on the inner content div now.
 
+# Weird characters in PDFs
+_Exported on 7/28/2026 at 22:25:28 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+I've sometimes seen weird characters in PDFs. Example:
+' 31_i_
+
+_'.:.:.:.:.:.:.:.:.:.:.:
+
+::::::::::::::::::::::: Io%ooo,-.%%..OoOI..- %o.ooo4-e-j%%o.-i% •
+
+-.%oa'e'e%'.'o'.'°'jo
+
+°°'°%%%'°','°'°%%°
+
+NATIONAL AERONAUTICS AND SPACE ADMINISTRATION
+
+.'o% o, o o°.. °o
+
+.o.-..i°.-°O°Oo°°-.*o% iii!i!i!i!i!i!i!i!i!i!i
+
+i!i!iiiii!i!i!iii!iiiii
+
+•%°.o%-.%°%%%°•
+
+Wi!i!iiiii!iii!i!i! FINAL i:i:i:i:i:!:i:i:i:i:i:i
+
+_:i:!:i:!:!:i:i:i:i:i:i
+
+::::::::!_iiii!i! A P0 LL0 11
+
+
+
+---
+
+**Cursor**
+
+Those garbled strings are almost certainly OCR noise from a scanned page, not real PDF text. Checking how this repo handles Sources/PDFs so the explanation matches your stack.
+
+Those aren’t real characters from the document — they’re **OCR hallucinating texture**.
+
+Your example is the Apollo 11 geology transcript cover: an illustrated page (astronauts, mission patches, a ring of stars, stippled shading). A scanner/OCR engine treats the whole page as “text,” so:
+
+- Dots / stippling → `.:.:.:` / `°%%%°`
+- Fine linework / borders → `::::::::` / `i!i!i!i!`
+- Decorative marks → `%o.ooo` / `•%°.o%`
+- Real type that survives → `NATIONAL AERONAUTICS…`, mangled `APOLLO 11`, maybe `FINAL`
+
+So you get a soup of punctuation with a few real words floating in it.
+
+**Two common PDF situations:**
+
+1. **Image-only / scanned PDF** — no text layer; whatever you “copy” or extract is pure OCR (or empty until OCR runs).
+2. **Scanned PDF with a bad text layer** — someone already ran OCR and embedded that garbage; copy/paste and `pdfjs` text extraction both return it.
+
+That’s why pipelines often: extract the text layer → if it’s empty or looks like noise → fall back to vision OCR on the page image (which can ignore decorative rings better than classic OCR).
+
+---
+
+**User**
+
+We just call getTextContent(). Anything we can do about it?
+
+---
+
+**Cursor**
+
+Looking at the current PDF extraction path and how thin/noisy text is handled.
+
+`getTextContent()` can't fix a bad embedded OCR layer — you already fall back to vision, but `isUsefulPdfText` accepts this garbage because a few real words slip through. Tightening that gate so noise like the Apollo cover fails and vision runs.
+
+Fixing a global-regex `lastIndex` bug in the noise-line check, then adding tests.
+
+Noise-stripping before the usefulness check would make the Apollo cover look “clean.” Checking density on the raw text layer instead, and cleaning only for the accepted output.
+
+Usefulness gate works; tightening noise stripping so leftover `i!i!` fragments get cleaned.
+
+Cleaning was too aggressive (e.g. wiped price lines). Keeping the density gate for usefulness; making noise stripping conservative.
+
+`getTextContent()` can’t fix it — if the PDF’s text layer is that soup, that’s what you get. Your vision fallback was already the right escape hatch; the hole was `isUsefulPdfText`, which treated “any 3+ letter word” as enough.
+
+**What changed**
+
+1. **Letter/digit density gate** — if non-space characters are mostly punctuation (`.:.:`, `i!i!`, etc.), treat the layer as useless and fall through to vision.
+2. **Conservative noise stripping** — drop pure decoration lines when the rest of the doc is real prose (noisy cover + good body stays on the text path).
+
+So Apollo-cover garbage → vision; normal Elternbrief → text layer; mixed cover+body → keep body, strip the stars.
+
+---
+
+**User**
+
+Is there a library solution for this?
+
+---
+
+**Cursor**
+
+Checking what the JS/PDF ecosystem offers beyond custom heuristics.
+
+Yes — a few, but none that just “fix `getTextContent()`.”
+
+**Closest fit for your pipeline**
+
+1. **[`@firecrawl/pdf-inspector`](https://github.com/firecrawl/pdf-inspector)** (also `@docmost/pdf-inspector`)  
+   Classifies TextBased / Scanned / Mixed, returns `pagesNeedingOcr`, `hasEncodingIssues`, and region-level `needsOcr` (empty / GID fonts / garbage). Built exactly for “extract if good, OCR if not.” Native Rust via napi — check Vercel/Bun packaging the same way you hit with canvas.
+
+2. **[`pdfvision`](https://github.com/yamadashy/pdfvision)**  
+   Per-page quality: coverage, glyph noise, OCR-residue warnings, then optional render/OCR. Heavier (Node ≥22, `@napi-rs/canvas`, optional tesseract) — same deploy pain you’ve already fought.
+
+**Quality-by-comparison (heavier)**
+
+3. **[Hypothesis `pdf-text-quality`](https://github.com/hypothesis/pdf-text-quality)** — Python: render page → OCR → IoU vs text layer. Gold standard for “is this layer lying?”, not a drop-in for Corpus.
+
+**Not a solution**
+
+- `pdfjs` / `pdf-parse` / `markitdown` — extract only; no trust signal.  
+- Commercial APIs (Document AI, LlamaParse, etc.) — replace the whole path, not a small gate.
+
+**Practical take:** for Corpus, the density heuristic + vision fallback is the small, deploy-safe version of what pdf-inspector/pdfvision do. Worth adopting a library only if you want per-page routing (OCR cover, keep body) and are willing to carry a native addon on Vercel.
+
+---
+
+**User**
+
+pdfvision is typescript and seems pretty good based on some sample tests. It also extracts meta data such as title, number of pages, author, subject, if available.
+
+---
+
+**Cursor**
+
+Checking how we use PDF title/metadata today so we can see where pdfvision would fit.
+
+Agreed — it’s a strong match for what Corpus wants out of PDFs.
+
+**Where it helps you specifically**
+- Quality signals / warnings → replace the DIY density gate with something that already knows glyph garbage and scan-backed layers
+- Metadata → `extractPdfMarkdown` currently always returns `title: null`; pdfvision would fill title/author/subject when present
+- Same stack family (`pdfjs-dist`) plus a TypeScript API
+
+**The catch for this repo**
+It depends on `@napi-rs/canvas`. You’ve already burned cycles on that missing from the Vercel function bundle. Text-only use might still pull canvas in; render/OCR definitely does. Worth a spike: does a minimal `processDocument` (no `--render` / `--ocr`) work on Vercel with your existing `traceDeps` story, or does it blow up the same way?
+
+If the spike is clean, swapping the text-layer path for pdfvision and keeping OpenAI PDF vision as the “untrusted / needsOcr” fallback is the natural shape. Metadata alone isn’t reason enough to adopt — `pdfjs` can already read `getMetadata()` — the quality warnings are.
+
+---
+
+**User**
+
+But if fails on PDFs that previously were no issue: Elternbrief_Start_Infoportal.pdf
+
+- **Pages:** 1
+
+---
+
+## Page 1
+
+_chars: 0 · images: 1 · coverage: 0% · rotation: 270° · native: empty_but_visual_content · warnings: 1 · size: 841.68×595.20pt_
+
+### Warnings
+
+> **warning** (raster_image_no_native_text): raster image covers 100.0% of the page but native text is empty — human-visible text inside the image will not appear in pages[].text; compare the render or OCR when exact text matters
+
+---
+
+**Cursor**
+
+That Elternbrief case is familiar — checking how Corpus handled it versus what pdfvision is reporting.
+
+That’s not a regression — it’s the same Elternbrief you’ve already special-cased.
+
+Corpus never got text from `getTextContent()` on that file either (only `-- 1 of 1 --`). It “worked” because empty/useless layer → OpenAI PDF vision. pdfvision is saying the same thing more clearly: 0 chars, full-page raster, `empty_but_visual_content`.
+
+So the warning is the *signal to fall back*, not a failed extract. Wire it like:
+
+```
+pdfvision native text
+  → if useful / no raster_image_no_native_text → use it (+ metadata)
+  → else → your existing OpenAI PDF vision path
+```
+
+Elternbrief still succeeds; you just don’t treat empty native text as failure.
+
+The `rotation: 270°` is a nice extra — that used to bite screenshot OCR; sending raw PDF bytes to OpenAI sidesteps it, which is why your current fallback is the right partner for pdfvision’s quality flags.
+
+---
+
+**User**
+
+Oh yea. Just noticing now. I usually view PDFs in Chrome which auto-OCRs them. In reality, it's a scanned image.
+
+---
+
+**Cursor**
+
+Exactly. Chrome (and Edge/Acrobat) show a live OCR overlay so you can select/search text — that never gets written into the PDF’s text layer. Copy/paste in the viewer can work while `getTextContent()` / pdfvision still see an empty page.
+
+So Elternbrief is image-only; Chrome just makes it *feel* like a text PDF.
+
+---
+
+**User**
+
+Then let's add pdfvision to the mix and keep our fallback.
+
+---
+
+**Cursor**
+
+Integrating pdfvision for native extraction and quality signals, keeping the OpenAI vision fallback. Checking the API and how ingest is wired today.
+
+Implementing pdfvision as the native path, with trust based on `nativeTextStatus === "ok"`, and keeping the OpenAI vision fallback.
+
+pdfvision is now the native path; OpenAI vision stays the fallback.
+
+**Flow**
+1. `processDocument(..., { sourceData, noCache: true })` — no render/OCR, so no canvas
+2. Keep only pages with `nativeTextStatus === "ok"`
+3. If that text passes `isUsefulPdfText` → use it (+ metadata title)
+4. Else → existing OpenAI PDF vision (Elternbrief, Apollo soup, etc.)
+
+**Also**
+- `pdfvision*` added to Nitro `traceDeps`
+- Metadata title is kept even when vision extracts the body
+
+Re-upload Elternbrief to confirm it still lands via vision with real text.
+

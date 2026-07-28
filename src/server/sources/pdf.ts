@@ -5,69 +5,33 @@ import { MODELS } from "src/lib/limits"
 import {
   cleanPdfText,
   isUsefulPdfText,
-  type PdfTextItem,
-  textFromPdfContentItems,
+  trustedNativePdfText,
 } from "src/lib/pdfText"
 
-async function loadPdfJs() {
+function titleFromMetadata(title: string | null | undefined) {
+  if (typeof title !== "string") {
+    return null
+  }
+
+  const trimmed = title.trim()
+
+  return trimmed ? trimmed : null
+}
+
+async function extractPdfViaPdfvision(buffer: Buffer) {
   const { ensureDomMatrix } = await import("src/server/polyfills/dommatrix")
 
   ensureDomMatrix()
 
-  return import("pdfjs-dist/legacy/build/pdf.mjs")
-}
+  const { processDocument } = await import("pdfvision")
+  const result = await processDocument("document.pdf", {
+    sourceData: new Uint8Array(buffer),
+    noCache: true,
+  })
 
-function pdfTextItemsFromContent(
-  items: Array<
-    | {
-        str?: string
-        hasEOL?: boolean
-        transform?: number[]
-        height?: number
-        width?: number
-      }
-    | { type: string }
-  >,
-) {
-  const result: PdfTextItem[] = []
-
-  for (const item of items) {
-    if (!("str" in item) || typeof item.str !== "string") {
-      continue
-    }
-
-    result.push({
-      str: item.str,
-      hasEOL: item.hasEOL,
-      transform: item.transform,
-      height: item.height,
-      width: item.width,
-    })
-  }
-
-  return result
-}
-
-async function extractPdfTextLayer(buffer: Buffer) {
-  const pdfjs = await loadPdfJs()
-  const data = new Uint8Array(buffer)
-  const doc = await pdfjs.getDocument({ data, useSystemFonts: true }).promise
-
-  try {
-    const pages: string[] = []
-
-    for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
-      const page = await doc.getPage(pageNumber)
-      const content = await page.getTextContent()
-
-      pages.push(
-        textFromPdfContentItems(pdfTextItemsFromContent(content.items)),
-      )
-    }
-
-    return cleanPdfText(pages.join("\n\n"))
-  } finally {
-    await doc.destroy()
+  return {
+    title: titleFromMetadata(result.metadata.title),
+    text: trustedNativePdfText(result.pages),
   }
 }
 
@@ -100,12 +64,12 @@ async function extractPdfViaVision(buffer: Buffer) {
 }
 
 export async function extractPdfMarkdown(buffer: Buffer) {
-  const layered = await extractPdfTextLayer(buffer)
+  const native = await extractPdfViaPdfvision(buffer)
 
-  if (isUsefulPdfText(layered)) {
+  if (isUsefulPdfText(native.text)) {
     return {
-      title: null as string | null,
-      markdown: layered,
+      title: native.title,
+      markdown: cleanPdfText(native.text),
     }
   }
 
@@ -118,7 +82,7 @@ export async function extractPdfMarkdown(buffer: Buffer) {
   }
 
   return {
-    title: null as string | null,
-    markdown: vision,
+    title: native.title,
+    markdown: cleanPdfText(vision),
   }
 }

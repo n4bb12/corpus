@@ -22,7 +22,7 @@ const config = defineConfig({
         },
       },
       // These resolve runtime files from their package dirs; bundling breaks those paths.
-      traceDeps: ["jsdom*", "pdfjs-dist*"],
+      traceDeps: ["jsdom*", "pdfjs-dist*", "pdfvision*"],
     }),
     tailwindcss(),
     tanstackStart({

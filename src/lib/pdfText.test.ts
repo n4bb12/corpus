@@ -4,6 +4,7 @@ import {
   isUsefulPdfText,
   type PdfTextItem,
   textFromPdfContentItems,
+  trustedNativePdfText,
 } from "./pdfText"
 
 function item(str: string, x: number, y: number, height = 12): PdfTextItem {
@@ -23,6 +24,53 @@ describe("pdf text helpers", () => {
         "Elternbrief zum Start des Infoportals mit wichtigen Hinweisen.",
       ),
     ).toBe(true)
+  })
+
+  test("rejects decorative OCR soup even when a few real words remain", () => {
+    const garbage = `
+.:.:.:.:.:.:.:.:.:.:.:
+::::::::::::::::::::::: Io%ooo,-.%%..OoOI..-
+NATIONAL AERONAUTICS AND SPACE ADMINISTRATION
+iii!i!i!i!i!i!i!i!i!i!i
+i!i!iiiii!i!i!iii!iiiii
+Wi!i!iiiii!iii!i!i! FINAL i:i:i:i:i:!:i:i:i:i:i:i
+::::::::!_iiii!i! A P0 LL0 11
+`
+
+    expect(isUsefulPdfText(garbage)).toBe(false)
+  })
+
+  test("strips decoration lines from otherwise useful text", () => {
+    const mixed = `
+.:.:.:.:.:.:.:.:.:.:.:
+:::::::::::::::::::::::
+Real paragraph about lunar geology samples and rover tracks near the landing site.
+iii!i!i!i!i!i!i!i!i!i!i
+`
+
+    expect(isUsefulPdfText(mixed)).toBe(true)
+    expect(cleanPdfText(mixed)).toMatchInlineSnapshot(
+      `"Real paragraph about lunar geology samples and rover tracks near the landing site."`,
+    )
+  })
+
+  test("keeps only pdfvision pages marked ok", () => {
+    expect(
+      trustedNativePdfText([
+        {
+          text: "",
+          quality: { nativeTextStatus: "empty_but_visual_content" },
+        },
+        {
+          text: "Body paragraph about the landing site.",
+          quality: { nativeTextStatus: "ok" },
+        },
+        {
+          text: "GID garbage",
+          quality: { nativeTextStatus: "unusable_glyph_indices" },
+        },
+      ]),
+    ).toMatchInlineSnapshot(`"Body paragraph about the landing site."`)
   })
 
   test("rebuilds paragraphs from Y gaps and unwraps soft wraps", () => {

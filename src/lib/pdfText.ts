@@ -20,7 +20,45 @@ type PdfLine = {
   text: string
 }
 
-export function cleanPdfText(text: string) {
+/** Long runs of decoration / bad-OCR texture (stars, stipple, borders). */
+const OCR_NOISE_RUN =
+  /(?:[.:;!|_°%•]){5,}|(?:[.:;!|_°%•]\s*){8,}|[iI](?:[!1|][iI]){4,}[!1|]?/g
+
+function hasOcrNoiseRun(text: string) {
+  OCR_NOISE_RUN.lastIndex = 0
+
+  return OCR_NOISE_RUN.test(text)
+}
+
+/** Line is almost only OCR decoration (few/no real letters). */
+function isOcrNoiseLine(line: string) {
+  const trimmed = line.trim()
+
+  if (!trimmed) {
+    return false
+  }
+
+  const letters = trimmed.match(/[A-Za-zÀ-ÿ]/g)?.length ?? 0
+  const nonSpace = trimmed.replace(/\s/g, "").length
+
+  if (!nonSpace) {
+    return false
+  }
+
+  // Pure decoration / stipple lines — not short prose with ellipsis or prices.
+  if (letters <= 2 && nonSpace >= 6) {
+    return true
+  }
+
+  // Leftover i/! runs after stripping longer OCR texture.
+  if (/^[iIl1|!\s]+$/i.test(trimmed) && letters <= 4) {
+    return true
+  }
+
+  return letters <= 4 && hasOcrNoiseRun(trimmed)
+}
+
+function normalizePdfWhitespace(text: string) {
   return text
     .replace(PAGE_MARKER_PATTERN, "\n")
     .replace(/[ \t]+\n/g, "\n")
@@ -30,14 +68,68 @@ export function cleanPdfText(text: string) {
     .trim()
 }
 
-export function isUsefulPdfText(text: string) {
-  const cleaned = cleanPdfText(text)
+function stripOcrNoise(text: string) {
+  return text
+    .split("\n")
+    .map((line) =>
+      line
+        .replace(OCR_NOISE_RUN, " ")
+        .replace(/[ \t]{2,}/g, " ")
+        .trimEnd(),
+    )
+    .filter((line) => !isOcrNoiseLine(line))
+    .join("\n")
+}
 
-  if (cleaned.length < 40) {
+export function cleanPdfText(text: string) {
+  return normalizePdfWhitespace(stripOcrNoise(text))
+}
+
+/**
+ * True when extracted text looks like real document content.
+ * Rejects empty layers and decorative / bad-OCR soup that still contains a few words.
+ * Density is measured before noise stripping so illustrated covers are not mistaken for prose.
+ */
+export function isUsefulPdfText(text: string) {
+  const forQuality = normalizePdfWhitespace(text)
+
+  if (forQuality.length < 40) {
     return false
   }
 
-  return /[A-Za-zÀ-ÿ]{3,}/.test(cleaned)
+  if (!/[A-Za-zÀ-ÿ]{3,}/.test(forQuality)) {
+    return false
+  }
+
+  const lettersAndDigits = forQuality.match(/[A-Za-zÀ-ÿ0-9]/g)?.length ?? 0
+  const nonSpace = forQuality.replace(/\s/g, "").length
+
+  if (!nonSpace || lettersAndDigits / nonSpace < 0.55) {
+    return false
+  }
+
+  const cleaned = cleanPdfText(text)
+
+  return cleaned.length >= 40 && /[A-Za-zÀ-ÿ]{3,}/.test(cleaned)
+}
+
+/** Minimal page shape from pdfvision — only fields we gate on. */
+export type PdfvisionTrustPage = {
+  text: string
+  quality: {
+    nativeTextStatus: string
+  }
+}
+
+/**
+ * Join text from pages pdfvision marks as trustworthy (`nativeTextStatus: "ok"`).
+ * Scanned / glyph-garbage / sparse pages are omitted so callers can fall back.
+ */
+export function trustedNativePdfText(pages: PdfvisionTrustPage[]) {
+  return pages
+    .filter((page) => page.quality.nativeTextStatus === "ok")
+    .map((page) => page.text)
+    .join("\n\n")
 }
 
 function itemY(item: PdfTextItem) {
