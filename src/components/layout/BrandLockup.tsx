@@ -1,5 +1,7 @@
-import { Link } from "@tanstack/react-router"
+"use client"
+
 import { BookOpen } from "lucide-react"
+import Link from "next/link"
 import { cn } from "src/lib/utils"
 
 export type BrandLockupProps = {
@@ -10,7 +12,7 @@ export type BrandLockupProps = {
 export function BrandLockup({ to = "/", compact = false }: BrandLockupProps) {
   return (
     <Link
-      to={to}
+      href={to}
       className="group inline-flex items-center gap-2.5 rounded-full pr-2 hover:bg-foreground/6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:hover:bg-muted/75"
     >
       <span
@@ -21,6 +23,7 @@ export function BrandLockup({ to = "/", compact = false }: BrandLockupProps) {
       >
         <BookOpen size={compact ? 18 : 22} aria-hidden strokeWidth={1.5} />
       </span>
+
       <span
         className={cn(
           "font-heading font-bold tracking-tight text-foreground",

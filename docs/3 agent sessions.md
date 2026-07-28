@@ -10481,3 +10481,49 @@ Starting
 
 Updated: `pending` now shows **Starting**.
 
+# Next.js migration and cleanup
+_Exported on 7/28/2026 at 23:58:09 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Switch to Next.js. Remove TanStack-related hacks like patchVercelSpaRoutes. All static pages.
+
+---
+
+**Cursor**
+
+I'll explore the current app structure and TanStack setup so we can migrate to Next.js with static pages and drop helpers like `patchVercelSpaRoutes`.
+
+This is a full framework migration — I'll switch to Plan mode so we can lock the Next.js shape before ripping out TanStack.
+
+Plan mode was declined — proceeding with the Next.js migration. Gathering route, auth, and config details next.
+
+Implementing the Next.js App Router setup and migrating routes, auth, and env next.
+
+Updating navigation components and adding the required `"use client"` directives.
+
+Mapping `VITE_*` → `NEXT_PUBLIC_*` in Next config so existing `.env.local` keeps working without touching it.
+
+Fixing public env access so Next.js can inline `NEXT_PUBLIC_*` values.
+
+Next.js needs `baseUrl` for the `src/*` path alias — adding that now.
+
+Next is treating `src/pages` as the Pages Router — renaming it to `src/views` and fixing the nullability issues.
+
+Migrated to **Next.js App Router**. Build reports all UI routes as static (`○`), with only `/api/*` dynamic.
+
+**What changed**
+- Replaced TanStack Start/Vite/Nitro with Next.js 16 + PostCSS Tailwind
+- Removed `patchVercelSpaRoutes` and related SPA shell hacks
+- App routes in `src/app/` (thin), UI in `src/views/` (Next reserves `src/pages` for the Pages Router)
+- Auth via `@convex-dev/better-auth/nextjs`
+- Navigation uses `next/link` / `next/navigation`
+- Env prefers `NEXT_PUBLIC_*`; `next.config.mjs` still maps existing `VITE_*` values
+- Kept `@tanstack/react-virtual` for the source preview
+
+**Verify:** `bun types`, `bun test` (127 pass), `bun run build` all green.
+
+Rename Vercel env keys to `NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CONVEX_SITE_URL`, and `NEXT_PUBLIC_SITE_URL` when you deploy (local `VITE_*` still works via the config mapping).
+

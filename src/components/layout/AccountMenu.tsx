@@ -1,5 +1,7 @@
-import { useNavigate } from "@tanstack/react-router"
+"use client"
+
 import { LogOut, User } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { PendingLabel } from "src/components/ui/PendingLabel"
 import { Button } from "src/components/ui/shadcn/button"
@@ -24,7 +26,7 @@ export type AccountMenuProps = {
 }
 
 export function AccountMenu({ email, name }: AccountMenuProps) {
-  const navigate = useNavigate()
+  const router = useRouter()
   const [pending, setPending] = useState(false)
 
   async function onSignOut() {
@@ -34,7 +36,7 @@ export function AccountMenu({ email, name }: AccountMenuProps) {
     // navigate before token clear. ClientAuthBoundary paints SignInPage on the
     // signed-in route only as a fallback if this navigate is slow.
     beginSignOut()
-    await navigate({ to: "/sign-in", replace: true })
+    router.replace("/sign-in")
     await settleSignOutQueries()
 
     await authClient.signOut({
@@ -59,18 +61,22 @@ export function AccountMenu({ email, name }: AccountMenuProps) {
           <User size={18} />
         </Button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end" className="w-56 rounded-xl">
         <DropdownMenuLabel className="font-normal">
           <div className="truncate text-sm font-medium">
             {name || "Account"}
           </div>
+
           {email ? (
             <div className="truncate text-xs text-muted-foreground">
               {email}
             </div>
           ) : null}
         </DropdownMenuLabel>
+
         <DropdownMenuSeparator />
+
         <DropdownMenuItem disabled={pending} onClick={() => void onSignOut()}>
           <PendingLabel
             pending={pending}

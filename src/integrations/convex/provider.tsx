@@ -1,3 +1,5 @@
+"use client"
+
 import {
   type AuthClient,
   ConvexBetterAuthProvider,
@@ -18,9 +20,9 @@ import {
   getStoredConvexAuthToken,
   setStoredConvexAuthToken,
 } from "src/lib/convexAuthToken"
-import { requireViteEnv } from "src/lib/env"
+import { requirePublicEnv } from "src/lib/env"
 
-const convexUrl = requireViteEnv("VITE_CONVEX_URL")
+const convexUrl = requirePublicEnv("CONVEX_URL")
 
 export const convexClient = new ConvexReactClient(convexUrl, {
   // Pause queries/mutations until Better Auth has handed Convex a validated token.

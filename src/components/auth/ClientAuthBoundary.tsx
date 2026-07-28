@@ -1,23 +1,25 @@
-import { useNavigate } from "@tanstack/react-router"
+"use client"
+
 import { useConvexAuth } from "convex/react"
+import { useRouter } from "next/navigation"
 import { type ReactNode, useEffect, useLayoutEffect } from "react"
+import { SignInPage } from "src/components/pages/SignInPage"
 import { authClient } from "src/lib/authClient"
 import { endSignOut, useIsSigningOut } from "src/lib/useSignedIn"
 import { useSyncAuthUserSnapshot } from "src/lib/useSyncAuthUserSnapshot"
-import { SignInPage } from "src/pages/SignInPage"
 
 export type ClientAuthBoundaryProps = {
   children: ReactNode
   mode: "signed-in" | "signed-out"
 }
 
-/** Paint sign-in immediately — TanStack `<Navigate>` returns null and flashes empty. */
+/** Paint sign-in immediately — avoid an empty flash during the redirect. */
 function RedirectToSignIn() {
-  const navigate = useNavigate()
+  const router = useRouter()
 
   useLayoutEffect(() => {
-    void navigate({ to: "/sign-in", replace: true })
-  }, [navigate])
+    router.replace("/sign-in")
+  }, [router])
 
   return <SignInPage />
 }
@@ -44,7 +46,7 @@ export function ClientAuthBoundary({
   }, [signingOut, session.isPending, hasSession])
 
   // While signing out: show sign-in immediately and keep it mounted. Never
-  // AppPending (empty) or the library shell (header, no data).
+  // an empty shell or the library chrome (header, no data).
   if (signingOut) {
     if (mode === "signed-out") {
       return children
@@ -77,11 +79,11 @@ export function ClientAuthBoundary({
 }
 
 function NavigateHome() {
-  const navigate = useNavigate()
+  const router = useRouter()
 
   useLayoutEffect(() => {
-    void navigate({ to: "/", replace: true })
-  }, [navigate])
+    router.replace("/")
+  }, [router])
 
   return null
 }

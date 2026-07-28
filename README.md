@@ -17,7 +17,7 @@ bunx convex login
 bunx convex dev
 ```
 
-Copy the printed `VITE_CONVEX_URL` values into `.env.local`. Also set:
+Copy the printed `NEXT_PUBLIC_CONVEX_URL` values into `.env.local`. Also set:
 
 ```bash
 bunx convex env set SITE_URL http://localhost:3000
@@ -37,9 +37,9 @@ Required local keys:
 | Name | Purpose |
 | --- | --- |
 | `CONVEX_DEPLOYMENT` | Convex deployment name |
-| `VITE_CONVEX_URL` | Convex cloud URL |
-| `VITE_CONVEX_SITE_URL` | Convex `.site` URL |
-| `VITE_SITE_URL` | Local app origin (`http://localhost:3000`) |
+| `NEXT_PUBLIC_CONVEX_URL` | Convex cloud URL |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex `.site` URL |
+| `NEXT_PUBLIC_SITE_URL` | Local app origin (`http://localhost:3000`) |
 
 Set these on the Convex deployment (Dashboard or `bunx convex env set`):
 
@@ -82,14 +82,14 @@ Better Auth trusts both hosts via `trustedOrigins` / `baseURL.allowedHosts`, so 
 bun run dev
 ```
 
-That runs Vite and Convex together via `concurrently`. For one side only: `bun run dev:vite` or `bun run dev:convex`.
+That runs Next.js and Convex together via `concurrently`. For one side only: `bun run dev:next` or `bun run dev:convex`.
 
 App: [http://localhost:3000](http://localhost:3000)
 
 ## Architecture
 
 ```text
-TanStack Start (Vercel)
+Next.js (Vercel)
   ├── Better Auth proxy  →  Convex HTTP (/api/auth)
   ├── Chat SSE bridge    →  Convex prepare + Voyage/OpenAI
   ├── Source ingest API  →  MarkItDown / chunk / embed, Convex mutations
@@ -156,14 +156,14 @@ Set the same Convex env vars for production, with `SITE_URL` equal to your Verce
 ### Vercel
 
 1. Import the GitHub repo.
-2. Framework preset: **TanStack Start** (`vercel.json` sets this). Nitro builds with `preset: "vercel"` into `.vercel/output`.
+2. Framework preset: **Next.js** (`vercel.json` sets this).
 3. Set:
 
 | Name | Value |
 | --- | --- |
-| `VITE_CONVEX_URL` | Production Convex URL |
-| `VITE_CONVEX_SITE_URL` | Production Convex site URL |
-| `VITE_SITE_URL` | `https://your-app.vercel.app` |
+| `NEXT_PUBLIC_CONVEX_URL` | Production Convex URL |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | Production Convex site URL |
+| `NEXT_PUBLIC_SITE_URL` | `https://your-app.vercel.app` |
 | `OPENAI_API_KEY` | Chat SSE route |
 | `VOYAGE_API_KEY` | Source ingest embeddings |
 

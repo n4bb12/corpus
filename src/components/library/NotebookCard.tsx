@@ -1,5 +1,7 @@
-import { Link } from "@tanstack/react-router"
+"use client"
+
 import { motion } from "motion/react"
+import Link from "next/link"
 import { useState } from "react"
 import { NotebookCardContent } from "src/components/library/NotebookCardContent"
 import { NotebookCardMenu } from "src/components/library/NotebookCardMenu"
@@ -46,9 +48,7 @@ export function NotebookCard({
             )}
           >
             <Link
-              to="/notebooks/$notebookId"
-              params={{ notebookId }}
-              search={{ tab: "chat" }}
+              href={`/notebooks/${notebookId}?tab=chat`}
               className="absolute inset-0 z-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label={`Open ${label}`}
             />

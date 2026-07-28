@@ -1,5 +1,5 @@
-import { convexBetterAuthReactStart } from "@convex-dev/better-auth/react-start"
-import { requireEnv } from "src/lib/env"
+import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs"
+import { requirePublicEnv } from "src/lib/env"
 
 export const {
   handler,
@@ -7,7 +7,7 @@ export const {
   fetchAuthQuery,
   fetchAuthMutation,
   fetchAuthAction,
-} = convexBetterAuthReactStart({
-  convexUrl: requireEnv("VITE_CONVEX_URL"),
-  convexSiteUrl: requireEnv("VITE_CONVEX_SITE_URL"),
+} = convexBetterAuthNextJs({
+  convexUrl: requirePublicEnv("CONVEX_URL"),
+  convexSiteUrl: requirePublicEnv("CONVEX_SITE_URL"),
 })

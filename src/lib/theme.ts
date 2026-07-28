@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useRef, useState } from "react"
 import { useStore } from "zustand"
 import { type PersistStorage, persist } from "zustand/middleware"

@@ -1,8 +1,8 @@
 import { ConvexHttpClient } from "convex/browser"
-import { requireEnv } from "src/lib/env"
+import { requirePublicEnv } from "src/lib/env"
 
 export function createAuthedConvexClient(token: string) {
-  const client = new ConvexHttpClient(requireEnv("VITE_CONVEX_URL"))
+  const client = new ConvexHttpClient(requirePublicEnv("CONVEX_URL"))
   client.setAuth(token)
   return client
 }
