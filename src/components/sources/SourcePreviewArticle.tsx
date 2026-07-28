@@ -2,6 +2,7 @@ import { useVirtualizer } from "@tanstack/react-virtual"
 import { useEffect, useMemo, useRef } from "react"
 import type { CitationOffsetRange } from "src/lib/citationHighlight"
 import { renderMarkdownHtml } from "src/lib/renderMarkdown"
+import { scheduleScrollOnce } from "src/lib/scheduleScrollOnce"
 import {
   scrollTargetBlockStart,
   sourcePreviewBlocks,
@@ -55,19 +56,17 @@ export function SourcePreviewArticle({
 
     const key = `${resolvedOffsets.start}:${resolvedOffsets.end}:${blocks.length}`
 
-    if (scrolledKey.current === key) {
-      return
-    }
-
-    scrolledKey.current = key
-    const frame = window.requestAnimationFrame(() => {
-      virtualizer.scrollToIndex(targetIndex, {
-        align: "center",
-        behavior: "smooth",
-      })
+    return scheduleScrollOnce({
+      key,
+      scrolledKey,
+      isReady: () => scrollElement.clientHeight > 0,
+      scroll: () => {
+        virtualizer.scrollToIndex(targetIndex, {
+          align: "center",
+          behavior: "smooth",
+        })
+      },
     })
-
-    return () => window.cancelAnimationFrame(frame)
   }, [blocks.length, resolvedOffsets, scrollElement, targetIndex, virtualizer])
 
   const virtualItems = virtualizer.getVirtualItems()

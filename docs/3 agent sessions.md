@@ -10200,3 +10200,42 @@ pdfvision is now the native path; OpenAI vision stays the fallback.
 
 Re-upload Elternbrief to confirm it still lands via vision with real text.
 
+# Source text panel scrolling issue
+_Exported on 7/28/2026 at 22:30:06 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+After adding virtualization to the source text panel, the first time a source pill is clicked, the source text panel opens but doesn't scroll to the location. Clicking the same pill doesn't fix it. Clicking a different pill then scrolls to that pill. Then clicking the previous pill scrolls to that pill as well.
+
+---
+
+**Cursor**
+
+I'll diagnose the first-click scroll miss after virtualization — likely the panel opens before the virtual list is ready to scroll. Looking at the source pill click handler and scroll-to logic.
+
+The `scrolledKey` guard looks like a strong match for “same pill won’t retry.” Next I’ll check the virtualization notes and set up a tight repro loop.
+
+Strict Mode’s mount → cleanup → remount would cancel the rAF after `scrolledKey` is set — that matches “first pill fails, same pill won’t retry, different pill works.” Verifying Strict Mode and locking that in with a regression test.
+
+Hypotheses ranked — then I’ll encode the scroll-once race in a failing test:
+
+1. `scrolledKey` set before rAF; cleanup cancels the frame (Strict Mode remount or dep flicker) → key stuck, same pill won’t retry  
+2. First `scrollToIndex` runs while viewport `clientHeight` is 0 → no-op, key still stuck  
+3. Article mounts before virtualizer attaches the scroll element → early scroll fails, key stuck  
+4. Smooth scroll races content height growing from estimates → ends at 0, key prevents retry  
+5. `getOffsetForIndex` runs before measurements exist → early return, key stuck  
+
+Building a red loop for (1), since it alone explains “same pill doesn’t help.”
+
+Loop is green. Wiring the article to mark the scroll key only after the scroll runs.
+
+Dropping the anti-pattern demo test — the mount/cleanup/remount case is the real regression.
+
+**Cause:** Citation scroll marked itself done *before* `requestAnimationFrame` ran. On first open, that frame often gets cancelled (effect cleanup while the panel/virtualizer settles). The key stayed set, so the same pill never retried; a different pill used a new key and scrolled.
+
+**Fix:** `scheduleScrollOnce` only records the key after the scroll actually runs, and retries until the viewport has height. Wired into `SourcePreviewArticle`.
+
+Regression covered in `src/lib/scheduleScrollOnce.test.ts` (mount → cleanup → remount).
+
