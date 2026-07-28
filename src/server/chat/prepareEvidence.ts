@@ -10,9 +10,11 @@ import {
 import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import { requireEnv } from "src/lib/env"
 import {
-  formatCorpusEvidence,
-  formatFlatEvidence,
-} from "src/lib/evidencePrompt"
+  buildDigestEvidencePack,
+  type PromptReadyEvidence,
+  packEvidence,
+  type ReadyDigestRow,
+} from "src/lib/evidencePack"
 import { MODELS } from "src/lib/limits"
 import {
   EVIDENCE_CHARACTER_BUDGET,
@@ -24,21 +26,9 @@ import {
   sourcesExceedEvidenceBudget,
   tryPackInlineEvidence,
 } from "src/lib/retrieval"
-import {
-  addMissingDigestCitationFallbacks,
-  type DigestSection,
-  formatDigestEvidence,
-  isCorpusSummaryPrompt,
-} from "src/lib/sourceDigest"
-import type { EvidenceItem, EvidencePack } from "src/server/chat/runAnswerTurn"
-import { generateSourceDigest } from "src/server/sources/generateSourceDigest"
 import { z } from "zod"
 
-export type PromptReadyEvidence = EvidencePack & {
-  evidenceBlock: string
-  systemAddendum: string
-  useDigestEvidence: boolean
-}
+export type { PromptReadyEvidence }
 
 type ListedChunk = {
   chunkId: string
@@ -96,159 +86,30 @@ When unsure, prefer "factual".`,
   return "factual" as const
 }
 
-async function backfillSourceDigest(
-  source: SourceDigestRow,
-  notebookId: string,
-) {
-  try {
-    const url = await fetchAuthQuery(api.sources.getNormalizedContent, {
-      sourceId: source.sourceId as never,
-    })
-
-    if (typeof url !== "string" || !url) {
-      return null
-    }
-
-    const response = await fetch(url)
-
-    if (!response.ok) {
-      return null
-    }
-
-    const markdown = await response.text()
-    const chunks = (await fetchAuthQuery(
-      api.retrievalHelpers.listChunksForSources,
-      {
-        notebookId: notebookId as never,
-        sourceIds: [source.sourceId as never],
-        maxChunksPerSource: 40,
-      },
-    )) as ListedChunk[]
-
-    if (!chunks.length || !markdown.trim()) {
-      return null
-    }
-
-    const digest = await generateSourceDigest({
-      sourceTitle: source.title,
-      markdown,
-      chunks: chunks.map((chunk) => ({
-        chunkId: String(chunk.chunkId),
-        text: chunk.text,
-        startOffset: chunk.startOffset,
-        endOffset: chunk.endOffset,
-        ordinal: chunk.ordinal,
-      })),
-    })
-
-    if (!digest) {
-      await fetchAuthMutation(api.ingestion.setDigest, {
-        sourceId: source.sourceId as never,
-        digestStatus: "failed",
-      })
-      return null
-    }
-
-    const citations = digest.citations.flatMap((citation) => {
-      const chunk = chunks.find(
-        (entry) => String(entry.chunkId) === citation.chunkId,
-      )
-
-      if (!chunk) {
-        return []
-      }
-
-      return [
-        {
-          chunkId: chunk.chunkId as never,
-          quote: citation.quote,
-          locator: citation.locator,
-        },
-      ]
-    })
-
-    await fetchAuthMutation(api.ingestion.setDigest, {
-      sourceId: source.sourceId as never,
-      digestStatus: "ready",
-      digestText: digest.digestText,
-      digestCitations: citations,
-    })
-
-    return {
-      sourceId: source.sourceId,
-      title: source.title,
-      digestStatus: "ready" as const,
-      digestText: digest.digestText,
-      digestCitations: citations.map((citation) => ({
-        chunkId: String(citation.chunkId),
-        quote: citation.quote,
-        locator: citation.locator,
-      })),
-      normalizedStorageId: source.normalizedStorageId,
-    } satisfies SourceDigestRow
-  } catch {
-    try {
-      await fetchAuthMutation(api.ingestion.setDigest, {
-        sourceId: source.sourceId as never,
-        digestStatus: "failed",
-      })
-    } catch {
-      // Ignore persistence failures during backfill.
-    }
-
-    return null
-  }
-}
-
-async function buildDigestEvidencePack(
-  notebookId: string,
-  sourceIds: string[],
-  prompt: string,
-) {
-  let rows = (await fetchAuthQuery(api.retrievalHelpers.listSourceDigests, {
+async function loadDigestEvidencePack(notebookId: string, sourceIds: string[]) {
+  const rows = (await fetchAuthQuery(api.retrievalHelpers.listSourceDigests, {
     notebookId: notebookId as never,
     sourceIds: sourceIds as never,
   })) as SourceDigestRow[]
 
-  const missing = rows.filter(
-    (row) =>
+  const ready: ReadyDigestRow[] = rows.flatMap((row) => {
+    if (
       row.digestStatus !== "ready" ||
       typeof row.digestText !== "string" ||
-      !row.digestText.trim(),
-  )
-
-  if (missing.length && isCorpusSummaryPrompt(prompt)) {
-    const filled: SourceDigestRow[] = []
-
-    for (const row of missing) {
-      if (row.digestStatus === "failed") {
-        continue
-      }
-
-      const backfilled = await backfillSourceDigest(row, notebookId)
-
-      if (backfilled) {
-        filled.push(backfilled)
-      }
+      !row.digestText.trim()
+    ) {
+      return []
     }
 
-    if (filled.length) {
-      const byId = new Map(rows.map((row) => [String(row.sourceId), row]))
-
-      for (const row of filled) {
-        byId.set(String(row.sourceId), row)
-      }
-
-      rows = [...byId.values()]
-    }
-  }
-
-  const ready = rows.filter(
-    (row) =>
-      row.digestStatus === "ready" &&
-      typeof row.digestText === "string" &&
-      !!row.digestText.trim(),
-  )
+    return [
+      {
+        sourceId: String(row.sourceId),
+        title: row.title,
+        digestText: row.digestText,
+        digestCitations: row.digestCitations,
+      },
+    ]
+  })
 
   if (!ready.length) {
     return null
@@ -270,200 +131,50 @@ async function buildDigestEvidencePack(
     }
   }
 
-  const chunks = citationIds.length
-    ? ((await fetchAuthQuery(api.retrievalHelpers.getChunksByIds, {
-        notebookId: notebookId as never,
-        chunkIds: citationIds as never,
-      })) as ListedChunk[])
-    : []
-  const chunkById = new Map(
-    chunks.map((chunk) => [String(chunk.chunkId), chunk]),
-  )
-
-  let sections: DigestSection[] = ready.map((row) => ({
-    sourceId: String(row.sourceId),
-    title: row.title,
-    digestText: row.digestText ?? "",
-    citations: (row.digestCitations ?? []).flatMap((citation) => {
-      const chunk = chunkById.get(String(citation.chunkId))
-
-      if (!chunk) {
-        return []
-      }
-
-      return [
-        {
-          chunkId: String(citation.chunkId),
-          quote: citation.quote,
-          locator: citation.locator,
-        },
-      ]
-    }),
-  }))
-
-  const evidence: RetrievalCandidate[] = []
-  const seen = new Set<string>()
-
-  for (const section of sections) {
-    for (const citation of section.citations) {
-      if (seen.has(citation.chunkId)) {
-        continue
-      }
-
-      const chunk = chunkById.get(citation.chunkId)
-
-      if (!chunk) {
-        continue
-      }
-
-      seen.add(citation.chunkId)
-      evidence.push({
-        chunkId: String(chunk.chunkId),
-        sourceId: String(chunk.sourceId),
-        text: chunk.text,
-        score: 1,
-        channel: "digest",
-        startOffset: chunk.startOffset,
-        endOffset: chunk.endOffset,
-        ordinal: chunk.ordinal,
-      })
-    }
-  }
-
-  const sourceIdsMissingCitations = sections
-    .filter((section) => !section.citations.length)
-    .map((section) => section.sourceId)
-
-  if (sourceIdsMissingCitations.length) {
-    const fallbackChunks = (await fetchAuthQuery(
-      api.retrievalHelpers.listChunksForSources,
-      {
-        notebookId: notebookId as never,
-        sourceIds: sourceIdsMissingCitations as never,
-        maxChunksPerSource: 2,
-      },
-    )) as ListedChunk[]
-
-    for (const chunk of fallbackChunks) {
-      const chunkId = String(chunk.chunkId)
-
-      if (seen.has(chunkId)) {
-        continue
-      }
-
-      seen.add(chunkId)
-      evidence.push({
-        chunkId,
-        sourceId: String(chunk.sourceId),
-        text: chunk.text,
-        score: 1,
-        channel: "digest",
-        startOffset: chunk.startOffset,
-        endOffset: chunk.endOffset,
-        ordinal: chunk.ordinal,
-      })
-    }
-
-    sections = addMissingDigestCitationFallbacks(
-      sections,
-      fallbackChunks.map((chunk) => ({
+  const citationChunks = citationIds.length
+    ? (
+        (await fetchAuthQuery(api.retrievalHelpers.getChunksByIds, {
+          notebookId: notebookId as never,
+          chunkIds: citationIds as never,
+        })) as ListedChunk[]
+      ).map((chunk) => ({
         ...chunk,
         chunkId: String(chunk.chunkId),
         sourceId: String(chunk.sourceId),
-      })),
-    )
+      }))
+    : []
+
+  const initial = buildDigestEvidencePack(ready, citationChunks)
+
+  if (!initial) {
+    return null
   }
 
-  return {
-    evidence,
-    digestSections: sections,
-    insufficient: !sections.length,
-    mode: "corpus" as const,
-    evidenceKind: "digest" as const,
-  }
-}
+  const missingSourceIds = initial.digestSections
+    .filter((section) => !section.citations.length)
+    .map((section) => section.sourceId)
 
-function toEvidenceItems(candidates: RetrievalCandidate[]): EvidenceItem[] {
-  return candidates.map((item) => ({
-    chunkId: String(item.chunkId),
-    sourceId: String(item.sourceId),
-    text: item.text,
-    startOffset: item.startOffset,
-    endOffset: item.endOffset,
-    ordinal: item.ordinal,
+  if (!missingSourceIds.length) {
+    return initial
+  }
+
+  const fallbackChunks = (
+    (await fetchAuthQuery(api.retrievalHelpers.listChunksForSources, {
+      notebookId: notebookId as never,
+      sourceIds: missingSourceIds as never,
+      maxChunksPerSource: 2,
+    })) as ListedChunk[]
+  ).map((chunk) => ({
+    ...chunk,
+    chunkId: String(chunk.chunkId),
+    sourceId: String(chunk.sourceId),
   }))
-}
 
-function makePromptReady(
-  pack: {
-    evidence: RetrievalCandidate[]
-    insufficient: boolean
-    mode: "factual" | "corpus"
-    evidenceKind?: "digest" | "coverage" | "chunks"
-    digestSections?: DigestSection[]
-  },
-  sourceIds: string[],
-  sourceTitleById: Map<string, string>,
-): PromptReadyEvidence {
-  const evidence = toEvidenceItems(pack.evidence)
-  const useDigestEvidence =
-    pack.evidenceKind === "digest" && !!pack.digestSections?.length
-  const distinctSourceCount = new Set(evidence.map((item) => item.sourceId))
-    .size
-  const useCorpusLayout =
-    useDigestEvidence ||
-    pack.mode === "corpus" ||
-    (distinctSourceCount > 1 && pack.mode !== "factual")
-
-  const evidenceBlock = useDigestEvidence
-    ? formatDigestEvidence(pack.digestSections ?? [], sourceIds)
-    : useCorpusLayout
-      ? formatCorpusEvidence(evidence, sourceTitleById, sourceIds)
-      : formatFlatEvidence(evidence)
-
-  const sourceNames = sourceIds
-    .map((sourceId) => {
-      const title = sourceTitleById.get(sourceId)?.trim()
-
-      return title || sourceId
-    })
-    .join("; ")
-
-  const systemAddendum = useDigestEvidence
-    ? `
-This question is a cross-cutting task over multiple sources.
-Selected sources: ${sourceNames || "(none)"}.
-Evidence is a per-source digest with supporting quotes. Synthesize from the digests; cite only the provided supporting quote chunk ids.
-You must cover every source section that has a digest—do not skip a source, and do not focus on only one source.
-For summaries and briefs, cover each source in turn (or clearly synthesize with citations from each).
-Ignore prior answers that omitted sources; re-answer from the digests below.
-`
-    : useCorpusLayout
-      ? `
-This question is a cross-cutting task over multiple sources.
-Selected sources: ${sourceNames || "(none)"}.
-Evidence is grouped under each source title. You must write at least one grounded paragraph with citations for every source section that has chunks—do not skip a source, and do not focus on only one source.
-For summaries and briefs, cover each source in turn (or clearly synthesize with citations from each).
-For contradictions or contested claims, state agreements and disagreements and cite each side.
-Ignore prior answers that omitted sources; re-answer from the evidence below.
-`
-      : ""
-
-  return {
-    evidence,
-    insufficient: pack.insufficient,
-    mode: pack.mode,
-    evidenceKind: pack.evidenceKind,
-    digestSections: pack.digestSections,
-    evidenceBlock,
-    systemAddendum,
-    useDigestEvidence,
-  }
+  return buildDigestEvidencePack(ready, citationChunks, fallbackChunks)
 }
 
 /**
- * Evidence pack orchestration: classify, retrieve/rerank or digest-pack, and
- * format a prompt-ready pack for the Answer turn.
+ * Evidence pack orchestration: classify, load, and pack prompt-ready evidence.
  */
 export async function prepareEvidence(args: {
   notebookId: string
@@ -539,31 +250,26 @@ export async function prepareEvidence(args: {
 
       if (mode === "corpus") {
         await setProgress(CHAT_PROGRESS.gathering)
-        const digestPack = await buildDigestEvidencePack(
+        const digestPack = await loadDigestEvidencePack(
           args.notebookId,
           args.sourceIds,
-          args.prompt,
         )
 
-        if (digestPack) {
-          return makePromptReady(
-            digestPack,
-            args.sourceIds,
-            args.sourceTitleById,
-          )
-        }
+        return packEvidence({
+          mode,
+          sourceIds: args.sourceIds,
+          sourceTitleById: args.sourceTitleById,
+          digestPack,
+          chunks: inline,
+        })
       }
 
-      return makePromptReady(
-        {
-          evidence: inline,
-          insufficient: !inline.length,
-          mode,
-          evidenceKind: "chunks",
-        },
-        args.sourceIds,
-        args.sourceTitleById,
-      )
+      return packEvidence({
+        mode,
+        sourceIds: args.sourceIds,
+        sourceTitleById: args.sourceTitleById,
+        chunks: inline,
+      })
     }
   }
 
@@ -573,14 +279,18 @@ export async function prepareEvidence(args: {
   if (mode === "corpus") {
     await setProgress(CHAT_PROGRESS.gathering)
 
-    const digestPack = await buildDigestEvidencePack(
+    const digestPack = await loadDigestEvidencePack(
       args.notebookId,
       args.sourceIds,
-      args.prompt,
     )
 
     if (digestPack) {
-      return makePromptReady(digestPack, args.sourceIds, args.sourceTitleById)
+      return packEvidence({
+        mode,
+        sourceIds: args.sourceIds,
+        sourceTitleById: args.sourceTitleById,
+        digestPack,
+      })
     }
 
     const maxChunksPerSource = maxChunksPerSourceForBudget(
@@ -596,18 +306,14 @@ export async function prepareEvidence(args: {
       },
     )) as ListedChunk[]
 
-    const evidence = packCoverageEvidence(chunks, EVIDENCE_CHARACTER_BUDGET)
+    const coverage = packCoverageEvidence(chunks, EVIDENCE_CHARACTER_BUDGET)
 
-    return makePromptReady(
-      {
-        evidence,
-        insufficient: !evidence.length,
-        mode: "corpus",
-        evidenceKind: "coverage",
-      },
-      args.sourceIds,
-      args.sourceTitleById,
-    )
+    return packEvidence({
+      mode: "corpus",
+      sourceIds: args.sourceIds,
+      sourceTitleById: args.sourceTitleById,
+      coverage,
+    })
   }
 
   await setProgress(CHAT_PROGRESS.searching)
@@ -704,14 +410,10 @@ export async function prepareEvidence(args: {
 
   const selected = selectEvidenceWithinBudget(ranked, EVIDENCE_CHARACTER_BUDGET)
 
-  return makePromptReady(
-    {
-      evidence: selected,
-      insufficient: !selected.length,
-      mode: "factual",
-      evidenceKind: "chunks",
-    },
-    args.sourceIds,
-    args.sourceTitleById,
-  )
+  return packEvidence({
+    mode: "factual",
+    sourceIds: args.sourceIds,
+    sourceTitleById: args.sourceTitleById,
+    chunks: selected,
+  })
 }

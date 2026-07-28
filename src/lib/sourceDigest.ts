@@ -142,13 +142,6 @@ export function clampDigestText(text: string) {
   return sliced.trim()
 }
 
-/** Heuristic: summary / brief / overview style corpus prompts. */
-export function isCorpusSummaryPrompt(prompt: string) {
-  return /\b(summar(?:y|ize|ise)|brief|overview|takeaways?|themes?|recap|tl;?dr)\b/i.test(
-    prompt,
-  )
-}
-
 /**
  * Format digests for corpus summary answers. Citations are the supporting
  * quotes stored at digest time (allowed chunk ids for the answer model).

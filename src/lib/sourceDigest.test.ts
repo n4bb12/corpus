@@ -3,7 +3,6 @@ import {
   addMissingDigestCitationFallbacks,
   clampDigestText,
   formatDigestEvidence,
-  isCorpusSummaryPrompt,
   validateDigestCitations,
 } from "./sourceDigest"
 
@@ -62,15 +61,6 @@ describe("source digests", () => {
 
     expect(clampDigestText(long).endsWith(".")).toBe(true)
     expect(clampDigestText(long).length).toBeLessThanOrEqual(800)
-  })
-
-  test("detects summary-like corpus prompts", () => {
-    expect(
-      isCorpusSummaryPrompt("Give me a concise brief of the sources."),
-    ).toBe(true)
-    expect(isCorpusSummaryPrompt("Where do these sources disagree?")).toBe(
-      false,
-    )
   })
 
   test("formats digest evidence under source titles", () => {
