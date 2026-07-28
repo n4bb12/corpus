@@ -10567,3 +10567,64 @@ Removed `atmosphere-noise` from the library shell so it matches the notebook pag
 
 PRODUCT.md is behind the current product-record schema — say if you want an `init` pass to fill the gaps.
 
+# Pretty error messages
+_Exported on 7/29/2026 at 00:02:44 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Show pretty messages for all errors.
+
+[CONVEX M(sources:generateUploadUrl)] [Request ID: df6f7190f0ce8d04] Server Error Uncaught Error: You've reached today's limit for adding sources. Try again tomorrow. at assertIngestionQuota (../src/convex/sources.ts:65:0) at async handler (../src/convex/sources.ts:187:11) Called by client
+
+---
+
+**Cursor**
+
+I'll look at how Convex and client errors are surfaced today so we can show clean, user-facing messages for cases like the ingestion quota limit.
+
+Convex is wrapping the quota message in a verbose server error string — I'll find whether the app already strips that, and how errors are shown in the UI.
+
+The fix is to throw `ConvexError` for app errors and centralize extraction so UI never shows the wrapped Convex stack.
+
+Next I'll switch Convex throws to `appError` and route every user-facing catch through `formatUserError`.
+
+Quota and other Convex failures will now show the clean app message (e.g. “You've reached today's limit for adding sources. Try again tomorrow.”) instead of the `[CONVEX M(...)] Server Error Uncaught Error: … at …` wrapper.
+
+**What changed**
+1. Convex app errors throw `ConvexError` via `appError()` so the message survives production redaction and is available as `.data`.
+2. Shared `formatUserError()` prefers that data and otherwise strips Convex wrappers.
+3. Upload/dialog notices, ingest/delete/clear-title API responses, source processing failures, and chat errors all go through it.
+
+# Duplicate source processing
+_Exported on 7/29/2026 at 00:04:10 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+During processing, sometimes the same sources shows up twice (briefly).
+
+---
+
+**Cursor**
+
+I'll dig into how sources are listed during processing — duplicate flashes usually come from optimistic UI overlapping realtime updates.
+
+Pending source rows look like the prime suspect for brief duplicates — I'll inspect that module next.
+
+Likely race: Convex can publish the new source before the upload placeholder gets a `sourceId`, so both rows render briefly. I'll lock that in with a failing unit test, then fix the merge.
+
+Red test confirms the race. Updating visibility + merge so placeholders drop as soon as Convex publishes, and the live row keeps the upload `localId` key.
+
+Handoff keys need the full uploading list — I'll merge them in the hook so the list still gets stable row keys.
+
+The effect was pruning placeholders by `createdAt` before the row key was remembered — I'll limit store cleanup to stamped `sourceId`s and adopt early Convex matches explicitly.
+
+File uploads could briefly show both the local “Uploading” placeholder and the live Convex row.
+
+**Cause:** Convex can publish the new source before the client stamps `sourceId` on the placeholder. Without that stamp, the list kept both rows until the HTTP response caught up.
+
+**Fix:** Match placeholders to live sources by `createdAt` + `title` (file ingest already sends the placeholder’s `addedAt`), hide the placeholder as soon as that match appears, and keep the upload `localId` as the React key so the row doesn’t remount.
+
