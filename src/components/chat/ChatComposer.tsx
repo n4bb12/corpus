@@ -30,7 +30,8 @@ export function ChatComposer({
   onOpenSources,
 }: ChatComposerProps) {
   const remaining = LIMITS.maxPromptCharacters - prompt.length
-  const canSubmit = !!readySourceCount && !!prompt.trim() && !sending && !streaming
+  const canSubmit =
+    !!readySourceCount && !!prompt.trim() && !sending && !streaming
 
   return (
     <div className="pointer-events-none bg-background px-4 pb-4">
