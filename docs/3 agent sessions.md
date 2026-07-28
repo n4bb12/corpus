@@ -8981,3 +8981,60 @@ Bump it to 1 second just to not have a weird number.
 
 Updated the title refresh debounce from 800ms to 1 second.
 
+# Uneven grounding distribution
+_Exported on 7/28/2026 at 02:30:15 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Grouding can be unevenly distributed. Here, we have 5 quotes for 1 source, 0 quotes for another source that is much longer, then 1 for an extremely short source, then another zero for the last source. Seems very glitched.
+
+---
+
+**Cursor**
+
+I reproduced the exact `5 / 0 / 1 / 0` distribution through the real answer-finalization path. The turn is incorrectly accepted as `complete`, so this is not merely a visual counting issue.
+
+Ranked causes I’m testing:
+
+1. Final answer validation verifies citation IDs, but not per-source coverage; prediction: omitted selected sources still yield `status: "complete"`—already confirmed.
+2. Digest packing preserves sources with zero supporting quotes and only adds fallback chunks when *all* digests have zero quotes; prediction: mixed `5/0/1/0` digest citations reach generation unchanged.
+3. Prompt-only enforcement (“cover every source”) is too weak/non-deterministic; prediction: no retry occurs unless the model invents an invalid chunk ID.
+4. Source length drives citation allocation; prediction: disproved if the same omission happens with equal-size fixture sources. The repro already does, so length is incidental rather than causal.
+
+Confirmed: this is a backend grounding bug, not UI.
+
+Two issues combine:
+
+- Digest citation validation may reduce a source to zero quotes, while retaining its digest.
+- Fallback evidence runs only when **all** sources lack quotes.
+- Answer validation checks citation IDs, but not whether every selected source was cited. No retry occurs for omissions.
+
+A deterministic repro returned:
+
+`status: complete`, distribution `5 / 0 / 1 / 0`, retries `0`.
+
+Source length is incidental. I made no changes; the fix should enforce per-source fallback evidence and validate corpus-wide citation coverage.
+
+---
+
+**User**
+
+Yes
+
+---
+
+**Cursor**
+
+I’ll fix this at both failure points: give every digest section fallback quote evidence when needed, then reject/retry corpus answers that still omit a source with available evidence. Citation counts will remain fact-driven rather than artificially equal.
+
+Implemented the grounding fix:
+
+- Citationless digest sections now receive fallback quote evidence.
+- Corpus answers must cite every evidence-bearing source.
+- Missing coverage triggers one retry; persistent omissions fail verification.
+- Existing notebooks benefit automatically on their next answer.
+
+Verified with TypeScript checks, 95 passing tests, and the original `5/0/1/0` repro.
+

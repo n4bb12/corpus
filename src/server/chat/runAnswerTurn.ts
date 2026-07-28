@@ -197,6 +197,29 @@ function mapAnswerCitations(args: {
   })
 }
 
+function findMissingCitationSourceIds(
+  citations: CitationRef[],
+  evidence: EvidenceItem[],
+) {
+  const sourceIdByChunkId = new Map(
+    evidence.map((item) => [String(item.chunkId), String(item.sourceId)]),
+  )
+  const requiredSourceIds = new Set(
+    evidence.map((item) => String(item.sourceId)),
+  )
+  const citedSourceIds = new Set(
+    citations.flatMap((citation) => {
+      const sourceId = sourceIdByChunkId.get(citation.chunkId)
+
+      return sourceId ? [sourceId] : []
+    }),
+  )
+
+  return [...requiredSourceIds].filter(
+    (sourceId) => !citedSourceIds.has(sourceId),
+  )
+}
+
 function buildPrompts(args: {
   evidencePack: EvidencePack
   history: Array<{
@@ -341,10 +364,21 @@ export async function runAnswerTurn(args: {
   let paragraphs = normalizeParagraphs(latestAnswer.paragraphs)
   let insufficient = latestAnswer.insufficient
   let built = buildCitedMarkdown(paragraphs, allowed, citeOptions)
+  let missingSourceIds =
+    !insufficient && args.evidencePack.mode === "corpus"
+      ? findMissingCitationSourceIds(
+          built.citations,
+          args.evidencePack.evidence,
+        )
+      : []
 
-  if (!insufficient && built.invalid.length) {
+  if (!insufficient && (built.invalid.length || missingSourceIds.length)) {
+    const coverageInstruction = missingSourceIds.length
+      ? `Your previous answer omitted these source IDs: ${missingSourceIds.join(", ")}. Include at least one paragraph and valid citation for every listed source.`
+      : ""
+
     const retry = await args.generateAnswer.generateOnce({
-      system: `${system}\nOnly cite these chunk IDs: ${[...allowed].join(", ")}`,
+      system: `${system}\nOnly cite these chunk IDs: ${[...allowed].join(", ")}\n${coverageInstruction}`,
       prompt: userPrompt,
       abortSignal: args.abortSignal,
     })
@@ -359,6 +393,13 @@ export async function runAnswerTurn(args: {
     paragraphs = normalizeParagraphs(latestAnswer.paragraphs)
     insufficient = latestAnswer.insufficient
     built = buildCitedMarkdown(paragraphs, allowed, citeOptions)
+    missingSourceIds =
+      !insufficient && args.evidencePack.mode === "corpus"
+        ? findMissingCitationSourceIds(
+            built.citations,
+            args.evidencePack.evidence,
+          )
+        : []
   }
 
   throwIfCanceled()
@@ -381,7 +422,11 @@ export async function runAnswerTurn(args: {
     }
   }
 
-  if (built.invalid.length || !built.content.trim()) {
+  if (
+    built.invalid.length ||
+    missingSourceIds.length ||
+    !built.content.trim()
+  ) {
     return {
       content:
         parseCitationMarkers(built.content).text ||
@@ -389,8 +434,9 @@ export async function runAnswerTurn(args: {
       insufficient: false,
       citations: [],
       status: "failed",
-      errorMessage:
-        "The answer couldn't be verified against your sources. Try again.",
+      errorMessage: missingSourceIds.length
+        ? "The answer didn't cover every selected source. Try again."
+        : "The answer couldn't be verified against your sources. Try again.",
     }
   }
 

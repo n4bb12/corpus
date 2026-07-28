@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import {
+  addMissingDigestCitationFallbacks,
   clampDigestText,
   formatDigestEvidence,
   isCorpusSummaryPrompt,
@@ -111,6 +112,92 @@ describe("source digests", () => {
       Supporting quotes:
       [2] chunk:c2
       serve communities"
+    `)
+  })
+
+  test("adds fallback quotes only to digest sections without citations", () => {
+    const sections = [
+      {
+        sourceId: "s1",
+        title: "One",
+        digestText: "First digest.",
+        citations: [
+          { chunkId: "s1-c1", quote: "First quote." },
+          { chunkId: "s1-c2", quote: "Second quote." },
+        ],
+      },
+      {
+        sourceId: "s2",
+        title: "Two",
+        digestText: "Second digest.",
+        citations: [],
+      },
+      {
+        sourceId: "s3",
+        title: "Three",
+        digestText: "Third digest.",
+        citations: [{ chunkId: "s3-c1", quote: "Third quote." }],
+      },
+      {
+        sourceId: "s4",
+        title: "Four",
+        digestText: "Fourth digest.",
+        citations: [],
+      },
+    ]
+
+    const filled = addMissingDigestCitationFallbacks(sections, [
+      {
+        chunkId: "s2-c1",
+        sourceId: "s2",
+        text: "Fallback quote for source two.",
+        startOffset: 0,
+        endOffset: 30,
+        ordinal: 0,
+      },
+      {
+        chunkId: "s4-c1",
+        sourceId: "s4",
+        text: "Fallback quote for source four.",
+        startOffset: 0,
+        endOffset: 31,
+        ordinal: 0,
+      },
+    ])
+
+    expect(
+      filled.map((section) => ({
+        sourceId: section.sourceId,
+        citationChunkIds: section.citations.map((citation) => citation.chunkId),
+      })),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "citationChunkIds": [
+            "s1-c1",
+            "s1-c2",
+          ],
+          "sourceId": "s1",
+        },
+        {
+          "citationChunkIds": [
+            "s2-c1",
+          ],
+          "sourceId": "s2",
+        },
+        {
+          "citationChunkIds": [
+            "s3-c1",
+          ],
+          "sourceId": "s3",
+        },
+        {
+          "citationChunkIds": [
+            "s4-c1",
+          ],
+          "sourceId": "s4",
+        },
+      ]
     `)
   })
 

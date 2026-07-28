@@ -34,6 +34,43 @@ export type DigestSection = {
   citations: DigestCitation[]
 }
 
+export type DigestFallbackChunk = DigestChunk & {
+  sourceId: string
+}
+
+export function addMissingDigestCitationFallbacks(
+  sections: DigestSection[],
+  chunks: DigestFallbackChunk[],
+) {
+  const chunksBySourceId = new Map<string, DigestFallbackChunk[]>()
+
+  for (const chunk of chunks) {
+    const sourceChunks = chunksBySourceId.get(chunk.sourceId)
+
+    if (sourceChunks) {
+      sourceChunks.push(chunk)
+    } else {
+      chunksBySourceId.set(chunk.sourceId, [chunk])
+    }
+  }
+
+  return sections.map((section) => {
+    if (section.citations.length) {
+      return section
+    }
+
+    const citations = (chunksBySourceId.get(section.sourceId) ?? []).flatMap(
+      (chunk) => {
+        const quote = chunk.text.slice(0, 180).trim()
+
+        return quote ? [{ chunkId: chunk.chunkId, quote }] : []
+      },
+    )
+
+    return { ...section, citations }
+  })
+}
+
 /**
  * Drop citations whose quotes cannot be found in the referenced chunk.
  * Attach locators when offsets are available.

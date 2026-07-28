@@ -25,6 +25,7 @@ import {
   tryPackInlineEvidence,
 } from "src/lib/retrieval"
 import {
+  addMissingDigestCitationFallbacks,
   type DigestSection,
   formatDigestEvidence,
   isCorpusSummaryPrompt,
@@ -279,7 +280,7 @@ async function buildDigestEvidencePack(
     chunks.map((chunk) => [String(chunk.chunkId), chunk]),
   )
 
-  const sections: DigestSection[] = ready.map((row) => ({
+  let sections: DigestSection[] = ready.map((row) => ({
     sourceId: String(row.sourceId),
     title: row.title,
     digestText: row.digestText ?? "",
@@ -329,30 +330,30 @@ async function buildDigestEvidencePack(
     }
   }
 
-  if (!evidence.length) {
+  const sourceIdsMissingCitations = sections
+    .filter((section) => !section.citations.length)
+    .map((section) => section.sourceId)
+
+  if (sourceIdsMissingCitations.length) {
     const fallbackChunks = (await fetchAuthQuery(
       api.retrievalHelpers.listChunksForSources,
       {
         notebookId: notebookId as never,
-        sourceIds: ready.map((row) => row.sourceId) as never,
+        sourceIds: sourceIdsMissingCitations as never,
         maxChunksPerSource: 2,
       },
     )) as ListedChunk[]
 
-    const bySource = new Map<string, ListedChunk[]>()
-
     for (const chunk of fallbackChunks) {
-      const key = String(chunk.sourceId)
-      const list = bySource.get(key)
+      const chunkId = String(chunk.chunkId)
 
-      if (list) {
-        list.push(chunk)
-      } else {
-        bySource.set(key, [chunk])
+      if (seen.has(chunkId)) {
+        continue
       }
 
+      seen.add(chunkId)
       evidence.push({
-        chunkId: String(chunk.chunkId),
+        chunkId,
         sourceId: String(chunk.sourceId),
         text: chunk.text,
         score: 1,
@@ -363,18 +364,14 @@ async function buildDigestEvidencePack(
       })
     }
 
-    for (const section of sections) {
-      if (section.citations.length) {
-        continue
-      }
-
-      const sourceChunks = bySource.get(section.sourceId) ?? []
-
-      section.citations = sourceChunks.map((chunk) => ({
+    sections = addMissingDigestCitationFallbacks(
+      sections,
+      fallbackChunks.map((chunk) => ({
+        ...chunk,
         chunkId: String(chunk.chunkId),
-        quote: chunk.text.slice(0, 180).trim(),
-      }))
-    }
+        sourceId: String(chunk.sourceId),
+      })),
+    )
   }
 
   return {
