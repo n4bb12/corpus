@@ -9038,3 +9038,71 @@ Implemented the grounding fix:
 
 Verified with TypeScript checks, 95 passing tests, and the original `5/0/1/0` repro.
 
+# Repo security review
+_Exported on 7/28/2026 at 03:07:27 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Full repo security review.
+
+---
+
+**Cursor**
+
+The specialized reviewer only accepts diffs and found none, so it could not audit unchanged code. I’ll continue with a repository-wide read-only audit instead.
+
+Security review found 7 issues: 3 high, 2 medium, 2 low.
+
+Highest risks:
+- Stored XSS through unsanitized Markdown
+- SSRF validation bypasses
+- Vulnerable SheetJS parser for uploaded XLSX files
+
+Open the standalone audit canvas: [Security review](/home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/canvases/security-review.canvas.tsx).
+
+No repository files were modified.
+
+---
+
+**User**
+
+Fix 1 and 2. 3 I'm not sure if we should even support xlsx as it probably doesn't lend itself well to chunking and RAG although I might be mistaken. 4 and 5 fix.
+
+---
+
+**Cursor**
+
+I'll fix XSS sanitization, SSRF hardening, server-side upload enforcement, and citation tenant checks. For XLSX I'll leave support as-is for now and note a short recommendation after the fixes.
+
+Fixed 1, 2, 4, and 5.
+
+1. **XSS** — Centralized Markdown rendering in `src/lib/renderMarkdown.ts` (strips raw HTML; allows only `http(s)`/`mailto`/`#` links and `http(s)` images). Chat and source preview both use it.
+2. **SSRF** — `urlSafety` now classifies IPs with `ipaddr.js` (IPv4-mapped loopback, `::`, CGNAT, etc.). Fetches pin DNS via Node `http`/`https` `lookup` and re-check redirects.
+4. **Uploads** — `addFile` enforces accepted type, storage existence, and size from `_storage` metadata; `generateUploadUrl` requires remaining ingestion quota; download path also caps size.
+5. **Citations** — `finalizeAssistant` only keeps `sourceId`/`chunkId` that belong to the message’s notebook (chunk wins for source binding).
+
+**On XLSX:** I’d drop it. Spreadsheet rows don’t chunk/retrieve well for grounded Q&A, and the current parser is the vulnerable path. CSV covers the tabular case that still makes sense. Say the word if you want it removed.
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll split into four security-focused commits (XSS, SSRF, uploads, citations) and stage mixed files by hunk.
+
+Created 4 commits on `main`:
+
+1. `65b518b` — **fix(security): sanitize Markdown rendering against XSS**
+2. `2226a12` — **fix(security): harden URL ingestion against SSRF**
+3. `d1870c0` — **fix(security): enforce upload type and size server-side**
+4. `0631a58` — **fix(security): bind chat citations to notebook-owned sources**
+
+Working tree is clean; branch is 4 ahead of `origin/main`.
+
