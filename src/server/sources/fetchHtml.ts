@@ -1,11 +1,20 @@
 import dns from "node:dns/promises"
+import type { IncomingMessage } from "node:http"
+import http from "node:http"
+import https from "node:https"
 import { LIMITS } from "src/lib/limits"
 import {
   isBlockedResolvedAddress,
   validatePublicHttpUrl,
 } from "src/lib/urlSafety"
 
-export async function assertSafeUrl(raw: string) {
+export type SafeResolvedUrl = {
+  url: URL
+  address: string
+  family: number
+}
+
+export async function assertSafeUrl(raw: string): Promise<SafeResolvedUrl> {
   const validated = validatePublicHttpUrl(raw)
 
   if (!validated.ok) {
@@ -14,13 +23,83 @@ export async function assertSafeUrl(raw: string) {
 
   const records = await dns.lookup(validated.url.hostname, { all: true })
 
+  if (!records.length) {
+    throw new Error("Couldn't resolve that host.")
+  }
+
   for (const record of records) {
     if (isBlockedResolvedAddress(record.address)) {
       throw new Error("That address isn't allowed.")
     }
   }
 
-  return validated.url
+  const [first] = records
+
+  if (!first) {
+    throw new Error("Couldn't resolve that host.")
+  }
+
+  return {
+    url: validated.url,
+    address: first.address,
+    family: first.family,
+  }
+}
+
+function requestPinned(
+  target: SafeResolvedUrl,
+  signal: AbortSignal,
+): Promise<IncomingMessage> {
+  const { url, address, family } = target
+  const lib = url.protocol === "https:" ? https : http
+  const headers: Record<string, string> = {
+    Host: url.host,
+    "User-Agent": "CorpusBot/1.0",
+    Accept: "text/html,application/xhtml+xml",
+  }
+
+  return new Promise((resolve, reject) => {
+    const request = lib.request(
+      {
+        protocol: url.protocol,
+        hostname: url.hostname,
+        port: url.port || undefined,
+        path: `${url.pathname}${url.search}`,
+        method: "GET",
+        headers,
+        signal,
+        servername: url.hostname,
+        lookup(_hostname, _options, callback) {
+          callback(null, address, family)
+        },
+      },
+      resolve,
+    )
+
+    request.on("error", reject)
+    request.end()
+  })
+}
+
+async function readLimitedBody(response: IncomingMessage) {
+  const chunks: Buffer[] = []
+  let total = 0
+
+  for await (const chunk of response) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+    total += buffer.byteLength
+
+    if (total > LIMITS.maxUrlResponseBytes) {
+      response.destroy()
+      throw new Error(
+        `Pages can be at most ${LIMITS.maxUrlResponseBytes / (1024 * 1024)} MB.`,
+      )
+    }
+
+    chunks.push(buffer)
+  }
+
+  return Buffer.concat(chunks).toString("utf8")
 }
 
 export async function fetchPublicHtml(url: URL) {
@@ -29,26 +108,21 @@ export async function fetchPublicHtml(url: URL) {
 
   try {
     let current = url
-    let response: Response | null = null
+    let response: IncomingMessage | null = null
 
     for (let redirect = 0; redirect < 4; redirect += 1) {
-      await assertSafeUrl(current.toString())
-      response = await fetch(current, {
-        redirect: "manual",
-        signal: controller.signal,
-        headers: {
-          "User-Agent": "CorpusBot/1.0",
-          Accept: "text/html,application/xhtml+xml",
-        },
-      })
+      const resolved = await assertSafeUrl(current.toString())
+      response = await requestPinned(resolved, controller.signal)
+      const status = response.statusCode ?? 0
 
-      if (response.status >= 300 && response.status < 400) {
-        const location = response.headers.get("location")
+      if (status >= 300 && status < 400) {
+        const location = response.headers.location
 
-        if (!location) {
+        if (typeof location !== "string" || !location) {
           throw new Error("The URL redirected in a way we couldn't follow.")
         }
 
+        response.resume()
         current = new URL(location, current)
         continue
       }
@@ -56,11 +130,13 @@ export async function fetchPublicHtml(url: URL) {
       break
     }
 
-    if (!response?.ok) {
+    const status = response?.statusCode ?? 0
+
+    if (!response || status < 200 || status >= 300) {
       throw new Error("Couldn't fetch that URL.")
     }
 
-    const contentType = response.headers.get("content-type") ?? ""
+    const contentType = String(response.headers["content-type"] ?? "")
 
     if (
       !contentType.includes("text/html") &&
@@ -69,40 +145,7 @@ export async function fetchPublicHtml(url: URL) {
       throw new Error("Only web pages (HTML) can be added from a URL.")
     }
 
-    const reader = response.body?.getReader()
-
-    if (!reader) {
-      throw new Error("That URL returned no content.")
-    }
-
-    const chunks: Uint8Array[] = []
-    let total = 0
-
-    while (true) {
-      const { done, value } = await reader.read()
-
-      if (done) {
-        break
-      }
-
-      if (!value) {
-        continue
-      }
-
-      total += value.byteLength
-
-      if (total > LIMITS.maxUrlResponseBytes) {
-        throw new Error(
-          `Pages can be at most ${LIMITS.maxUrlResponseBytes / (1024 * 1024)} MB.`,
-        )
-      }
-
-      chunks.push(value)
-    }
-
-    const html = new TextDecoder().decode(
-      Buffer.concat(chunks.map((chunk) => Buffer.from(chunk))),
-    )
+    const html = await readLimitedBody(response)
 
     return { html, finalUrl: current.toString() }
   } finally {

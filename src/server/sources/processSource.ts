@@ -49,7 +49,7 @@ async function extractMarkdown(
   let nextTitle = source.title
 
   if (source.kind === "url" && source.url) {
-    const safeUrl = await assertSafeUrl(source.url)
+    const { url: safeUrl } = await assertSafeUrl(source.url)
     const { html, finalUrl } = await fetchPublicHtml(safeUrl)
     const readable = await extractReadableHtml(html)
     const converted = await normalizeHtmlToMarkdown(readable.html)

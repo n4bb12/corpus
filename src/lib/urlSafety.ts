@@ -1,24 +1,74 @@
-const PRIVATE_HOST_PATTERNS = [
-  /^localhost$/i,
-  /^127\./,
-  /^10\./,
-  /^192\.168\./,
-  /^169\.254\./,
-  /^::1$/,
-  /^fc00:/i,
-  /^fe80:/i,
-  /^0\.0\.0\.0$/,
-]
+import ipaddr from "ipaddr.js"
 
 const METADATA_HOSTS = new Set([
   "metadata.google.internal",
   "metadata.google",
+  "metadata",
   "169.254.169.254",
+])
+
+const BLOCKED_IP_RANGES = new Set([
+  "unspecified",
+  "broadcast",
+  "multicast",
+  "linkLocal",
+  "loopback",
+  "private",
+  "reserved",
+  "carrierGradeNat",
+  "uniqueLocal",
+  "benchmarking",
+  "discard",
+  "amdIPv6",
+  "as112V4",
+  "as112",
+  "orchid",
+  "orchid2",
+  "6to4",
+  "teredo",
+  "ipv4Mapped",
 ])
 
 export type UrlValidationResult =
   | { ok: true; url: URL }
   | { ok: false; error: string }
+
+function hostnameLooksLikeIp(hostname: string) {
+  return ipaddr.isValid(hostname)
+}
+
+function effectiveIpRange(address: string) {
+  const parsed = ipaddr.parse(address)
+
+  if (
+    parsed.kind() === "ipv6" &&
+    "isIPv4MappedAddress" in parsed &&
+    parsed.isIPv4MappedAddress()
+  ) {
+    return parsed.toIPv4Address().range()
+  }
+
+  return parsed.range()
+}
+
+/** True when a hostname or resolved address must not be fetched. */
+export function isBlockedResolvedAddress(address: string) {
+  const host = address.replace(/^\[|\]$/g, "")
+
+  if (METADATA_HOSTS.has(host.toLowerCase())) {
+    return true
+  }
+
+  if (!hostnameLooksLikeIp(host)) {
+    return false
+  }
+
+  try {
+    return BLOCKED_IP_RANGES.has(effectiveIpRange(host))
+  } catch {
+    return true
+  }
+}
 
 /** Accept public http(s) URLs only — no credentials, localhost, or private nets. */
 export function validatePublicHttpUrl(raw: string): UrlValidationResult {
@@ -43,18 +93,22 @@ export function validatePublicHttpUrl(raw: string): UrlValidationResult {
 
   const hostname = url.hostname.replace(/^\[|\]$/g, "")
 
+  if (!hostname) {
+    return { ok: false, error: "Enter a valid public HTTP or HTTPS URL." }
+  }
+
   if (METADATA_HOSTS.has(hostname.toLowerCase())) {
     return { ok: false, error: "That host is blocked for security reasons." }
   }
 
-  if (PRIVATE_HOST_PATTERNS.some((pattern) => pattern.test(hostname))) {
+  if (hostname.toLowerCase() === "localhost") {
     return {
       ok: false,
       error: "Private or local network URLs are not allowed.",
     }
   }
 
-  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)) {
+  if (hostnameLooksLikeIp(hostname) && isBlockedResolvedAddress(hostname)) {
     return {
       ok: false,
       error: "Private or local network URLs are not allowed.",
@@ -62,18 +116,4 @@ export function validatePublicHttpUrl(raw: string): UrlValidationResult {
   }
 
   return { ok: true, url }
-}
-
-export function isBlockedResolvedAddress(address: string) {
-  const host = address.replace(/^\[|\]$/g, "")
-
-  if (METADATA_HOSTS.has(host.toLowerCase())) {
-    return true
-  }
-
-  if (PRIVATE_HOST_PATTERNS.some((pattern) => pattern.test(host))) {
-    return true
-  }
-
-  return /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
 }

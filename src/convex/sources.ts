@@ -8,6 +8,7 @@ import {
   titleFromPastedText,
   titleFromUrl,
 } from "src/lib/sourceTitle"
+import { validatePublicHttpUrl } from "src/lib/urlSafety"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
 import {
@@ -257,6 +258,12 @@ export const addUrl = mutation({
       throw new Error("Enter a URL to add as a source.")
     }
 
+    const validated = validatePublicHttpUrl(url)
+
+    if (!validated.ok) {
+      throw new Error(validated.error)
+    }
+
     await assertIngestionQuota(ctx, user._id)
 
     const visible = await countVisibleSources(ctx, notebook._id)
@@ -276,7 +283,7 @@ export const addUrl = mutation({
       kind: "url",
       title,
       originalTitle: title,
-      url,
+      url: validated.url.toString(),
       selected: true,
       processingState: "pending",
       createdAt: now,
