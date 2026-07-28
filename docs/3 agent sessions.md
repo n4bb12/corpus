@@ -9484,3 +9484,26 @@ Real pills use `min-h-6` + `text-xs` + `px-2`; pending uses fixed `size-6`, so t
 
 The pending pills used fixed `size-6`, while real ones size from `min-h-6` + `text-xs` + `px-2`. They now share that same box model, with a transparent `0` so the text line box matches.
 
+# Chat clearing stream cancellation
+_Exported on 7/28/2026 at 03:43:31 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Clearing chat during response streaming should cancel the stream just like a stop would.
+
+---
+
+**Cursor**
+
+I'll look at how chat clear and stream stop are wired so clearing during streaming can cancel the same way stop does.
+
+Checking how the server reacts to abort and chatEpoch bumps during a clear.
+
+Clear currently only deletes messages and never aborts the in-flight fetch. I'll abort via the same path as stop, then clear.
+
+Confirming clear now stops any in-flight answer first.
+
+`useChatPaneData` exposes a `clear()` that calls `stop()` (abort the fetch, cancel generation, reset stream UI) before the `clearChat` mutation. The dialog uses that path instead of calling the mutation alone.
+

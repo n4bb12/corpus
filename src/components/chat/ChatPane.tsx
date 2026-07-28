@@ -93,7 +93,7 @@ export function ChatPane({
         open={chat.clearOpen}
         onOpenChange={chat.setClearOpen}
         onConfirm={async () => {
-          await chat.clearChat({ notebookId })
+          await chat.clear()
           chat.setClearOpen(false)
         }}
       />

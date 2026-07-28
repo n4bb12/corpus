@@ -323,6 +323,11 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     }
   }
 
+  async function clear() {
+    await stop()
+    await clearChat({ notebookId })
+  }
+
   return {
     entries,
     prompt,
@@ -347,6 +352,6 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     optimisticUserPrompt,
     send,
     stop,
-    clearChat,
+    clear,
   }
 }
