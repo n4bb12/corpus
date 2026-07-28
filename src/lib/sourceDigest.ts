@@ -3,6 +3,10 @@ import { chunkContainsQuote, resolveCitationQuote } from "src/lib/citationQuote"
 export const DIGEST_TARGET_MIN_CHARS = 400
 export const DIGEST_TARGET_MAX_CHARS = 800
 export const DIGEST_MAX_CITATIONS = 6
+export const DIGEST_MAX_INPUT_CHARS = 24_000
+/** Enough for an 800-char digest with a little headroom; caps wasted generation. */
+export const DIGEST_MAX_OUTPUT_TOKENS = 450
+export const DIGEST_QUOTE_MAX_CHARS = 180
 
 export type DigestChunk = {
   chunkId: string
@@ -38,6 +42,122 @@ export type DigestFallbackChunk = DigestChunk & {
   sourceId: string
 }
 
+const TOKEN_PATTERN = /[a-z0-9\u00c0-\u024f]{3,}/gi
+
+function tokenize(text: string) {
+  return new Set(
+    (text.toLowerCase().match(TOKEN_PATTERN) ?? []).map((token) => token),
+  )
+}
+
+function tokenOverlapScore(left: Set<string>, right: Set<string>) {
+  if (!left.size || !right.size) {
+    return 0
+  }
+
+  let overlap = 0
+
+  for (const token of right) {
+    if (left.has(token)) {
+      overlap += 1
+    }
+  }
+
+  return overlap / Math.min(left.size, right.size)
+}
+
+function splitSentenceCandidates(text: string) {
+  const trimmed = text.trim()
+
+  if (!trimmed) {
+    return []
+  }
+
+  const parts = trimmed
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  if (!parts.length) {
+    return [trimmed.slice(0, DIGEST_QUOTE_MAX_CHARS).trim()].filter(Boolean)
+  }
+
+  return parts.flatMap((part) => {
+    if (part.length <= DIGEST_QUOTE_MAX_CHARS) {
+      return [part]
+    }
+
+    return [part.slice(0, DIGEST_QUOTE_MAX_CHARS).trim()].filter(Boolean)
+  })
+}
+
+/**
+ * Pick supporting quotes from chunks by lexical overlap with the digest.
+ * Prefers diverse chunks; falls back to leading chunk excerpts when overlap is empty.
+ */
+export function selectExtractiveDigestCitations(
+  digestText: string,
+  chunks: DigestChunk[],
+) {
+  const digestTokens = tokenize(digestText)
+  const ranked: Array<{ chunkId: string; quote: string; score: number }> = []
+
+  for (const chunk of chunks) {
+    for (const candidate of splitSentenceCandidates(chunk.text)) {
+      if (candidate.length < 12) {
+        continue
+      }
+
+      const score = tokenOverlapScore(digestTokens, tokenize(candidate))
+
+      if (score <= 0) {
+        continue
+      }
+
+      ranked.push({ chunkId: chunk.chunkId, quote: candidate, score })
+    }
+  }
+
+  ranked.sort((left, right) => right.score - left.score)
+
+  const picked: DigestCitationInput[] = []
+  const usedChunkIds = new Set<string>()
+
+  for (const candidate of ranked) {
+    if (usedChunkIds.has(candidate.chunkId)) {
+      continue
+    }
+
+    picked.push({ chunkId: candidate.chunkId, quote: candidate.quote })
+    usedChunkIds.add(candidate.chunkId)
+
+    if (picked.length >= DIGEST_MAX_CITATIONS) {
+      break
+    }
+  }
+
+  if (!picked.length) {
+    for (const chunk of chunks) {
+      const quote = chunk.text.slice(0, DIGEST_QUOTE_MAX_CHARS).trim()
+
+      if (!quote) {
+        continue
+      }
+
+      picked.push({ chunkId: chunk.chunkId, quote })
+
+      if (picked.length >= DIGEST_MAX_CITATIONS) {
+        break
+      }
+    }
+  }
+
+  return validateDigestCitations(
+    picked,
+    new Map(chunks.map((chunk) => [chunk.chunkId, chunk] as const)),
+  )
+}
+
 export function addMissingDigestCitationFallbacks(
   sections: DigestSection[],
   chunks: DigestFallbackChunk[],
@@ -61,7 +181,7 @@ export function addMissingDigestCitationFallbacks(
 
     const citations = (chunksBySourceId.get(section.sourceId) ?? []).flatMap(
       (chunk) => {
-        const quote = chunk.text.slice(0, 180).trim()
+        const quote = chunk.text.slice(0, DIGEST_QUOTE_MAX_CHARS).trim()
 
         return quote ? [{ chunkId: chunk.chunkId, quote }] : []
       },
@@ -140,6 +260,39 @@ export function clampDigestText(text: string) {
   }
 
   return sliced.trim()
+}
+
+function buildDigestResult(digestText: string, chunks: DigestChunk[]) {
+  const clamped = clampDigestText(digestText)
+
+  if (!clamped) {
+    return null
+  }
+
+  return {
+    digestText: clamped,
+    citations: selectExtractiveDigestCitations(clamped, chunks),
+  }
+}
+
+/**
+ * Short sources skip the LLM: the markdown itself is the digest.
+ */
+export function tryCheapSourceDigest(args: {
+  markdown: string
+  chunks: DigestChunk[]
+}) {
+  const trimmed = args.markdown.trim()
+
+  if (!trimmed || trimmed.length > DIGEST_TARGET_MAX_CHARS) {
+    return null
+  }
+
+  return buildDigestResult(trimmed, args.chunks)
+}
+
+export function digestFromModelText(text: string, chunks: DigestChunk[]) {
+  return buildDigestResult(text, chunks)
 }
 
 /**

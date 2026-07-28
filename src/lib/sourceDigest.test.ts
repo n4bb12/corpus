@@ -3,6 +3,8 @@ import {
   addMissingDigestCitationFallbacks,
   clampDigestText,
   formatDigestEvidence,
+  selectExtractiveDigestCitations,
+  tryCheapSourceDigest,
   validateDigestCitations,
 } from "./sourceDigest"
 
@@ -61,6 +63,86 @@ describe("source digests", () => {
 
     expect(clampDigestText(long).endsWith(".")).toBe(true)
     expect(clampDigestText(long).length).toBeLessThanOrEqual(800)
+  })
+
+  test("picks extractive citations by overlap with the digest", () => {
+    const chunks = [
+      {
+        chunkId: "c1",
+        text: "Soil moisture sensors help farms decide when to irrigate.",
+        startOffset: 0,
+        endOffset: 58,
+        ordinal: 0,
+      },
+      {
+        chunkId: "c2",
+        text: "Pine resin was used in shipbuilding along the coast.",
+        startOffset: 60,
+        endOffset: 112,
+        ordinal: 1,
+      },
+      {
+        chunkId: "c3",
+        text: "Farmers track soil moisture to reduce water waste.",
+        startOffset: 114,
+        endOffset: 164,
+        ordinal: 2,
+      },
+    ]
+
+    expect(
+      selectExtractiveDigestCitations(
+        "This source explains how soil moisture monitoring guides irrigation.",
+        chunks,
+      ).map((citation) => citation.chunkId),
+    ).toMatchInlineSnapshot(`
+      [
+        "c3",
+        "c1",
+      ]
+    `)
+  })
+
+  test("skips the LLM when markdown already fits the digest budget", () => {
+    const markdown =
+      "A short portal letter announcing the Infoportal launch for parents."
+
+    expect(
+      tryCheapSourceDigest({
+        markdown,
+        chunks: [
+          {
+            chunkId: "c1",
+            text: markdown,
+            startOffset: 0,
+            endOffset: markdown.length,
+            ordinal: 0,
+          },
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "citations": [
+          {
+            "chunkId": "c1",
+            "locator": {
+              "endOffset": 67,
+              "ordinal": 0,
+              "startOffset": 0,
+            },
+            "quote": "A short portal letter announcing the Infoportal launch for parents.",
+          },
+        ],
+        "digestText": "A short portal letter announcing the Infoportal launch for parents.",
+      }
+    `)
+
+    expect(
+      tryCheapSourceDigest({
+        markdown: "x".repeat(801),
+        chunks: [],
+      }),
+    ).toBeNull()
   })
 
   test("formats digest evidence under source titles", () => {

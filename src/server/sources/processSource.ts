@@ -124,11 +124,32 @@ async function extractMarkdown(
   return { markdown, nextTitle }
 }
 
+function kickTitleRefresh(result: unknown, token: string) {
+  if (
+    !result ||
+    typeof result !== "object" ||
+    !("titleRefreshGeneration" in result) ||
+    typeof result.titleRefreshGeneration !== "number" ||
+    !("notebookId" in result)
+  ) {
+    return
+  }
+
+  scheduleBackground(
+    refreshNotebookTitle({
+      notebookId: String(result.notebookId),
+      generation: result.titleRefreshGeneration,
+      token,
+    }),
+  )
+}
+
 async function summarizeSource(args: {
   client: ConvexHttpClient
   sourceId: Id<"sources">
   sourceTitle: string
   markdown: string
+  token: string
   chunks: Array<{
     chunkId: string
     text: string
@@ -137,15 +158,6 @@ async function summarizeSource(args: {
     endOffset: number
   }>
 }) {
-  try {
-    await args.client.mutation(api.ingestion.setProcessingState, {
-      sourceId: args.sourceId,
-      processingState: "summarizing",
-    })
-  } catch {
-    // Older deployments may not know "summarizing" yet — still try the digest.
-  }
-
   try {
     requireEnv("OPENAI_API_KEY")
 
@@ -163,10 +175,16 @@ async function summarizeSource(args: {
       return null
     }
 
-    await args.client.mutation(api.ingestion.setDigestDraft, {
-      sourceId: args.sourceId,
-      digestText: digest.digestText,
-    })
+    const draftResult = await args.client.mutation(
+      api.ingestion.setDigestDraft,
+      {
+        sourceId: args.sourceId,
+        digestText: digest.digestText,
+      },
+    )
+
+    // Title can refresh from pending digest text while embedding continues.
+    kickTitleRefresh(draftResult, args.token)
 
     return digest
   } catch {
@@ -243,24 +261,44 @@ export async function processSourcePipeline(
       startOffset: locators[index]?.startOffset ?? 0,
       endOffset: locators[index]?.endOffset ?? text.length,
     }))
-    const [{ embeddings: vectors }, digest] = await Promise.all([
-      embedMany({
-        model: embeddingModel,
-        values: texts,
-        providerOptions: {
-          voyage: {
-            inputType: "document",
-          },
+
+    // Keep "embedding" on the UI during the parallel phase. Only flip to
+    // "summarizing" if the digest is still running after indexing finishes.
+    const digestState = { done: false }
+
+    const digestPromise = summarizeSource({
+      client,
+      sourceId,
+      sourceTitle: nextTitle,
+      markdown,
+      token,
+      chunks: draftChunks,
+    }).finally(() => {
+      digestState.done = true
+    })
+
+    const { embeddings: vectors } = await embedMany({
+      model: embeddingModel,
+      values: texts,
+      providerOptions: {
+        voyage: {
+          inputType: "document",
         },
-      }),
-      summarizeSource({
-        client,
-        sourceId,
-        sourceTitle: nextTitle,
-        markdown,
-        chunks: draftChunks,
-      }),
-    ])
+      },
+    })
+
+    if (!digestState.done) {
+      try {
+        await client.mutation(api.ingestion.setProcessingState, {
+          sourceId,
+          processingState: "summarizing",
+        })
+      } catch {
+        // Older deployments may not know "summarizing" yet — still await digest.
+      }
+    }
+
+    const digest = await digestPromise
 
     const inserted = await client.mutation(api.ingestion.replaceChunks, {
       sourceId,
@@ -309,22 +347,7 @@ export async function processSourcePipeline(
       sourceId,
     })
 
-    const titleKick = readyResult
-
-    if (
-      titleKick &&
-      typeof titleKick === "object" &&
-      "titleRefreshGeneration" in titleKick &&
-      typeof titleKick.titleRefreshGeneration === "number"
-    ) {
-      scheduleBackground(
-        refreshNotebookTitle({
-          notebookId: String(titleKick.notebookId),
-          generation: titleKick.titleRefreshGeneration,
-          token,
-        }),
-      )
-    }
+    kickTitleRefresh(readyResult, token)
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Couldn't process this source."
@@ -334,21 +357,6 @@ export async function processSourcePipeline(
       errorCode: message.slice(0, 200),
     })
 
-    const titleKick = failedResult
-
-    if (
-      titleKick &&
-      typeof titleKick === "object" &&
-      "titleRefreshGeneration" in titleKick &&
-      typeof titleKick.titleRefreshGeneration === "number"
-    ) {
-      scheduleBackground(
-        refreshNotebookTitle({
-          notebookId: String(titleKick.notebookId),
-          generation: titleKick.titleRefreshGeneration,
-          token,
-        }),
-      )
-    }
+    kickTitleRefresh(failedResult, token)
   }
 }

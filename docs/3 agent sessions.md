@@ -10239,3 +10239,135 @@ Dropping the anti-pattern demo test — the mount/cleanup/remount case is the re
 
 Regression covered in `src/lib/scheduleScrollOnce.test.ts` (mount → cleanup → remount).
 
+# Summarization time efficiency
+_Exported on 7/28/2026 at 22:51:14 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Summarizing still makes for a considerable amount of time (50%?). Explore ways to speed that up.
+
+---
+
+**Cursor**
+
+I'll dig into how summarizing works in this codebase and where the time goes, then outline concrete ways to speed it up.
+
+This is a design/exploration problem with trade-offs, so I'll switch to Plan mode and dig into the digest pipeline.
+
+Checking reasoning-effort options and whether digests block readiness — those are the biggest levers.
+
+Digest already runs **in parallel with embedding**, so wall-clock is `max(embed, digest)` — and the UI flips to **Summarizing** as soon as that phase starts, so the whole wait looks like summarization.
+
+### What’s slow today
+
+`generateSourceDigest` asks `gpt-5.4-nano` for structured JSON: **400–800 char digest + up to 6 grounded quotes**, over up to **24k chars** of chunks. Output tokens + structured output dominate; you’re already on the cheapest/fastest model tier.
+
+### Ways to speed it up
+
+1. **Pin `reasoningEffort: "none"`**  
+   Official nano default is `none`, but the AI SDK docs default reasoning to `medium` if set. Explicitly pinning `"none"` is a one-line, low-risk latency insurance for a compression task that doesn’t need chain-of-thought.
+
+2. **Shrink work in the same call**  
+   Cut input (e.g. 8–12k chars is plenty for an 800-char digest), shorten the target (≈250–400 chars), fewer citations (3), and `maxOutputTokens`. Linear win on generation time; mild quality risk on long PDFs.
+
+3. **Digest text only; citations without a second LLM**  
+   Biggest algorithmic win while keeping quality. Generate plain digest text (faster, no structured schema). Build supporting quotes extractively from chunks — lexical overlap or reuse the embeddings you’re already computing. Corpus answers still get grounded quotes; the model stops hunting verbatim citations.
+
+4. **Ready before digest finishes**  
+   Mark the Source ready after chunk+embed; finish digest in the background. Chat unlocks sooner; corpus briefs fall through to coverage until digests land (already allowed by the ADR). Best for “when can I talk?”, not for digest wall-clock itself.
+
+5. **Fix the label / phase accounting**  
+   Don’t overwrite `embedding` with `summarizing` at the start of `Promise.all`. Show “Indexing” / “Preparing” for the parallel phase, or only show Summarizing if digest is still running after embed. This can make the “50%” feel disappear even if wall-clock barely moves.
+
+6. **Skip or cheap-path short sources**  
+   If markdown is already &lt; digest target length, store a trimmed excerpt + first-chunk quote and skip the LLM. Free for pasted blurbs and short pages.
+
+### Recommendation
+
+Start with **1 + 5** (cheap, measurable), then **3** if digests still dominate wall-clock. Prefer **4** only if the pain is “chat stays locked,” not “digest quality/latency.”
+
+Want me to implement a specific path (e.g. `reasoningEffort: none` + extractive citations, or ready-before-digest)?
+
+---
+
+**User**
+
+Implement all except 4.
+
+---
+
+**Cursor**
+
+Implementing 1–3, 5, and 6: reading the digest path and tests, then applying the changes.
+
+Implementing digest helpers and rewriting the generator next.
+
+The test file write failed — rewriting it and re-running.
+
+Shipped (everything except ready-before-digest). Types, format, and all 122 tests pass.
+
+1. **`reasoningEffort: "none"`** on the digest call  
+2. **Smaller job** — input 10k chars, digest 250–400 chars, max 3 citations, `maxOutputTokens: 220`  
+3. **Plain-text digest + extractive citations** — no structured output; quotes chosen by lexical overlap (with chunk-prefix fallback)  
+5. **UI phase** — stays on “Indexing” during the parallel embed/digest window; “Summarizing” only if digest is still running after embed  
+6. **Cheap path** — markdown ≤ 400 chars becomes the digest with no LLM
+
+---
+
+**User**
+
+It's much faster now, we almost have a little buffer to do more.
+
+---
+
+**Cursor**
+
+Good — digest is no longer the bottleneck.
+
+Ways to spend that buffer:
+
+1. **Slightly richer digests** — bump target to ~350–500 chars and/or 4 citations; still cheaper than the old structured call  
+2. **Better extractive quotes** — score with the embeddings you already compute (semantic overlap instead of lexical)  
+3. **Earlier titles** — kick title refresh from the digest draft while indexing finishes (you had this sketched before)  
+4. **Hold the line** — keep the speed win and leave the buffer as headroom for slow sources  
+
+Which do you want?
+
+---
+
+**User**
+
+Digest draft?
+
+---
+
+**Cursor**
+
+Checking how digest drafts are stored and used today.
+
+**Digest draft** is already in the pipeline: when summarization finishes, `setDigestDraft` writes `digestStatus: "pending"` + `digestText` (no citations yet) while the source is still indexing.
+
+Title refresh is allowed to use that pending text (`sourceHasTitleEvidence`). The mutation even bumps `titleRefreshGeneration` — but `processSource` never kicks `refreshNotebookTitle` from that return value. It only starts the orchestrator on `markReady`, which bumps the generation again, so the draft’s bump is effectively wasted.
+
+Spending the buffer on this would mean: when `setDigestDraft` returns a generation, `scheduleBackground(refreshNotebookTitle(...))` right away so the notebook can rename while embedding finishes. Want that wired up?
+
+---
+
+**User**
+
+Yes and slightly richer digests. Actually, I would like to try our previous size. We have plenty of budget.
+
+---
+
+**Cursor**
+
+Restoring the previous digest size and wiring early title refresh from the digest draft.
+
+Done.
+
+**Richer digests** — back to 400–800 chars, 6 citations, 24k input (`maxOutputTokens: 450`). Speed wins stay: plain text, `reasoningEffort: none`, extractive cites, cheap path for short sources.
+
+**Early titles** — `setDigestDraft` now kicks `refreshNotebookTitle` immediately, so the notebook can rename from pending digest text while embedding finishes. `markReady` / `markFailed` still kick as before (latest-wins).
+
