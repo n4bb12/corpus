@@ -1,4 +1,8 @@
 import {
+  type AnswerCitationSlot,
+  isAnswerCitationSlot,
+} from "src/lib/answerCitation"
+import {
   normalizeNumberedCitedMarkdown,
   parseCitationMarkers,
   remapCitationMarkers,
@@ -14,19 +18,12 @@ export type ChatSseResult = {
   canceled: boolean
 }
 
-export type StreamCitation = {
-  _id: string
-  chunkId: string
-  sourceId?: string
-  liveTitle: string
-  excerpt: string
-  canNavigate: boolean
-  locator?: { startOffset?: number; endOffset?: number } | null
-}
+/** @deprecated Prefer AnswerCitationSlot — alias kept for call-site clarity in SSE. */
+export type StreamCitation = AnswerCitationSlot
 
 export type ChatSseHandlers = {
   onText?: (text: string) => void
-  onCitations?: (citations: StreamCitation[]) => void
+  onCitations?: (citations: AnswerCitationSlot[]) => void
   onInsufficient?: (insufficient: boolean) => void
   onStatus?: (label: string) => void
   /** When false, stop applying events even if the socket still delivers them. */
@@ -34,27 +31,10 @@ export type ChatSseHandlers = {
   signal?: AbortSignal
 }
 
-function isStreamCitation(value: unknown): value is StreamCitation {
-  return (
-    !!value &&
-    typeof value === "object" &&
-    "_id" in value &&
-    typeof value._id === "string" &&
-    "chunkId" in value &&
-    typeof value.chunkId === "string" &&
-    "liveTitle" in value &&
-    typeof value.liveTitle === "string" &&
-    "excerpt" in value &&
-    typeof value.excerpt === "string" &&
-    "canNavigate" in value &&
-    typeof value.canNavigate === "boolean"
-  )
-}
-
 /** Parse mid-stream cites against the catalog; remap to validated numbered markers. */
 export function resolveStreamedAssistantContent(
   text: string,
-  catalog: StreamCitation[],
+  catalog: AnswerCitationSlot[],
 ) {
   if (usesNumberedCitationMarkers(text)) {
     return {
@@ -249,7 +229,7 @@ export async function consumeChatSse(
             "citations" in data &&
             Array.isArray(data.citations)
           ) {
-            handlers.onCitations?.(data.citations.filter(isStreamCitation))
+            handlers.onCitations?.(data.citations.filter(isAnswerCitationSlot))
             return
           }
 

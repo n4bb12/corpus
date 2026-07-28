@@ -5,9 +5,10 @@ import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import { Button } from "src/components/ui/shadcn/button"
 import type { api } from "src/convex/_generated/api"
 import {
-  resolveStreamedAssistantContent,
-  type StreamCitation,
-} from "src/lib/chatSse"
+  type AnswerCitationSlot,
+  asAnswerCitationSlots,
+} from "src/lib/answerCitation"
+import { resolveStreamedAssistantContent } from "src/lib/chatSse"
 
 type ChatListEntry = FunctionReturnType<typeof api.chat.list>[number]
 
@@ -15,7 +16,7 @@ export type ChatAssistantMessageProps = {
   entry: ChatListEntry
   entries: ChatListEntry[] | undefined
   streamedContent: string | null
-  streamedCitations: StreamCitation[]
+  streamedCitations: AnswerCitationSlot[]
   streamedInsufficient: boolean | null
   progressLabel: string | null
   retrying?: boolean
@@ -43,7 +44,9 @@ export function ChatAssistantMessage({
     : null
   const content =
     retrying && !streamedContent ? null : (streamed?.content ?? entry.content)
-  const citations = streamed?.citations ?? entry.citations ?? []
+  const citations = asAnswerCitationSlots(
+    streamed?.citations ?? entry.citations ?? [],
+  )
   const insufficient =
     streamedContent !== null ? !!streamedInsufficient : !!entry.insufficient
   const latestFailed =

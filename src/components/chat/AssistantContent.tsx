@@ -1,23 +1,13 @@
 import { marked } from "marked"
-import {
-  type ChatCiteArgs,
-  CitationPills,
-} from "src/components/chat/CitationPills"
+import type { ChatCiteArgs } from "src/components/chat/CitationPills"
+import { CitationPills } from "src/components/chat/CitationPills"
 import { CitationPillsPending } from "src/components/chat/CitationPillsPending"
+import type { AnswerCitationSlot } from "src/lib/answerCitation"
 import { splitCitedParagraphs, stripCitationMarkers } from "src/lib/citations"
-
-type ChatCitation = {
-  _id: string
-  liveTitle: string
-  excerpt: string
-  canNavigate: boolean
-  sourceId?: string
-  locator?: { startOffset?: number; endOffset?: number } | null
-}
 
 export type AssistantContentProps = {
   content: string
-  citations: ChatCitation[]
+  citations: AnswerCitationSlot[]
   insufficient?: boolean
   /** Trailing paragraph cites are held until they finish; show placeholders meanwhile. */
   citationsPending?: boolean

@@ -1,4 +1,7 @@
-import type { StreamCitation } from "src/lib/chatSse"
+import {
+  type AnswerCitationSlot,
+  toAnswerCitationSlots,
+} from "src/lib/answerCitation"
 import { resolveCitationQuote } from "src/lib/citationQuote"
 import {
   type AnswerParagraph,
@@ -194,25 +197,6 @@ function mapAnswerCitations(args: {
   })
 }
 
-function toStreamCitationCatalog(
-  citations: PersistedAnswerCitation[],
-  sourcesById: Map<string, SourceRecord | null | undefined>,
-): StreamCitation[] {
-  return citations.map((citation, order) => {
-    const source = citation.sourceId ? sourcesById.get(citation.sourceId) : null
-
-    return {
-      _id: `answer-cite-${order}`,
-      chunkId: String(citation.chunkId),
-      sourceId: citation.sourceId,
-      liveTitle: citation.sourceTitleSnapshot,
-      excerpt: citation.excerpt,
-      canNavigate: Boolean(source && !source.deletedAt),
-      locator: citation.locator,
-    }
-  })
-}
-
 function buildPrompts(args: {
   evidencePack: EvidencePack
   history: Array<{
@@ -264,7 +248,7 @@ export async function runAnswerTurn(args: {
   onPartial?: {
     insufficient?: (insufficient: boolean) => void
     text?: (text: string) => void
-    citations?: (citations: StreamCitation[]) => void
+    citations?: (citations: AnswerCitationSlot[]) => void
   }
 }): Promise<AnswerTurnResult> {
   const throwIfCanceled = args.throwIfCanceled ?? (() => undefined)
@@ -330,7 +314,7 @@ export async function runAnswerTurn(args: {
         lastStreamedCitationSignature = citationSignature
 
         onPartial.citations?.(
-          toStreamCitationCatalog(
+          toAnswerCitationSlots(
             mapAnswerCitations({
               citations: built.citations,
               evidence: args.evidencePack.evidence,
@@ -419,7 +403,7 @@ export async function runAnswerTurn(args: {
   })
 
   onPartial.text?.(content)
-  onPartial.citations?.(toStreamCitationCatalog(titled, args.sourcesById))
+  onPartial.citations?.(toAnswerCitationSlots(titled, args.sourcesById))
 
   return {
     content,

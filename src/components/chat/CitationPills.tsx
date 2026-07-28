@@ -8,6 +8,7 @@ import {
 import { useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { CitationPill } from "src/components/chat/CitationPill"
+import type { AnswerCitationSlot } from "src/lib/answerCitation"
 import { markdownToPlainText } from "src/lib/markdownPlain"
 import { formatTitle } from "src/lib/sourceTitle"
 
@@ -19,17 +20,8 @@ export type ChatCiteArgs = {
   canNavigate: boolean
 }
 
-type ChatCitation = {
-  _id: string
-  liveTitle: string
-  excerpt: string
-  canNavigate: boolean
-  sourceId?: string
-  locator?: { startOffset?: number; endOffset?: number } | null
-}
-
 export type CitationPillsProps = {
-  citations: ChatCitation[]
+  citations: AnswerCitationSlot[]
   indexes: number[]
   onCite: (args: ChatCiteArgs) => void
 }
