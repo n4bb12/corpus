@@ -388,9 +388,44 @@ export const finalizeAssistant = mutation({
     }
 
     for (const citation of args.citations ?? []) {
+      let sourceId = citation.sourceId
+      let chunkId = citation.chunkId
+
+      if (chunkId) {
+        const chunk = await ctx.db.get(chunkId)
+
+        if (
+          !chunk ||
+          chunk.deletedAt ||
+          chunk.notebookId !== message.notebookId
+        ) {
+          chunkId = undefined
+        } else {
+          sourceId = chunk.sourceId
+        }
+      }
+
+      if (sourceId) {
+        const source = await ctx.db.get(sourceId)
+
+        if (
+          !source ||
+          source.deletedAt ||
+          source.notebookId !== message.notebookId
+        ) {
+          sourceId = undefined
+          chunkId = undefined
+        }
+      }
+
       await ctx.db.insert("citations", {
         messageId: message._id,
-        ...citation,
+        sourceId,
+        chunkId,
+        sourceTitleSnapshot: citation.sourceTitleSnapshot,
+        excerpt: citation.excerpt,
+        locator: citation.locator,
+        order: citation.order,
       })
     }
 
