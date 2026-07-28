@@ -5,7 +5,7 @@ import { Button } from "src/components/ui/shadcn/button"
 export default function NotFoundPage() {
   return (
     <div className="atmosphere atmosphere-noise flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
-      <BrandLockup />
+      <BrandLockup to="/library" />
 
       <div className="space-y-3">
         <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
@@ -18,7 +18,7 @@ export default function NotFoundPage() {
       </div>
 
       <Button asChild className="rounded-full">
-        <Link href="/">Back to notebooks</Link>
+        <Link href="/library">Back to notebooks</Link>
       </Button>
     </div>
   )

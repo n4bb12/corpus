@@ -44,7 +44,7 @@ export function SignInCard() {
 
     const result = await authClient.signIn.magicLink({
       email,
-      callbackURL: "/",
+      callbackURL: "/library",
     })
 
     setPendingEmail(false)
@@ -63,7 +63,7 @@ export function SignInCard() {
     setLastSignInMethod("google")
     void authClient.signIn.social({
       provider: "google",
-      callbackURL: "/",
+      callbackURL: "/library",
     })
   }
 

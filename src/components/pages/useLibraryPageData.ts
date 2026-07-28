@@ -112,7 +112,7 @@ export function useLibraryPageData() {
     }
 
     const query = params.toString()
-    router.replace(query ? `/?${query}` : "/")
+    router.replace(query ? `/library?${query}` : "/library")
   }, [debouncedDraft, router, searchQ])
 
   const listArgs = searchTerm
@@ -176,7 +176,7 @@ export function useLibraryPageData() {
     setDraft("")
     setDebouncedDraft("")
     startTransition(() => {
-      router.replace("/")
+      router.replace("/library")
     })
   }
 
@@ -193,7 +193,7 @@ export function useLibraryPageData() {
       }
 
       const query = params.toString()
-      router.replace(query ? `/?${query}` : "/")
+      router.replace(query ? `/library?${query}` : "/library")
     })
   }
 

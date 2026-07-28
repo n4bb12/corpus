@@ -18,7 +18,7 @@ function RedirectToSignIn() {
   const router = useRouter()
 
   useLayoutEffect(() => {
-    router.replace("/sign-in")
+    router.replace("/")
   }, [router])
 
   return <SignInPage />
@@ -72,17 +72,17 @@ export function ClientAuthBoundary({
   }
 
   if (mode === "signed-out" && isSignedIn) {
-    return <NavigateHome />
+    return <NavigateLibrary />
   }
 
   return children
 }
 
-function NavigateHome() {
+function NavigateLibrary() {
   const router = useRouter()
 
   useLayoutEffect(() => {
-    router.replace("/")
+    router.replace("/library")
   }, [router])
 
   return null
