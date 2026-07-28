@@ -8872,3 +8872,31 @@ Clearing goes through a fetch with no optimistic update, so exiting edit mode fl
 Clearing the title exited edit mode before the clear API/`generating` prop caught up, so the old title flashed briefly.
 
 `InlineNotebookTitle` now sets a local `awaitingGenerate` flag as soon as you commit an empty title, so “Generating title…” shows immediately and stays until the server pending state arrives.
+
+# Title length flexibility
+_Exported on 7/28/2026 at 02:12:03 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Allow titles to be longer than 4 words. Aim for max 10 or make it flexible. If the sources allow for a short title, use it. Don't force a certain word count. But aim for staying within a limit.
+
+---
+
+**Cursor**
+
+I'll check how notebook titles are constrained today and relax the word-count rules so short titles stay allowed while longer ones can go up to ~10 words.
+
+The hard limit looks like it's in `sourceTitle.ts` — checking that and related constants.
+
+The model prompt still forces a 3–8 word range. I'll relax that to prefer short titles when possible, with a soft ~10-word ceiling, and align the compact-title caps.
+
+Titles are no longer steered toward a fixed 3–8 word band.
+
+1. **Prompt** — ask for a concise topical phrase, prefer short when the sources allow it, soft ceiling of ~10 words, no padding to hit a count.
+2. **Compact fallbacks** — word/char caps raised from 5/48 to 10/80 so source-derived titles can be longer too.
+3. **Multi-source label join** — same 10-word / 80-char allowance.
+
+Clear a notebook title (or re-add a source) to regenerate under the new guidance.
+

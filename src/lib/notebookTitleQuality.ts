@@ -142,8 +142,8 @@ export function multiSourceFallbackTitle(sourceLabels: string[]) {
 
     if (
       !isUsableNotebookTitle(trimmed) ||
-      trimmed.length > 40 ||
-      trimmed.split(/\s+/).length > 5
+      trimmed.length > 80 ||
+      trimmed.split(/\s+/).length > 10
     ) {
       continue
     }

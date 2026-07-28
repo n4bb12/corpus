@@ -203,7 +203,9 @@ Source names: ${labelList}
 Rules:
 - Synthesize the central topic or relationship across all sources
 - Use the language used by the sources
-- Write 3–8 words, not a sentence or a list of source names
+- Prefer a concise topical phrase: use as few words as the topic needs, and stay within about 10 words
+- Short titles are better when the sources support them; do not pad to a word count
+- Not a sentence or a list of source names
 - No URLs, hostnames, file paths, filenames, or document codes
 - Ignore branding slogans and generic marketing copy${multiSourceRules}
 

@@ -60,14 +60,14 @@ describe("source titles", () => {
         "Wichtiger Hinweis:\n\nIm Rahmen der kontinuierlichen Weiterentwicklung unserer schulischen Organisation.",
       ),
     ).toMatchInlineSnapshot(
-      `"Im Rahmen der kontinuierlichen Weiterentwicklung"`,
+      `"Im Rahmen der kontinuierlichen Weiterentwicklung unserer schulischen"`,
     )
     expect(
       compactTitle(
         "Im Rahmen der kontinuierlichen Weiterentwicklung unserer schulischen Organisation werden wir die Elt",
       ),
     ).toMatchInlineSnapshot(
-      `"Im Rahmen der kontinuierlichen Weiterentwicklung"`,
+      `"Im Rahmen der kontinuierlichen Weiterentwicklung unserer schulischen"`,
     )
     expect(isWeakTitle("Wichtiger Hinweis:")).toBe(true)
     expect(isWeakTitle("Untitled notebook")).toBe(true)

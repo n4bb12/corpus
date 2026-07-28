@@ -88,8 +88,8 @@ export function titleFromFilename(filename: string) {
   return normalizeTitle(filename, "Uploaded file")
 }
 
-const COMPACT_TITLE_MAX_WORDS = 5
-const COMPACT_TITLE_MAX_CHARS = 48
+const COMPACT_TITLE_MAX_WORDS = 10
+const COMPACT_TITLE_MAX_CHARS = 80
 
 /** Strip extension and turn `_` / `-` into spaces for a readable title. */
 export function humanizeFilenameTitle(filename: string, fallback = "") {
