@@ -4,11 +4,16 @@ import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import {
   prunePendingSources,
+  rememberSourceRowKey,
   updateUploadingSources,
   useSourceRowKeys,
   useUploadingSources,
 } from "src/lib/pendingSources"
-import { visibleUploadingSources } from "src/lib/uploadingSources"
+import {
+  markUploadingSourceCreated,
+  rowKeysForUploadingSources,
+  visibleUploadingSources,
+} from "src/lib/uploadingSources"
 import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 export function useSourcesList(notebookId: Id<"notebooks">) {
@@ -18,7 +23,7 @@ export function useSourcesList(notebookId: Id<"notebooks">) {
   )
   const [query, setQuery] = useState("")
   const uploadingSources = useUploadingSources(notebookId)
-  const rowKeyBySourceId = useSourceRowKeys(notebookId)
+  const rememberedRowKeys = useSourceRowKeys(notebookId)
 
   const filtered = useMemo(() => {
     const list = sources ?? []
@@ -33,12 +38,15 @@ export function useSourcesList(notebookId: Id<"notebooks">) {
   }, [query, sources])
 
   const uploading = useMemo(
-    () =>
-      visibleUploadingSources(
-        uploadingSources,
-        (sources ?? []).map((source) => source._id),
-      ),
+    () => visibleUploadingSources(uploadingSources, sources ?? []),
     [sources, uploadingSources],
+  )
+  const rowKeyBySourceId = useMemo(
+    () => ({
+      ...rowKeysForUploadingSources(uploadingSources, sources ?? []),
+      ...rememberedRowKeys,
+    }),
+    [rememberedRowKeys, sources, uploadingSources],
   )
 
   useEffect(() => {
@@ -51,9 +59,33 @@ export function useSourcesList(notebookId: Id<"notebooks">) {
     prunePendingSources(notebookId, sourceIds)
 
     updateUploadingSources(notebookId, (current) => {
-      const next = visibleUploadingSources(current, sourceIds)
+      let next = current
 
-      return next.length === current.length ? current : next
+      for (const entry of current) {
+        if (entry.sourceId) {
+          continue
+        }
+
+        const match = sources.find(
+          (source) =>
+            source.createdAt === entry.addedAt && source.title === entry.title,
+        )
+
+        if (!match) {
+          continue
+        }
+
+        rememberSourceRowKey(notebookId, match._id, entry.localId)
+        next = markUploadingSourceCreated(next, entry.localId, match._id)
+      }
+
+      const pruned = next.filter(
+        (entry) => !entry.sourceId || !sourceIds.has(entry.sourceId),
+      )
+
+      return pruned.length === current.length && next === current
+        ? current
+        : pruned
     })
   }, [notebookId, sources])
 

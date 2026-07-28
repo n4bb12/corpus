@@ -4,6 +4,7 @@ import {
   markUploadingSourceCreated,
   mergeSourcesListEntries,
   removeUploadingSource,
+  rowKeysForUploadingSources,
   visibleUploadingSources,
 } from "./uploadingSources"
 
@@ -26,9 +27,13 @@ describe("uploading sources", () => {
     ]
 
     expect(
-      visibleUploadingSources(uploading, ["sources_b" as never]).map(
-        (entry) => entry.localId,
-      ),
+      visibleUploadingSources(uploading, [
+        {
+          _id: "sources_b" as never,
+          createdAt: 2,
+          title: "b.pdf",
+        },
+      ]).map((entry) => entry.localId),
     ).toMatchInlineSnapshot(`
 			[
 			  "a",
@@ -59,6 +64,54 @@ describe("uploading sources", () => {
     ).toMatchInlineSnapshot(`
 			[
 			  "b",
+			]
+		`)
+  })
+
+  test("hides placeholder when Convex publishes before sourceId is stamped", () => {
+    const uploading = [
+      {
+        localId: "local-a",
+        filename: "a.pdf",
+        title: "a.pdf",
+        addedAt: 1003,
+      },
+    ]
+    const sources = [
+      {
+        _id: "sources_a" as never,
+        createdAt: 1003,
+        title: "a.pdf",
+      },
+    ]
+
+    expect(
+      visibleUploadingSources(uploading, sources).map((entry) => entry.localId),
+    ).toMatchInlineSnapshot(`[]`)
+    expect(
+      rowKeysForUploadingSources(uploading, sources),
+    ).toMatchInlineSnapshot(`
+			{
+			  "sources_a": "local-a",
+			}
+		`)
+    expect(
+      mergeSourcesListEntries(
+        visibleUploadingSources(uploading, sources),
+        sources as never,
+        rowKeysForUploadingSources(uploading, sources),
+      ).map((entry) => ({
+        type: entry.type,
+        key: entry.key,
+        title: entry.source.title,
+      })),
+    ).toMatchInlineSnapshot(`
+			[
+			  {
+			    "key": "local-a",
+			    "title": "a.pdf",
+			    "type": "source",
+			  },
 			]
 		`)
   })

@@ -12,6 +12,12 @@ export type SourcesListEntry =
   | { type: "uploading"; key: string; source: UploadingSource }
   | { type: "source"; key: string; source: Doc<"sources"> }
 
+export type SourceListMatch = {
+  _id: Id<"sources">
+  createdAt: number
+  title: string
+}
+
 /**
  * Newest first. Within a simultaneous batch, earlier accepted files get higher
  * timestamps so selection order stays stable as uploads complete.
@@ -24,15 +30,68 @@ export function addedAtForBatch(
   return now + (batchSize - index)
 }
 
+function createdTitleKey(createdAt: number, title: string) {
+  return `${createdAt}\0${title}`
+}
+
+/**
+ * Map live source ids back to upload placeholder localIds, including the race
+ * where Convex publishes the row before the client stamps `sourceId`.
+ */
+export function rowKeysForUploadingSources(
+  uploading: UploadingSource[],
+  sources: Iterable<SourceListMatch>,
+) {
+  const byId = new Map<string, string>()
+  const byCreatedTitle = new Map<string, string>()
+
+  for (const entry of uploading) {
+    if (entry.sourceId) {
+      byId.set(entry.sourceId, entry.localId)
+      continue
+    }
+
+    byCreatedTitle.set(
+      createdTitleKey(entry.addedAt, entry.title),
+      entry.localId,
+    )
+  }
+
+  const rowKeys: Record<string, string> = {}
+
+  for (const source of sources) {
+    const localId =
+      byId.get(source._id) ??
+      byCreatedTitle.get(createdTitleKey(source.createdAt, source.title))
+
+    if (localId) {
+      rowKeys[source._id] = localId
+    }
+  }
+
+  return rowKeys
+}
+
 export function visibleUploadingSources(
   uploading: UploadingSource[],
-  sourceIds: Iterable<Id<"sources">>,
+  sources: Iterable<SourceListMatch>,
 ) {
-  const ids = new Set(sourceIds)
+  const ids = new Set<string>()
+  const createdTitles = new Set<string>()
 
-  return uploading.filter(
-    (entry) => !entry.sourceId || !ids.has(entry.sourceId),
-  )
+  for (const source of sources) {
+    ids.add(source._id)
+    createdTitles.add(createdTitleKey(source.createdAt, source.title))
+  }
+
+  return uploading.filter((entry) => {
+    if (entry.sourceId) {
+      return !ids.has(entry.sourceId)
+    }
+
+    // Convex may publish before we stamp sourceId on the placeholder.
+    return !createdTitles.has(createdTitleKey(entry.addedAt, entry.title))
+  })
 }
 
 export function markUploadingSourceCreated(
