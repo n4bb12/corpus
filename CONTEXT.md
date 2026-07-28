@@ -16,5 +16,5 @@ Domain vocabulary for Corpus. Prefer these names in code, plans, and architectur
 - **Quote grounding** — locate a model quote in chunk or Source markdown → excerpt, range, locator.
 - **Answer turn** — given evidence + history + a generation port, produce answer content and Citation catalog.
 - **Evidence pack** — classify, retrieve/rerank or digest-pack, and format prompt-ready evidence for an Answer turn. Consumes digests; does not ensure them.
-- **Title refresh** — schedule and propose automatic Notebook titles from ready Source digests (or markdown fallback).
+- **Title refresh** — schedule and propose automatic Notebook titles from ready Source digests (or markdown fallback), behind a generation port.
 - **Add Sources** — client module for pending rows, upload, ingest POST, and LIMITS when adding Sources.
