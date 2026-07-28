@@ -110,11 +110,11 @@ export const SourceListItem = memo(function SourceListItem({
             : undefined,
       )}
     >
-      {source ? (
+      {source && !failed ? (
         <button
           type="button"
           className="absolute inset-0 z-0 rounded-2xl"
-          aria-label={failed ? `Open ${label}, failed` : `Open ${label}`}
+          aria-label={`Open ${label}`}
           onClick={() => onPreview(source._id)}
         />
       ) : null}

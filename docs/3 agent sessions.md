@@ -9106,3 +9106,22 @@ Created 4 commits on `main`:
 
 Working tree is clean; branch is 4 ahead of `origin/main`.
 
+# Clickable source failure
+_Exported on 7/28/2026 at 03:09:45 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+A failed source should not be clickable (as in open source reading mode).
+
+---
+
+**Cursor**
+
+I'll find where source clicks open reading mode and gate that for failed sources.
+
+The overlay button always calls `onPreview`; I'll disable it for failed sources.
+
+Failed sources no longer open reading mode. The full-row preview button in `SourceListItem` is only rendered when the source isn’t failed; rename/retry/delete via the menu still work.
+
