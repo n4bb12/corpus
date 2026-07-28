@@ -11,7 +11,11 @@ import {
   normalizeNumberedCitedMarkdown,
   parseCitationMarkers,
 } from "src/lib/citations"
+import type { EvidenceItem, PromptReadyEvidence } from "src/lib/evidencePack"
+import type { DigestSection } from "src/lib/sourceDigest"
 import { z } from "zod"
+
+export type { DigestSection, EvidenceItem }
 
 export const answerSchema = z.object({
   insufficient: z.boolean(),
@@ -30,40 +34,7 @@ export const answerSchema = z.object({
 
 export type AnswerObject = z.infer<typeof answerSchema>
 
-export type EvidenceItem = {
-  chunkId: string
-  sourceId: string
-  text: string
-  startOffset: number
-  endOffset: number
-  ordinal: number
-}
-
-export type DigestSection = {
-  sourceId: string
-  title: string
-  digestText: string
-  citations: Array<{
-    chunkId: string
-    quote: string
-    locator?: {
-      startOffset: number
-      endOffset: number
-      ordinal: number
-    }
-  }>
-}
-
-export type EvidencePack = {
-  evidence: EvidenceItem[]
-  insufficient: boolean
-  mode: "factual" | "corpus"
-  evidenceKind?: "digest" | "coverage" | "chunks"
-  digestSections?: DigestSection[]
-  evidenceBlock: string
-  systemAddendum: string
-  useDigestEvidence: boolean
-}
+export type EvidencePack = PromptReadyEvidence
 
 export type SourceRecord = {
   title: string
