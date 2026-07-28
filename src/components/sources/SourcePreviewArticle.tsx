@@ -102,13 +102,17 @@ export function SourcePreviewArticle({
             key={item.key}
             data-index={item.index}
             ref={virtualizer.measureElement}
-            className={cn(
-              "absolute top-0 left-0 w-full pb-4 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-              highlighted && "citation-highlight",
-            )}
+            className="absolute top-0 left-0 w-full pb-4"
             style={{ transform: `translateY(${item.start}px)` }}
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+          >
+            <div
+              className={cn(
+                "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+                highlighted && "citation-highlight",
+              )}
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          </div>
         )
       })}
     </article>

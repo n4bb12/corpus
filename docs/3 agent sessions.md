@@ -9947,3 +9947,26 @@ Source preview now **virtualizes** markdown blocks instead of parsing and mounti
 
 Large sources should stay smooth to open and scroll; only the viewport pays the markdown/DOM cost.
 
+# Citation highlight display issue
+_Exported on 7/28/2026 at 22:22:44 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+The pb-4 causes citation highlights to look weird.
+
+---
+
+**Cursor**
+
+I'll inspect the citation highlight styling and where `pb-4` is applied.
+
+The `pb-4` is on the same element as the highlight, so the highlight background includes that gap. Checking the highlight styles next.
+
+The highlight sits on the same node as `pb-4`, so the `::before` background includes that bottom spacing. Splitting spacing onto an outer wrapper and applying the highlight only to the content.
+
+Fixed. `pb-4` was on the same element as `citation-highlight`, so the highlight `::before` stretched over the inter-block padding and left a heavy empty band under the text.
+
+Spacing stays on the outer measured wrapper; the highlight class is only on the inner content div now.
+
