@@ -9528,3 +9528,28 @@ Removing the textarea disable and gating Enter/submit the same way as the Send b
 
 The composer textarea stays editable with no ready sources and while a reply is in flight. Send (and Enter) still require ready sources, a non-empty prompt, and no active send/stream.
 
+# Auth token calls
+_Exported on 7/28/2026 at 04:07:43 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Should we have 2 /api/auth/convex/token calls + getSession?
+
+---
+
+**Cursor**
+
+I'll check how session and Convex token fetching are wired so we can tell whether the double token + get-session pattern is expected.
+
+Yes — that trio is expected with your current Better Auth + Convex wiring, not a double-mount bug.
+
+1. **`get-session`** — Better Auth session via `authClient.useSession()` (`ConvexBetterAuthProvider` and `ClientAuthBoundary`). One call is correct.
+
+2. **First `/api/auth/convex/token`** — Convex’s auth manager calls `fetchAccessToken({ forceRefreshToken: false })` so it can authenticate the WebSocket.
+
+3. **Second `/api/auth/convex/token`** — After sync confirms that token, Convex intentionally refetches with `forceRefreshToken: true`. `@convex-dev/better-auth` only caches the non-forced path, so the forced refresh always hits the network.
+
+So: one session probe + Convex’s authenticate → confirm → force-refresh handshake. Normal cold load; not something to remove unless you chase an optimization like SSR `initialToken` (you’d still usually get the forced refresh).
+
