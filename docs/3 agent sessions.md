@@ -10828,3 +10828,35 @@ Done. Routing is now:
 
 Auth callbacks, sign-out, brand lockup, search/pagination URLs, and the 404 “Back to notebooks” link all point at the new paths.
 
+# Atomic commits discussion
+_Exported on 7/29/2026 at 00:19:16 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll inspect the working tree and recent commit style, then split the changes into atomic commits.
+
+Next I'll read the full diffs so I can group them by intent.
+
+I have a clear split. Committing in dependency order, starting with the PDF worker tracing fix.
+
+Next up: routing, then optimistic sources, then docs.
+
+Split into 6 commits; working tree is clean:
+
+1. `b137231` — fix(next): include pdfjs worker assets in ingest file tracing
+2. `d499595` — refactor(fonts): load Outfit and Fraunces via next/font
+3. `161e173` — chore(deps): remove unused direct pdfjs-dist dependency
+4. `fccd6b2` — feat(routing): serve sign-in at / and library at /library
+5. `0318034` — feat(sources): show optimistic pending rows for URL and text adds
+6. `c64286a` — docs: record agent sessions for routing, fonts, pending sources, and pdfjs
+
+`main` is 6 commits ahead of `origin/main`.
+
