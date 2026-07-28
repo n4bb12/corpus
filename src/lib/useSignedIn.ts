@@ -2,7 +2,7 @@ import { useConvexAuth } from "convex/react"
 import {
   clearCachedConvexAuth,
   clearConvexQueryCache,
-} from "src/integrations/convex/provider"
+} from "src/components/context/ConvexProvider"
 import { authClient } from "src/lib/authClient"
 import {
   clearAuthUserSnapshot,

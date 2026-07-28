@@ -120,11 +120,11 @@ function ConvexQueryCacheRegistryBridge() {
   return null
 }
 
-export type AppConvexProviderProps = {
+export type ConvexProviderProps = {
   children: ReactNode
 }
 
-export function AppConvexProvider({ children }: AppConvexProviderProps) {
+export function ConvexProvider({ children }: ConvexProviderProps) {
   // Client-only read: SSR has no localStorage. Hydration may keep Better Auth's
   // internal `cachedToken` null; `bootConvexAuthFromCache` still unpauses the
   // socket. `initialToken` helps client-only mounts and soft navigations.

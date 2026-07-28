@@ -3,7 +3,7 @@ import { useEffect } from "react"
 import {
   cacheConvexAuthToken,
   clearCachedConvexAuth,
-} from "src/integrations/convex/provider"
+} from "src/components/context/ConvexProvider"
 import { authClient } from "src/lib/authClient"
 import {
   clearAuthUserSnapshot,

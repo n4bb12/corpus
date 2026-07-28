@@ -10527,3 +10527,22 @@ Migrated to **Next.js App Router**. Build reports all UI routes as static (`○`
 
 Rename Vercel env keys to `NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CONVEX_SITE_URL`, and `NEXT_PUBLIC_SITE_URL` when you deploy (local `VITE_*` still works via the config mapping).
 
+# ConvexProvider refactor
+_Exported on 7/29/2026 at 00:00:25 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Rename AppConvexProvider to ConvexProvider and move it to a context folder in components.
+
+---
+
+**Cursor**
+
+I'll rename `AppConvexProvider` to `ConvexProvider`, move it under a components context folder, and update all imports.
+
+Creating the new file and updating imports.
+
+Done. `AppConvexProvider` is now `ConvexProvider` at `src/components/context/ConvexProvider.tsx`, with imports updated in `layout.tsx`, `useSignedIn.ts`, and `useSyncAuthUserSnapshot.ts`. The empty `src/integrations` tree was removed.
+

@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import { ThemeScript } from "src/components/layout/ThemeScript"
 import { TooltipProvider } from "src/components/ui/shadcn/tooltip"
-import { AppConvexProvider } from "src/integrations/convex/provider"
+import { ConvexProvider } from "src/components/context/ConvexProvider"
 import { requirePublicEnv } from "src/lib/env"
 import "src/styles.css"
 
@@ -30,9 +30,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeScript />
       </head>
       <body className="h-dvh overflow-hidden bg-background text-foreground">
-        <AppConvexProvider>
+        <ConvexProvider>
           <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
-        </AppConvexProvider>
+        </ConvexProvider>
       </body>
     </html>
   )
