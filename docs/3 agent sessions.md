@@ -9583,3 +9583,146 @@ Sideways pagination still clips after enter because only the fade-up was gated. 
 `Reveal` was clipping flush to the content box during the fade-up, and after that the scrollport’s `overflow-x: hidden` hard-cut pine shadows on page slides.
 
 Fix in `Reveal`: a 96px padding/negative-margin gutter so the clip edge sits outside the shadow + travel distance. Full `overflow-clip` only while entering; afterward `overflow-x-clip` at that same gutter for sideways pagination. `pointer-events` are adjusted so the gutter doesn’t block the header.
+
+# Library page loading delay
+_Exported on 7/28/2026 at 04:38:00 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+When loading the library page, what is blocking so long between header is shown and notebooks are shown? It sometimes takes like a full second.
+
+---
+
+**Cursor**
+
+I'll trace the library page load path to find what's delaying notebooks after the header appears.
+
+The grid waits on `notebooks.list` resolving; next I'll check auth gating, the list query cost, and any Reveal delay.
+
+The header paints immediately; the notebook grid is held back until `api.notebooks.list` has resolved once. That wait is what you’re seeing.
+
+**What’s blocking**
+
+1. **Auth before any list fetch** — `useSignedInQueryArgs` skips the query until both Convex auth and the Better Auth session are ready. `ClientAuthBoundary` intentionally still renders the page shell during that window, so you get header + “Your notebooks” with no grid.
+
+```60:68:src/lib/useSignedIn.ts
+/** Pass query args only when Convex auth is ready; otherwise skip. */
+export function useSignedInQueryArgs<T extends Record<string, unknown>>(
+  args: T | "skip",
+) {
+  const isSignedIn = useIsSignedIn()
+
+  if (!isSignedIn || args === "skip") {
+    return "skip" as const
+  }
+```
+
+```57:126:src/pages/LibraryPage.tsx
+            {!library.isLoading ? (
+              <Reveal>
+                ...
+                  <LibraryNotebookGrid
+```
+
+`isLoading` stays true until that first non-`undefined` list result (`hasResolvedOnce` in `useLibraryPageData`).
+
+2. **Then the Convex round-trip** — once auth is ready, `notebooks.list` runs. It loads **all** of the user’s notebooks, then for each notebook on the page loads **all** of its sources just to compute `sourceCount`. That’s extra work after auth, but the big empty gap is usually auth settle + waiting to start the subscription.
+
+3. **Reveal is not the ~1s** — when data finally arrives, `Reveal` fades in over ~320ms. The long blank stretch is the grid not mounting at all while `isLoading` is true.
+
+So the ~1s is mostly **serial auth readiness → then first `notebooks.list`**, with the UI choosing to show chrome and hide the grid until that completes.
+
+---
+
+**User**
+
+Why is it faster on a second reload? Coldstart?
+
+---
+
+**Cursor**
+
+I'll check what gets cached between the first and second load — auth, Convex, and the query cache.
+
+Mostly yes — but not “app cold start” in the JS sense. The header already means the client has booted.
+
+**What does *not* help on reload**
+
+The in-memory Convex query cache is gone on a full reload, and this app sets `maxIdleEntries={0}` anyway. So the second load is not serving a cached `notebooks.list` from React.
+
+**What does make the second reload faster**
+
+The gap is still **auth settle → then `notebooks.list`**. On a quick second reload that path is warmer:
+
+1. **Convex / network warm** — first hit after idle pays for WebSocket connect, TLS, and often a colder query isolate. Seconds later, that stack is already warm, so the same list query comes back faster.
+2. **Auth is still required, but usually cheaper** — session cookie is already there; `get-session` + Convex token + `expectAuth` handshake still run, but they’re typically quicker once DNS/TLS/connections are hot.
+3. **Static assets** — JS/CSS come from browser cache, so you reach the auth+query phase sooner. That shortens overall load more than the header→grid gap itself.
+
+So: second reload feels faster mainly because **auth + Convex are warm**, not because notebook data was kept client-side. Leave the tab idle long enough and the first load after that can feel slow again.
+
+---
+
+**User**
+
+Any way we can warm the auth path on the sign-in page?
+
+---
+
+**Cursor**
+
+I'll check what the sign-in page already connects to and whether we can preload the auth/Convex handshake there.
+
+Not in a way that fixes the library gap after sign-in.
+
+Both Google and magic link leave `/sign-in` and land on `/` as a **new document** (`callbackURL: "/"`). Anything you warm in that React tree (session fetch, Convex token, WS) is thrown away before the library mounts.
+
+While signed out you also can’t warm the real bottleneck: there is no session/JWT yet, and with `expectAuth: true` the Convex socket stays paused until a token exists. `useSession()` is already running via `AppConvexProvider` on every route, including sign-in.
+
+What actually helps:
+
+1. **Root `preconnect` / `dns-prefetch`** to the Convex URL (and auth origin if it’s separate) — cheap, helps every cold `/` load, including post-login.
+2. **Hydrate auth on `/`** — server-read session / pass `initialToken` into `ConvexBetterAuthProvider` so library doesn’t wait as long for the client auth handshake. That’s the real lever for the header→grid pause.
+3. **Skeleton for the grid** — doesn’t warm auth, but removes the empty gap.
+
+So: warm on sign-in ≈ no; warm/bootstrap on the library document load ≈ yes.
+
+---
+
+**User**
+
+1. Unsure if token hydration is the way to go as it adds to first paint delay and makes the page dynamic.
+
+---
+
+**Cursor**
+
+That’s a fair call — and it matches how the app is already built.
+
+The shell is intentionally static-first: paint header immediately, skip queries until client auth is ready. Server token hydration fights that — it adds work before HTML (or forces a dynamic route) for a gain that mostly shortens the post-paint auth wait, not first paint itself.
+
+Given that preference, stronger fits are:
+
+1. **`preconnect` to Convex** — no dynamism, tiny win on cold connect.
+2. **Skeleton/placeholder grid while `isLoading`** — keeps the page static; fills the header→notebooks gap without waiting on auth.
+3. **Leave the auth gate as-is** — the empty gap is the cost of avoiding empty-then-redo and keeping `/` non-dynamic.
+
+Token hydration is the right tool if you later decide “time-to-notebooks” matters more than “static shell + fast first paint.” Until then, I’d skip it.
+
+---
+
+**User**
+
+1
+
+---
+
+**Cursor**
+
+I'll add a Convex `preconnect` in the root document head.
+
+Added a root `preconnect` to the Convex cloud origin in `__root.tsx`. Auth stays same-origin (`/api/auth`), so only Convex needed it.
+
+Expect a small cold-connect win, not a fix for the full auth→list wait.
+

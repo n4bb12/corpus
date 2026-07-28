@@ -11,6 +11,7 @@ import { ThemeScript } from "src/components/layout/ThemeScript"
 import { Button } from "src/components/ui/shadcn/button"
 import { TooltipProvider } from "src/components/ui/shadcn/tooltip"
 import { AppConvexProvider } from "src/integrations/convex/provider"
+import { requireViteEnv } from "src/lib/env"
 import styles from "src/styles.css?url"
 
 type RootHeadLink = {
@@ -18,9 +19,17 @@ type RootHeadLink = {
   rel: string
   type?: string
   sizes?: string
+  crossOrigin?: "anonymous" | "use-credentials"
 }
 
+const convexOrigin = new URL(requireViteEnv("VITE_CONVEX_URL")).origin
+
 const rootHeadLinks = [
+  {
+    href: convexOrigin,
+    rel: "preconnect",
+    crossOrigin: "anonymous",
+  },
   {
     href: "/favicon.svg",
     rel: "icon",
