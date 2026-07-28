@@ -9126,7 +9126,7 @@ The overlay button always calls `onPreview`; I'll disable it for failed sources.
 Failed sources no longer open reading mode. The full-row preview button in `SourceListItem` is only rendered when the source isn’t failed; rename/retry/delete via the menu still work.
 
 # Codebase architecture improvement
-_Exported on 7/28/2026 at 03:16:10 GMT+2 from Cursor (3.13.21)_
+_Exported on 7/28/2026 at 03:21:49 GMT+2 from Cursor (3.13.21)_
 
 ---
 
@@ -9370,4 +9370,73 @@ Done. All four landed; `bun types`, `bun fix`, and `bun run test` pass (104).
 3. **Evidence pack** — Pure strategy in `src/lib/evidencePack.ts` (`buildDigestEvidencePack`, `packEvidence`, `makePromptReady`); `prepareEvidence` classifies/loads then packs.
 
 4. **Answer turn** — `DigestSection` / `EvidenceItem` come from `sourceDigest` / `evidencePack`; `EvidencePack` is `PromptReadyEvidence`.
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll inspect the full change set and recent commit style, then split it into atomic commits.
+
+Grouping into four commits: Evidence pack (no chat-time ensure) → Answer turn type unify → Title refresh deepen → agent sessions docs. Splitting `CONTEXT.md` hunks across the first and third.
+
+Four commits:
+
+1. `0ed1793` — **refactor(evidence): deepen Evidence pack and drop chat-time digest ensure**
+2. `af9b3c5` — **refactor(chat): share EvidencePack types from evidence pack and digests**
+3. `3d0e2ac` — **refactor(titles): deepen Title refresh behind a generation port**
+4. `5847796` — **docs: update agent sessions**
+
+Working tree is clean.
+
+---
+
+**User**
+
+Adding websites fails with results.sort is not a function. (In 'results.sort((a, b) => b.family - a.family)', 'results.sort' is undefined) since recently.
+
+---
+
+**Cursor**
+
+I'll find that `results.sort` call and trace what recently changed around website ingestion.
+
+The error matches Node's custom `dns.lookup` when callers pass `{ all: true }`. Building a tight repro next.
+
+Confirmed: Bun calls the custom `lookup` with `{ all: true }`, so returning `(address, family)` makes `results.sort` blow up. Fixing that and adding a regression test.
+
+**Cause:** The SSRF-hardened pin used `lookup(null, address, family)`, but Bun always calls that callback with `{ all: true }`, which expects `[{ address, family }]`. That’s the exact `results.sort is not a function` crash.
+
+**Fix:** `createPinnedLookup` returns an address list when `all` is set. Unit tests cover both shapes; a live HTTPS pin to `example.com` returns 200.
+
+---
+
+**User**
+
+<timestamp>Tuesday, Jul 28, 2026, 3:20 AM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: aborted
+task_id: 570344
+title: Verify fixed lookup callback works
+tool_call_id: call-ab25829e-1a8e-4460-925c-e040c6c6e12b-76
+fc_0e885e6f-bb48-9934-8ad0-2d78686539f3_0
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/570344.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+---
+
+**Cursor**
+
+That earlier verify script hung and was aborted — it was superseded by the successful check (pinned lookup → `example.com` status 200). The fix itself is already in place.
 

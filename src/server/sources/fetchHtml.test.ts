@@ -1,5 +1,39 @@
 import { describe, expect, test } from "bun:test"
-import { extractReadableHtml } from "./fetchHtml"
+import { createPinnedLookup, extractReadableHtml } from "./fetchHtml"
+
+describe("createPinnedLookup", () => {
+  test("returns an address list when options.all is true", () => {
+    const lookup = createPinnedLookup("93.184.216.34", 4)
+    let received: unknown
+
+    lookup("example.com", { all: true }, (_err, result) => {
+      received = result
+    })
+
+    expect(received).toMatchInlineSnapshot(`
+      [
+        {
+          "address": "93.184.216.34",
+          "family": 4,
+        },
+      ]
+    `)
+  })
+
+  test("returns a single address when options.all is false", () => {
+    const lookup = createPinnedLookup("93.184.216.34", 4)
+    let address: unknown
+    let family: unknown
+
+    lookup("example.com", { all: false }, (_err, result, nextFamily) => {
+      address = result
+      family = nextFamily
+    })
+
+    expect(address).toBe("93.184.216.34")
+    expect(family).toBe(4)
+  })
+})
 
 describe("extractReadableHtml", () => {
   test("prefers main and keeps every product article inside it", async () => {

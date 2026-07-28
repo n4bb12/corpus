@@ -46,6 +46,48 @@ export async function assertSafeUrl(raw: string): Promise<SafeResolvedUrl> {
   }
 }
 
+/**
+ * Pin HTTP(S) to a pre-checked address. Bun/Node call lookup with `{ all: true }`,
+ * so the callback must return `[{ address, family }]` in that mode.
+ */
+export function createPinnedLookup(address: string, family: number) {
+  return function pinnedLookup(
+    _hostname: string,
+    options: unknown,
+    callback?: (
+      err: Error | null,
+      address: string | Array<{ address: string; family: number }>,
+      family?: number,
+    ) => void,
+  ) {
+    const cb =
+      typeof options === "function"
+        ? (options as (
+            err: Error | null,
+            address: string | Array<{ address: string; family: number }>,
+            family?: number,
+          ) => void)
+        : callback
+
+    if (!cb) {
+      return
+    }
+
+    const all =
+      typeof options === "object" &&
+      options !== null &&
+      "all" in options &&
+      Boolean(options.all)
+
+    if (all) {
+      cb(null, [{ address, family }])
+      return
+    }
+
+    cb(null, address, family)
+  }
+}
+
 function requestPinned(
   target: SafeResolvedUrl,
   signal: AbortSignal,
@@ -69,9 +111,7 @@ function requestPinned(
         headers,
         signal,
         servername: url.hostname,
-        lookup(_hostname, _options, callback) {
-          callback(null, address, family)
-        },
+        lookup: createPinnedLookup(address, family),
       },
       resolve,
     )
