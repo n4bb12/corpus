@@ -8900,3 +8900,26 @@ Titles are no longer steered toward a fixed 3–8 word band.
 
 Clear a notebook title (or re-add a source) to regenerate under the new guidance.
 
+# UI title update feedback
+_Exported on 7/28/2026 at 02:16:33 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+When the title updates due to new ready sources. The UI should be able to see that and show the shimmering feedback.
+
+---
+
+**Cursor**
+
+I'll look at how notebook title refresh works today and where the shimmer feedback is wired so we can surface updates when new sources become ready.
+
+The generating flag currently requires an empty title, so refreshes on existing titles never show shimmer. Checking recent session notes and related tests for the intended UX.
+
+The shimmer is gated on an empty title, so refreshes that keep the old title never surface. Removing that check so `pending` alone drives the feedback.
+
+Fixed. Shimmer was only shown when `titleGenerationState === "pending"` **and** the title was empty, so refreshes that keep the current title (new ready sources) never surfaced.
+
+It now follows `pending` alone, so when a source becomes ready and Convex marks the title pending, the sparkles + “Generating title…” feedback shows until the new title lands.
+

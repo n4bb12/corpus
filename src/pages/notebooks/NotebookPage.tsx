@@ -32,8 +32,7 @@ export function NotebookPage() {
               loading={!page.notebook}
               generating={
                 !!page.notebook &&
-                page.notebook.titleGenerationState === "pending" &&
-                !page.notebook.title.trim()
+                page.notebook.titleGenerationState === "pending"
               }
               onSave={async (title) => {
                 const notebook = page.notebook
