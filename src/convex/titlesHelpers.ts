@@ -3,6 +3,7 @@ import {
   canApplyGeneratedTitle,
   isStaleTitleRefresh,
   shouldSkipTitleRefresh,
+  sourceHasTitleEvidence,
 } from "src/lib/notebookTitlePolicy"
 import { mutation, query } from "./_generated/server"
 import { requireNotebookOwner } from "./lib/ownership"
@@ -33,23 +34,7 @@ export const listReadySourcesForTitle = query({
       )
       .collect()
 
-    return sources.filter((source) => {
-      if (source.deletedAt || source.processingState === "failed") {
-        return false
-      }
-
-      const hasDigest =
-        (source.digestStatus === "pending" ||
-          source.digestStatus === "ready") &&
-        typeof source.digestText === "string" &&
-        !!source.digestText.trim()
-
-      if (hasDigest) {
-        return true
-      }
-
-      return source.processingState === "ready" && !!source.normalizedStorageId
-    })
+    return sources.filter(sourceHasTitleEvidence)
   },
 })
 

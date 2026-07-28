@@ -8850,3 +8850,25 @@ Fixed and deployed to the development backend.
 
 Clear the existing title once to regenerate it.
 
+# AI title regeneration process
+_Exported on 7/28/2026 at 02:10:58 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Regenerating a title with AI should start immediately after leaving the cleared input field, no intermediate restored previous title before the generation feedback kicks in.
+
+---
+
+**Cursor**
+
+I'll find how title regeneration and the input blur/clear flow interact so we can start generation immediately without flashing the old title.
+
+The flash comes from exiting edit mode before `generating` flips on. I'll trace the clear-title path and how `titleGenerationState` is set.
+
+Clearing goes through a fetch with no optimistic update, so exiting edit mode flashes the old title. I'll keep a local awaiting-generate flag so the generating UI shows immediately on blur.
+
+Clearing the title exited edit mode before the clear API/`generating` prop caught up, so the old title flashed briefly.
+
+`InlineNotebookTitle` now sets a local `awaitingGenerate` flag as soon as you commit an empty title, so “Generating title…” shows immediately and stays until the server pending state arrives.

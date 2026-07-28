@@ -22,9 +22,11 @@ export function InlineNotebookTitle({
 }: InlineNotebookTitleProps) {
   const [draft, setDraft] = useState(title)
   const [editing, setEditing] = useState(false)
+  const [awaitingGenerate, setAwaitingGenerate] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const display = displayNotebookTitle(title)
-  const busy = loading || generating
+  const showGenerating = generating || awaitingGenerate
+  const busy = loading || showGenerating
 
   useEffect(() => {
     if (!editing) {
@@ -39,17 +41,48 @@ export function InlineNotebookTitle({
     }
   }, [editing])
 
-  async function commit() {
-    setEditing(false)
-    const next = draft.trim()
-    setDraft(next)
-
-    if (next !== title) {
-      await onSave(next)
+  useEffect(() => {
+    if (!awaitingGenerate) {
+      return
     }
+
+    // Server caught up: pending generate, or title already cleared.
+    if (generating || !title.trim()) {
+      setAwaitingGenerate(false)
+    }
+  }, [awaitingGenerate, generating, title])
+
+  async function commit() {
+    const next = draft.trim()
+
+    if (next === title) {
+      setEditing(false)
+      setDraft(next)
+      return
+    }
+
+    // Clear → AI title: show generate feedback before the network/query catches up.
+    if (!next) {
+      setAwaitingGenerate(true)
+      setEditing(false)
+      setDraft("")
+
+      try {
+        await onSave(next)
+      } catch {
+        setAwaitingGenerate(false)
+        setDraft(title)
+      }
+
+      return
+    }
+
+    setEditing(false)
+    setDraft(next)
+    await onSave(next)
   }
 
-  if (generating) {
+  if (showGenerating) {
     return (
       <div
         className={cn("flex h-9 min-w-0 items-center gap-2 px-2", className)}
