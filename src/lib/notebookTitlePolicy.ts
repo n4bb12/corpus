@@ -35,3 +35,27 @@ export function isStaleTitleRefresh(
 ) {
   return (currentGeneration ?? 0) !== scheduledGeneration
 }
+
+/** Source rows that can contribute digest or markdown evidence to a title. */
+export function sourceHasTitleEvidence(source: {
+  deletedAt?: number
+  processingState: string
+  digestStatus?: string
+  digestText?: string
+  normalizedStorageId?: string
+}) {
+  if (source.deletedAt || source.processingState === "failed") {
+    return false
+  }
+
+  const hasDigest =
+    (source.digestStatus === "pending" || source.digestStatus === "ready") &&
+    typeof source.digestText === "string" &&
+    !!source.digestText.trim()
+
+  if (hasDigest) {
+    return true
+  }
+
+  return source.processingState === "ready" && !!source.normalizedStorageId
+}

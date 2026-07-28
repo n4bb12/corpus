@@ -8795,3 +8795,24 @@ Implemented.
 
 Verified with type checks, formatting, linting, and all 86 tests.
 
+# Notebook regeneration issue
+_Exported on 7/28/2026 at 02:05:17 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Regenerating a notebook with zero sources can short-circuit.
+
+---
+
+**Cursor**
+
+I'll look at how notebook regeneration works and where a zero-sources short-circuit should land.
+
+Zero-source title refresh still goes pending → debounce → clear. I'll short-circuit in `scheduleNotebookTitleRefresh` so we clear to idle immediately and skip kicking the orchestrator.
+
+Done. `scheduleNotebookTitleRefresh` now short-circuits when there are no title-eligible sources: it clears to placeholder/`idle`, bumps the generation (to kill in-flight refreshes), and returns `null` so clear-title / delete don’t kick the orchestrator.
+
+Shared the eligibility check as `sourceHasTitleEvidence` with `listReadySourcesForTitle`. All 92 tests pass.
+

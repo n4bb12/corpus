@@ -4,6 +4,7 @@ import {
   isStaleTitleRefresh,
   patchForClearedNotebookTitle,
   shouldSkipTitleRefresh,
+  sourceHasTitleEvidence,
 } from "./notebookTitlePolicy"
 
 describe("notebook title policy", () => {
@@ -33,5 +34,44 @@ describe("notebook title policy", () => {
     expect(isStaleTitleRefresh(3, 2)).toBe(true)
     expect(isStaleTitleRefresh(3, 3)).toBe(false)
     expect(isStaleTitleRefresh(undefined, 0)).toBe(false)
+  })
+
+  test("title evidence requires digest draft or ready markdown", () => {
+    expect(
+      sourceHasTitleEvidence({
+        processingState: "embedding",
+        digestStatus: "pending",
+        digestText: "Draft digest.",
+      }),
+    ).toBe(true)
+
+    expect(
+      sourceHasTitleEvidence({
+        processingState: "ready",
+        normalizedStorageId: "storage:1",
+      }),
+    ).toBe(true)
+
+    expect(
+      sourceHasTitleEvidence({
+        processingState: "embedding",
+      }),
+    ).toBe(false)
+
+    expect(
+      sourceHasTitleEvidence({
+        deletedAt: 1,
+        processingState: "ready",
+        normalizedStorageId: "storage:1",
+      }),
+    ).toBe(false)
+
+    expect(
+      sourceHasTitleEvidence({
+        processingState: "failed",
+        digestStatus: "ready",
+        digestText: "Ignored.",
+      }),
+    ).toBe(false)
   })
 })
