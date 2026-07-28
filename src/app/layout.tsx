@@ -1,10 +1,21 @@
 import type { Metadata } from "next"
+import { Fraunces, Outfit } from "next/font/google"
 import type { ReactNode } from "react"
 import { ConvexProvider } from "src/components/context/ConvexProvider"
 import { ThemeScript } from "src/components/layout/ThemeScript"
 import { TooltipProvider } from "src/components/ui/shadcn/tooltip"
 import { requirePublicEnv } from "src/lib/env"
 import "src/styles.css"
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+})
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+})
 
 const convexOrigin = new URL(requirePublicEnv("CONVEX_URL")).origin
 
@@ -24,7 +35,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${outfit.variable} ${fraunces.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <link rel="preconnect" href={convexOrigin} crossOrigin="anonymous" />
         <ThemeScript />
