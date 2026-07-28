@@ -3,6 +3,7 @@ import { useState } from "react"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { addSources } from "src/lib/addSources"
+import { formatUserError } from "src/lib/userError"
 
 export function useSourceUpload({
   notebookId,
@@ -27,9 +28,7 @@ export function useSourceUpload({
       })
       setUploadNotice(notice)
     } catch (error) {
-      setUploadNotice(
-        error instanceof Error ? error.message : "Couldn't upload that file.",
-      )
+      setUploadNotice(formatUserError(error, "Couldn't upload that file."))
     }
   }
 

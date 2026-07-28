@@ -1,6 +1,7 @@
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { fetchAuthMutation, getToken } from "src/lib/authServer"
+import { formatUserError } from "src/lib/userError"
 import { scheduleBackground } from "src/server/scheduleBackground"
 import { refreshNotebookTitle } from "src/server/titles/refreshNotebookTitle"
 import { z } from "zod"
@@ -51,10 +52,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return Response.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Couldn't clear the notebook title.",
+        error: formatUserError(error, "Couldn't clear the notebook title."),
       },
       { status: 400 },
     )

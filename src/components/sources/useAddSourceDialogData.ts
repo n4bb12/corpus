@@ -4,6 +4,7 @@ import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
 import { addSources } from "src/lib/addSources"
 import { quotaResetMessage } from "src/lib/quotas"
+import { formatUserError } from "src/lib/userError"
 
 export function useAddSourceDialogData({
   open,
@@ -76,7 +77,7 @@ export function useAddSourceDialogData({
     } catch (err) {
       setUrl(submittedUrl)
       setMode("main")
-      setError(err instanceof Error ? err.message : "Couldn't add this URL.")
+      setError(formatUserError(err, "Couldn't add this URL."))
       onOpenChange(true)
     } finally {
       setPending(false)
@@ -104,7 +105,7 @@ export function useAddSourceDialogData({
     } catch (err) {
       setText(submittedText)
       setMode("text")
-      setError(err instanceof Error ? err.message : "Couldn't add this text.")
+      setError(formatUserError(err, "Couldn't add this text."))
       onOpenChange(true)
     } finally {
       setPending(false)

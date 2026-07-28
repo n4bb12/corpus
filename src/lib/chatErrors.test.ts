@@ -15,4 +15,16 @@ describe("chat errors", () => {
     )
     expect(formatChatError("boom")).toMatchInlineSnapshot(`"boom"`)
   })
+
+  test("strips Convex wrappers before mapping", () => {
+    expect(
+      formatChatError(
+        new Error(
+          "[CONVEX M(chat:startGeneration)] Server Error Uncaught Error: You've reached today's chat limit. Try again tomorrow. at handler (../src/convex/chat.ts:96:0) Called by client",
+        ),
+      ),
+    ).toMatchInlineSnapshot(
+      `"You've reached today's chat limit. Try again tomorrow."`,
+    )
+  })
 })

@@ -1,15 +1,7 @@
+import { formatUserError } from "./userError"
+
 export function formatChatError(error: unknown) {
-  const raw =
-    typeof error === "string"
-      ? error
-      : error instanceof Error
-        ? error.message
-        : error &&
-            typeof error === "object" &&
-            "message" in error &&
-            typeof error.message === "string"
-          ? error.message
-          : "Couldn't generate an answer."
+  const raw = formatUserError(error, "Couldn't generate an answer.")
 
   if (/insufficient_quota/i.test(raw)) {
     return "Chat is temporarily unavailable. Try again later."

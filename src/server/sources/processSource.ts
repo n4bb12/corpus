@@ -8,6 +8,7 @@ import { chunkMarkdown } from "src/lib/chunkMarkdown"
 import { requireEnv } from "src/lib/env"
 import { LIMITS, MODELS } from "src/lib/limits"
 import { titleFromUrl } from "src/lib/sourceTitle"
+import { formatUserError } from "src/lib/userError"
 import { createAuthedConvexClient } from "src/server/convexClient"
 import { scheduleBackground } from "src/server/scheduleBackground"
 import {
@@ -349,8 +350,7 @@ export async function processSourcePipeline(
 
     kickTitleRefresh(readyResult, token)
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Couldn't process this source."
+    const message = formatUserError(error, "Couldn't process this source.")
 
     const failedResult = await client.mutation(api.ingestion.markFailed, {
       sourceId,
