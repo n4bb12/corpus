@@ -1,5 +1,4 @@
 import { ArrowLeft } from "lucide-react"
-import { marked } from "marked"
 import { useEffect, useMemo, useRef } from "react"
 import { Button } from "src/components/ui/shadcn/button"
 import { ScrollArea } from "src/components/ui/shadcn/scroll-area"
@@ -7,6 +6,7 @@ import {
   type CitationOffsetRange,
   resolveCitationOffsets,
 } from "src/lib/citationHighlight"
+import { renderMarkdownHtml } from "src/lib/renderMarkdown"
 import { formatTitle } from "src/lib/sourceTitle"
 import { cn } from "src/lib/utils"
 
@@ -184,7 +184,7 @@ export function SourcePreview({
                   !!resolvedOffsets &&
                   start < resolvedOffsets.end &&
                   end > resolvedOffsets.start
-                const html = marked.parse(text, { async: false }) as string
+                const html = renderMarkdownHtml(text)
 
                 return (
                   <div

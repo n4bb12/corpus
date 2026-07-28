@@ -1,9 +1,9 @@
-import { marked } from "marked"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import { CitationPills } from "src/components/chat/CitationPills"
 import { CitationPillsPending } from "src/components/chat/CitationPillsPending"
 import type { AnswerCitationSlot } from "src/lib/answerCitation"
 import { splitCitedParagraphs, stripCitationMarkers } from "src/lib/citations"
+import { renderMarkdownHtml } from "src/lib/renderMarkdown"
 
 export type AssistantContentProps = {
   content: string
@@ -27,9 +27,7 @@ export function AssistantContent({
   const showPending = citationsPending && !insufficient
 
   if (!visibleCitations.length || !hasInlineMarkers) {
-    const html = marked.parse(stripCitationMarkers(displayContent), {
-      async: false,
-    }) as string
+    const html = renderMarkdownHtml(stripCitationMarkers(displayContent))
 
     return (
       <div className="space-y-3">
@@ -56,9 +54,9 @@ export function AssistantContent({
     <div className="space-y-3">
       {paragraphs.map((paragraph, index) => {
         const hasPills = !!paragraph.citationIndexes.length
-        const html = paragraph.text
-          ? (marked.parse(paragraph.text, { async: false }) as string)
-          : ""
+
+        const html = paragraph.text ? renderMarkdownHtml(paragraph.text) : ""
+
         const key = `${paragraph.text}:${paragraph.citationIndexes.join(",")}`
         const isTrailing = index === paragraphs.length - 1
 
