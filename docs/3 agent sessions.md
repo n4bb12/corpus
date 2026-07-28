@@ -10658,3 +10658,173 @@ All uncommitted work is in 6 commits:
 
 Working tree is clean.
 
+# Pdfjs-dist version inquiry
+_Exported on 7/29/2026 at 00:12:26 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Is there a reason we're on pdfjs-dist 5 not 6?
+
+---
+
+**Cursor**
+
+I'll check how `pdfjs-dist` is pinned in the repo and whether anything blocks upgrading to v6.
+
+Checking whether the top-level pin still serves anything, or if it's just leftover from the old direct extraction path.
+
+No intentional “stay off 6” decision for our code.
+
+`pdfjs-dist` is pinned exactly to **`5.4.296`** because that’s what **`pdf-parse@2.4.5`** hard-depends on, and `markitdown-ts` still pulls `pdf-parse` in. Matching that version keeps one shared v5 copy for that tree.
+
+Meanwhile:
+
+- Our PDF path uses **`pdfvision`**, which already nests **`pdfjs-dist@6.2.108`**
+- Nothing under `src/` imports `pdfjs-dist` anymore (only a DOMMatrix polyfill comment mentions it)
+
+So the top-level v5 pin is leftover alignment with `pdf-parse` / markitdown, not a blocker on v6. You’re already on 6 for the real extraction path; the direct dep is mostly redundant and could likely be dropped unless you still want it for bundling/`serverExternalPackages` reasons.
+
+---
+
+**User**
+
+No we can remove it then.
+
+---
+
+**Cursor**
+
+Removing the direct `pdfjs-dist` dependency and cleaning up any leftover references.
+
+Root `pdfjs-dist` is now the hoisted v6 from pdfvision — restoring those tracing includes so the worker still ships.
+
+Removed the direct `pdfjs-dist` dependency. It’s still present transitively: v6 via `pdfvision`, v5 nested under `pdf-parse`/`markitdown-ts`. Kept `serverExternalPackages` and the worker tracing includes for those install paths.
+
+# Pdf worker module error
+_Exported on 7/29/2026 at 00:12:34 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+On prod:
+
+Setting up fake worker failed: "Cannot find module '/var/task/node_modules/pdfvision/node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs' imported from /var/task/node_modules/pdfvision/node_modules/pd
+
+
+---
+
+**Cursor**
+
+I'll dig into how `pdfvision` / `pdfjs-dist` workers are wired in this repo and how that maps to the prod `/var/task` layout.
+
+Looking at how pdfvision configures the worker and whether Vercel packaging is dropping that file.
+
+The tracer likely misses `pdf.worker.mjs` because it's loaded via a runtime-relative dynamic import. Next I'll find the ingest route and build a red-capable repro.
+
+Reproduced the exact failure by hiding the nested worker. Ranked hypotheses next, then I'll probe file tracing and a workerSrc fix.
+
+NFT confirms: `pdf.mjs` is traced, `pdf.worker.mjs` is not. Hypotheses:
+
+1. **NFT miss (confirmed)** — dynamic `import("./pdf.worker.mjs")` isn't traced → missing on `/var/task`
+2. Nested pdfjs 6.x only — top-level 5.x doesn't help
+3. cmaps/wasm/fonts also untraced — may fail after worker is fixed
+4. Fix: `outputFileTracingIncludes` (+ optional absolute `workerSrc`)
+
+Implementing the tracing fix now.
+
+Updating `next.config.mjs` so NFT includes the nested worker and related pdfjs assets.
+
+**Cause:** On Node, pdfjs disables real workers and dynamically imports `./pdf.worker.mjs`. NFT traces `pdf.mjs` but not that runtime import, so Vercel deploys without the worker → the exact error you saw.
+
+**Fix:** Added `outputFileTracingIncludes` for `/api/sources/ingest` so the nested (and top-level) worker plus cmaps/fonts/wasm ship with the function.
+
+Verified after rebuild: ingest NFT now lists  
+`node_modules/pdfvision/node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs`.
+
+Redeploy and PDF ingest should get past this.
+
+# Source list delay issue
+_Exported on 7/29/2026 at 00:15:43 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Since f31dc3d duplicates are fixed but it feels like there is a noticable delay between adding a source and the source showing up in the list.
+
+---
+
+**Cursor**
+
+I'll investigate the source-add path and list update timing around `f31dc3d` to find what's introducing that delay.
+
+The duplicate fix may have created a visibility gap—I'll read that path and the list merge logic next.
+
+Checking how list rendering and URL/text creation interact with the pending state — that may explain the post-fix delay.
+
+URL/text adds close the dialog with no list placeholder—I'll confirm that gap and how file handoff differs.
+
+URL/text closes the dialog with no list placeholder (files already have one). I'll lock that handoff in a test, then add the same optimistic pending rows for URL/text.
+
+Ranked causes:
+1. URL/text close the dialog with no list placeholder — only files get optimistic rows
+2. File rows can sit on “Uploading” after ingest until Convex syncs
+3. Unlikely: f31dc3d hides a placeholder before the live row paints
+
+Implementing #1: same optimistic pending rows for URL/text.
+
+Improving the post-ingest label so stamped rows show “Starting” instead of lingering on “Uploading”.
+
+The delay wasn’t from the duplicate fix — **URL/text adds closed the dialog and waited on ingest + Convex with no list row**. Files already had optimistic placeholders; URL/text only bumped chat’s pending counter.
+
+**Fix:** URL and text now insert the same kind of pending list row immediately (status **Adding**), pass `createdAt` so the early-publish handoff stays duplicate-free, then swap to the live row under a stable key. After ingest returns but before Convex syncs, the label is **Starting** instead of stuck on Uploading.
+
+Try adding a URL or pasted text — the row should appear as soon as the dialog closes.
+
+# Fontsource package replacement
+_Exported on 7/29/2026 at 00:16:42 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Replace the fontsource packages with next/font.
+
+---
+
+**Cursor**
+
+I'll find how fontsource is used and switch those fonts over to `next/font`.
+
+Switching Fraunces and Outfit to `next/font/google`, wiring CSS variables, and removing the fontsource packages.
+
+Done. Outfit and Fraunces now load via `next/font/google` in the root layout, with CSS variables wired into `--font-sans` / `--font-heading`. The `@fontsource-variable/*` packages are removed.
+
+# Sign-in and library pages
+_Exported on 7/29/2026 at 00:17:26 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Make / the sign-in page and /library the library page.
+
+---
+
+**Cursor**
+
+I'll look at how routes and pages are wired today so we can move sign-in to `/` and the library to `/library`.
+
+Updating routes and all path references so `/` is sign-in and `/library` is the library.
+
+Done. Routing is now:
+
+- **`/`** — sign-in (signed-out gate; signed-in users go to `/library`)
+- **`/library`** — notebook library (signed-in gate)
+- **`/sign-in`** — redirects to `/` for old links
+
+Auth callbacks, sign-out, brand lockup, search/pagination URLs, and the 404 “Back to notebooks” link all point at the new paths.
+
