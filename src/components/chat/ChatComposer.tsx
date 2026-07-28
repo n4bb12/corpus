@@ -30,6 +30,7 @@ export function ChatComposer({
   onOpenSources,
 }: ChatComposerProps) {
   const remaining = LIMITS.maxPromptCharacters - prompt.length
+  const canSubmit = !!readySourceCount && !!prompt.trim() && !sending && !streaming
 
   return (
     <div className="pointer-events-none bg-background px-4 pb-4">
@@ -50,7 +51,10 @@ export function ChatComposer({
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault()
-                onSend()
+
+                if (canSubmit) {
+                  onSend()
+                }
               }
             }}
             placeholder={
@@ -58,7 +62,6 @@ export function ChatComposer({
                 ? "Ask your sources"
                 : "Select sources to start chatting"
             }
-            disabled={!readySourceCount || sending}
             className="min-h-12 max-h-60 resize-none border-0 bg-transparent p-1 text-base shadow-none focus-visible:ring-0 md:min-h-24 md:text-base"
           />
           <div className="mt-3 flex items-center justify-between gap-3">
@@ -89,7 +92,7 @@ export function ChatComposer({
               ) : (
                 <IslandCta
                   type="button"
-                  disabled={!readySourceCount || !prompt.trim() || sending}
+                  disabled={!canSubmit}
                   onClick={onSend}
                   showArrow={!sending}
                 >

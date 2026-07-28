@@ -9507,3 +9507,24 @@ Confirming clear now stops any in-flight answer first.
 
 `useChatPaneData` exposes a `clear()` that calls `stop()` (abort the fetch, cancel generation, reset stream UI) before the `clearChat` mutation. The dialog uses that path instead of calling the mutation alone.
 
+# Response streaming composition
+_Exported on 7/28/2026 at 03:51:43 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Allow composing while a response is streaming or while no sources are selected. Only block submission.
+
+---
+
+**Cursor**
+
+I'll find where the chat composer disables input during streaming or with no sources selected, and change it so only submit is blocked.
+
+Checking how `sending` relates to streaming and whether Enter-to-send needs the same submit guard.
+
+Removing the textarea disable and gating Enter/submit the same way as the Send button.
+
+The composer textarea stays editable with no ready sources and while a reply is in flight. Send (and Enter) still require ready sources, a non-empty prompt, and no active send/stream.
+
