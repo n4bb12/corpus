@@ -19,6 +19,21 @@ const nextConfig = {
     NEXT_PUBLIC_SITE_URL: publicEnv("SITE_URL"),
   },
   serverExternalPackages: ["jsdom", "markitdown-ts", "pdfjs-dist", "pdfvision"],
+  // pdfjs loads `./pdf.worker.mjs` via a runtime dynamic import that NFT
+  // cannot see. Without these includes, Vercel ships pdf.mjs but not the
+  // worker → "Setting up fake worker failed: Cannot find module …pdf.worker.mjs".
+  outputFileTracingIncludes: {
+    "/api/sources/ingest": [
+      "./node_modules/pdfvision/node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+      "./node_modules/pdfvision/node_modules/pdfjs-dist/cmaps/**/*",
+      "./node_modules/pdfvision/node_modules/pdfjs-dist/standard_fonts/**/*",
+      "./node_modules/pdfvision/node_modules/pdfjs-dist/wasm/**/*",
+      "./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+      "./node_modules/pdfjs-dist/cmaps/**/*",
+      "./node_modules/pdfjs-dist/standard_fonts/**/*",
+      "./node_modules/pdfjs-dist/wasm/**/*",
+    ],
+  },
   turbopack: {
     resolveAlias: {
       src: srcDir,
