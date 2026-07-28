@@ -9553,3 +9553,33 @@ Yes — that trio is expected with your current Better Auth + Convex wiring, not
 
 So: one session probe + Convex’s authenticate → confirm → force-refresh handshake. Normal cold load; not something to remove unless you chase an optimization like SSR `initialToken` (you’d still usually get the forced refresh).
 
+# Notebooks grid animation clipping
+_Exported on 7/28/2026 at 04:10:49 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+I noticed a shadow/wash clipping while the notebooks grid animates (up or sideways, both affected)
+
+---
+
+**Cursor**
+
+I'll look at the notebooks grid animation and how shadows/washes are clipped during motion.
+
+There's already a note about card shadow cropping in `Reveal`. I'll inspect the grid animation path and that overflow handling next.
+
+Reveal already clips during enter to avoid scrollbar growth — that likely crops shadows. Checking layout motion and ScrollArea overflow next.
+
+Checking recent notes and whether page-slide wrappers or layout motion reintroduced clipping.
+
+Root cause: `Reveal` hard-clips during the fade-up, and the ScrollArea viewport forces `overflow-x: hidden`, which chops pine shadows on the page slide. Fixing both with clip margins / gutters so motion can keep traveling without cropping shadows.
+
+Consolidating on a Reveal-level shadow gutter (both axes) so page slides inherit the same room, and guarding pointer events so the negative margin can’t block the header.
+
+Sideways pagination still clips after enter because only the fade-up was gated. Keeping a horizontal gutter clip after settle so page slides don’t hard-cut shadows.
+
+`Reveal` was clipping flush to the content box during the fade-up, and after that the scrollport’s `overflow-x: hidden` hard-cut pine shadows on page slides.
+
+Fix in `Reveal`: a 96px padding/negative-margin gutter so the clip edge sits outside the shadow + travel distance. Full `overflow-clip` only while entering; afterward `overflow-x-clip` at that same gutter for sideways pagination. `pointer-events` are adjusted so the gutter doesn’t block the header.
