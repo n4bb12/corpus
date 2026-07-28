@@ -73,7 +73,24 @@ async function extractMarkdown(
       throw new Error("Couldn't download the uploaded file. Try again.")
     }
 
+    const declaredLength = Number(response.headers.get("content-length"))
+
+    if (
+      Number.isFinite(declaredLength) &&
+      declaredLength > LIMITS.maxUploadBytes
+    ) {
+      throw new Error(
+        `Files can be at most ${Math.round(LIMITS.maxUploadBytes / (1024 * 1024))} MB.`,
+      )
+    }
+
     const buffer = Buffer.from(await response.arrayBuffer())
+
+    if (buffer.byteLength > LIMITS.maxUploadBytes) {
+      throw new Error(
+        `Files can be at most ${Math.round(LIMITS.maxUploadBytes / (1024 * 1024))} MB.`,
+      )
+    }
     const extension = source.filename?.includes(".")
       ? `.${source.filename.split(".").pop()?.toLowerCase()}`
       : ".txt"

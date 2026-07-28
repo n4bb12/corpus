@@ -1,5 +1,6 @@
 import { v } from "convex/values"
 import { shouldCreateSourceRevision } from "src/lib/chatHistory"
+import { describeRejectedFile, isAcceptedUpload } from "src/lib/fileTypes"
 import { LIMITS } from "src/lib/limits"
 import { quotaResetMessage, remainingQuota, utcDateKey } from "src/lib/quotas"
 import {
@@ -185,7 +186,8 @@ export const getOriginalContent = query({
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    await requireUser(ctx)
+    const user = await requireUser(ctx)
+    await assertIngestionQuota(ctx, user._id)
     return await ctx.storage.generateUploadUrl()
   },
 })
@@ -310,6 +312,35 @@ export const addFile = mutation({
   },
   handler: async (ctx, args) => {
     const { user, notebook } = await requireNotebookOwner(ctx, args.notebookId)
+    const filename = args.filename.trim()
+
+    if (!filename) {
+      throw new Error("Choose a file before adding a source.")
+    }
+
+    if (!isAcceptedUpload(filename, args.mimeType)) {
+      throw new Error(describeRejectedFile(filename))
+    }
+
+    const metadata = await ctx.db.system.get("_storage", args.storageId)
+
+    if (!metadata) {
+      throw new Error("The uploaded file is missing. Try uploading again.")
+    }
+
+    if (metadata.size > LIMITS.maxUploadBytes) {
+      throw new Error(
+        `Files can be at most ${Math.round(LIMITS.maxUploadBytes / (1024 * 1024))} MB.`,
+      )
+    }
+
+    if (
+      metadata.contentType &&
+      metadata.contentType !== "application/octet-stream" &&
+      !isAcceptedUpload(filename, metadata.contentType)
+    ) {
+      throw new Error(describeRejectedFile(filename))
+    }
 
     await assertIngestionQuota(ctx, user._id)
 
@@ -323,10 +354,13 @@ export const addFile = mutation({
 
     const now = Date.now()
     const createdAt =
-      typeof args.createdAt === "number" && Number.isFinite(args.createdAt)
+      typeof args.createdAt === "number" &&
+      Number.isFinite(args.createdAt) &&
+      args.createdAt <= now + 60_000
         ? args.createdAt
         : now
-    const title = titleFromFilename(args.filename)
+    const title = titleFromFilename(filename)
+    const mimeType = args.mimeType || metadata.contentType || undefined
 
     const sourceId = await ctx.db.insert("sources", {
       ownerId: user._id,
@@ -334,8 +368,8 @@ export const addFile = mutation({
       kind: "file",
       title,
       originalTitle: title,
-      filename: args.filename,
-      mimeType: args.mimeType,
+      filename,
+      mimeType,
       originalStorageId: args.storageId,
       selected: true,
       processingState: "pending",
