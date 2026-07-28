@@ -110,7 +110,9 @@ async function extractMarkdown(
   }
 
   if (!markdown) {
-    throw new Error("Couldn't find readable text in this source.")
+    throw new Error(
+      "Couldn't find readable text in this source. Pages that only show their content after loading in a browser aren't supported.",
+    )
   }
 
   if (markdown.length > LIMITS.maxExtractedCharacters) {

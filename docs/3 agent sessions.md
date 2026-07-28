@@ -9440,3 +9440,23 @@ output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpu
 
 That earlier verify script hung and was aborted — it was superseded by the successful check (pinned lookup → `example.com` status 200). The fix itself is already in place.
 
+# Readable text support policy
+_Exported on 7/28/2026 at 03:26:10 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Add to "Couldn't find readable text in this source." that we don't support sites that are not server-rendered (in non-technical terms).
+
+---
+
+**Cursor**
+
+I'll find that error string and update the copy to mention client-only / non–server-rendered sites in plain language.
+
+Updating the error message to plain-language wording about pages that only load content in the browser.
+
+Updated the message to:
+
+> Couldn't find readable text in this source. Pages that only show their content after loading in a browser aren't supported.
