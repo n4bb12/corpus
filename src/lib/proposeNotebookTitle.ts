@@ -8,8 +8,7 @@ import { formatTitle } from "src/lib/sourceTitle"
 export type ProposeNotebookTitleInput = {
   sourceLabels: string[]
   digests: string[]
-  includedSourceIds: string[]
-  modelOutput: { title: string; sourceIds: string[] } | null
+  modelOutput: { title: string } | null
 }
 
 export type ProposeNotebookTitleResult =
@@ -40,12 +39,8 @@ export function proposeNotebookTitle(
   input: ProposeNotebookTitleInput,
 ): ProposeNotebookTitleResult {
   const title = cleanGeneratedTitle(input.modelOutput?.title ?? "")
-  const coveredSourceIds = new Set(input.modelOutput?.sourceIds ?? [])
-  const coversEverySource = input.includedSourceIds.every((sourceId) =>
-    coveredSourceIds.has(sourceId),
-  )
 
-  if (coversEverySource && acceptNotebookTitle(title, input.sourceLabels)) {
+  if (acceptNotebookTitle(title, input.sourceLabels)) {
     return { kind: "title", title }
   }
 

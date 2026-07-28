@@ -79,6 +79,15 @@ export function isLowQualityNotebookTitle(value: string) {
     return true
   }
 
+  // A compacted source label may end on punctuation or a connective word.
+  if (
+    /(?:[&|/:—–-]|\b(?:about|and|for|from|or|with|für|mit|oder|und|von))$/i.test(
+      trimmed,
+    )
+  ) {
+    return true
+  }
+
   const letters = trimmed.replace(/[^a-zA-ZÀ-ÿ]+/g, "")
 
   if (letters.length < 8) {
@@ -101,17 +110,24 @@ export function isSingleSourceNotebookTitle(
     return false
   }
 
-  const needle = formatTitle(title).toLowerCase()
+  const needle = comparisonTitle(title)
 
   if (!needle) {
     return false
   }
 
   return sourceLabels.some((label) => {
-    const normalized = formatTitle(label).toLowerCase()
+    const normalized = comparisonTitle(label)
 
-    return !!normalized && normalized === needle
+    return !!normalized && normalized.includes(needle)
   })
+}
+
+function comparisonTitle(value: string) {
+  return formatTitle(value)
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
 }
 
 /**
@@ -124,7 +140,11 @@ export function multiSourceFallbackTitle(sourceLabels: string[]) {
   for (const label of sourceLabels) {
     const trimmed = formatTitle(label)
 
-    if (!isUsableNotebookTitle(trimmed)) {
+    if (
+      !isUsableNotebookTitle(trimmed) ||
+      trimmed.length > 40 ||
+      trimmed.split(/\s+/).length > 5
+    ) {
       continue
     }
 
@@ -143,7 +163,7 @@ export function multiSourceFallbackTitle(sourceLabels: string[]) {
     return `${unique[0]} & ${unique[1]}`
   }
 
-  return unique[0] ?? ""
+  return sourceLabels.length === 1 ? (unique[0] ?? "") : ""
 }
 
 export function fallbackNotebookTitle(args: {

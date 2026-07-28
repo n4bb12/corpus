@@ -14,21 +14,24 @@ import {
   cleanGeneratedTitle,
   proposeNotebookTitle,
 } from "src/lib/proposeNotebookTitle"
-import { titleFromSourceLabel } from "src/lib/sourceTitle"
+import {
+  formatTitle,
+  humanizeFilenameTitle,
+  looksLikeFilename,
+} from "src/lib/sourceTitle"
 import { createAuthedConvexClient } from "src/server/convexClient"
 import { z } from "zod"
 
 const titleSchema = z.object({
   title: z.string(),
-  sourceIds: z.array(z.string()),
 })
 
 function preferredSourceLabel(source: {
   title: string
   originalTitle: string
 }) {
-  const display = titleFromSourceLabel(source.title, "")
-  const original = titleFromSourceLabel(source.originalTitle, "")
+  const display = fullSourceLabel(source.title)
+  const original = fullSourceLabel(source.originalTitle)
 
   if (isUsableNotebookTitle(display)) {
     return display
@@ -39,6 +42,14 @@ function preferredSourceLabel(source: {
   }
 
   return ""
+}
+
+function fullSourceLabel(value: string) {
+  if (looksLikeFilename(value)) {
+    return humanizeFilenameTitle(value)
+  }
+
+  return formatTitle(value)
 }
 
 function sleep(ms: number) {
@@ -164,7 +175,7 @@ export async function refreshNotebookTitle(args: {
   const sourceCount = Math.max(excerpts.length, sources.length)
   const labelList = sourceLabels.join("; ") || "(none usable)"
 
-  let modelOutput: { title: string; sourceIds: string[] } | null = null
+  let modelOutput: { title: string } | null = null
 
   try {
     if (!corpus.trim()) {
@@ -190,9 +201,11 @@ export async function refreshNotebookTitle(args: {
       prompt: `Write a short notebook title for this collection of sources.
 Source names: ${labelList}
 Rules:
-- Keep it brief: a compact topical phrase, not a full sentence
+- Synthesize the central topic or relationship across all sources
+- Use the language used by the sources
+- Write 3–8 words, not a sentence or a list of source names
 - No URLs, hostnames, file paths, filenames, or document codes
-- Return a title and the source IDs you considered${multiSourceRules}
+- Ignore branding slogans and generic marketing copy${multiSourceRules}
 
 ${corpus}`,
       output: Output.object({ schema: titleSchema }),
@@ -200,7 +213,6 @@ ${corpus}`,
 
     modelOutput = {
       title: cleanGeneratedTitle(result.output?.title ?? ""),
-      sourceIds: result.output?.sourceIds ?? [],
     }
   } catch (error) {
     console.error(
@@ -212,7 +224,6 @@ ${corpus}`,
   const proposal = proposeNotebookTitle({
     sourceLabels,
     digests,
-    includedSourceIds: includedSourceIds.map(String),
     modelOutput,
   })
 

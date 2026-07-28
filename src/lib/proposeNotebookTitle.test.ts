@@ -2,15 +2,13 @@ import { describe, expect, test } from "bun:test"
 import { proposeNotebookTitle } from "src/lib/proposeNotebookTitle"
 
 describe("proposeNotebookTitle", () => {
-  test("accepts a model title that covers every source", () => {
+  test("accepts a usable model title", () => {
     expect(
       proposeNotebookTitle({
         sourceLabels: ["Pine resin", "Soil notes"],
         digests: ["Resin seals wounds.", "Soil holds water."],
-        includedSourceIds: ["s1", "s2"],
         modelOutput: {
           title: "Forest materials",
-          sourceIds: ["s1", "s2"],
         },
       }),
     ).toMatchInlineSnapshot(`
@@ -29,12 +27,31 @@ describe("proposeNotebookTitle", () => {
           "Pine resin seals wounds on the trunk and protects the tree.",
           "Soil notes describe water retention in the upper layer.",
         ],
-        includedSourceIds: ["s1", "s2"],
         modelOutput: {
           title: "Notes",
-          sourceIds: ["s1"],
         },
       }).kind,
     ).toMatchInlineSnapshot(`"fallback"`)
+  })
+
+  test("does not join clipped source-title fragments", () => {
+    expect(
+      proposeNotebookTitle({
+        sourceLabels: [
+          "elvent — Deine Marke für",
+          "Deine Deko-Box. | Flowers &",
+        ],
+        digests: [
+          "Outdoor-Produkte unterstützen Familien bei gemeinsamen Ausflügen.",
+          "Dekorationen und Deko-Boxen werden individuell selbst gefertigt.",
+        ],
+        modelOutput: null,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "kind": "fallback",
+        "title": "Research Collection",
+      }
+    `)
   })
 })

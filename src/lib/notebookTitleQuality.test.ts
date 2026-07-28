@@ -14,6 +14,11 @@ describe("notebook title quality", () => {
     expect(isLowQualityNotebookTitle("Notes")).toBe(true)
     expect(isLowQualityNotebookTitle("Untitled notebook")).toBe(true)
     expect(isLowQualityNotebookTitle("32460 004")).toBe(true)
+    expect(
+      isLowQualityNotebookTitle(
+        "elvent — Deine Marke für & Deine Deko-Box. | Flowers &",
+      ),
+    ).toBe(true)
     expect(isUsableNotebookTitle("Reef frog taxonomy")).toBe(true)
     expect(isUsableNotebookTitle("Mission – Biblebots")).toBe(true)
   })
@@ -23,6 +28,13 @@ describe("notebook title quality", () => {
       isSingleSourceNotebookTitle("Elternbrief Start Infoportal", [
         "Mission – Biblebots",
         "Elternbrief Start Infoportal",
+      ]),
+    ).toBe(true)
+
+    expect(
+      isSingleSourceNotebookTitle("Deine Deko-Box", [
+        "Deine Deko-Box. | Flowers & Me — Alles dabei.",
+        "elvent — Deine Marke für Outdoor-Familienprodukte.",
       ]),
     ).toBe(true)
 

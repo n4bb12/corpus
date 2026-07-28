@@ -19,7 +19,7 @@ export const MODELS = {
   classify: "gpt-5.4-nano",
   chat: "gpt-5.4-mini",
   digest: "gpt-5.4-nano",
-  title: "gpt-5.4-nano",
+  title: "gpt-5.4-mini",
   embed: "voyage-4-large",
   rerank: "rerank-2.5",
 } as const

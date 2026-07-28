@@ -8816,3 +8816,37 @@ Done. `scheduleNotebookTitleRefresh` now short-circuits when there are no title-
 
 Shared the eligibility check as `sourceHasTitleEvidence` with `listReadySourcesForTitle`. All 92 tests pass.
 
+# Bad title quality
+_Exported on 7/28/2026 at 02:08:35 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Still bad title quality.
+
+---
+
+**Cursor**
+
+The screenshot is not an AI-generated synthesis. It exactly matches the emergency fallback joining two five-word source-title fragments; one fragment even ends in `&`. I’m locking that case down and removing the brittle conditions that force valid model results into this fallback.
+
+Ranked causes:
+1. The active backend is still using the old Convex title action, where the model key was missing, so every result became fallback text.
+2. The fallback blindly joins already-truncated labels.
+3. The model’s self-reported source-ID requirement can reject an otherwise good synthesis.
+
+I’ll address all three in the current server-side title path, then verify the exact screenshot title is rejected.
+
+The regression is green locally. The malformed title is now rejected, multi-source fallbacks can’t collapse to one clipped label, model results no longer depend on unreliable self-reported IDs, and title generation uses the higher-quality mini model with full source names. I’m updating the development backend so the browser stops exercising the old fallback-only action.
+
+Fixed and deployed to the development backend.
+
+- Rejects clipped titles like the screenshot.
+- Uses full source names and `gpt-5.4-mini`.
+- Rejects titles covering only one source.
+- Removes unreliable model-reported source-ID checks.
+- 93 tests, types, and lint pass.
+
+Clear the existing title once to regenerate it.
+
