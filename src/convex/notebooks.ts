@@ -13,6 +13,7 @@ import { patchForClearedNotebookTitle } from "src/lib/notebookTitlePolicy"
 import { normalizeTitle } from "src/lib/sourceTitle"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
+import { appError } from "./lib/appError"
 import {
   getUserOrNull,
   requireNotebookOwner,
@@ -146,7 +147,7 @@ export const create = mutation({
     const count = existing.filter((notebook) => !notebook.deletedAt).length
 
     if (count >= LIMITS.notebooksPerAccount) {
-      throw new Error(
+      throw appError(
         `You can keep up to ${LIMITS.notebooksPerAccount} notebooks per account.`,
       )
     }

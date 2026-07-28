@@ -3,6 +3,7 @@ import { api, internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 import { action, internalQuery, query } from "./_generated/server"
 import { authComponent } from "./auth"
+import { appError } from "./lib/appError"
 import { requireNotebookOwner } from "./lib/ownership"
 
 type VectorHit = {
@@ -236,7 +237,7 @@ export const searchVectors = action({
     const user = await authComponent.getAuthUser(ctx)
 
     if (!user) {
-      throw new Error("You need to sign in to continue.")
+      throw appError("You need to sign in to continue.")
     }
 
     await ctx.runQuery(api.notebooks.get, {

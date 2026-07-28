@@ -8,6 +8,7 @@ import { CHAT_PROGRESS } from "src/lib/chatProgress"
 import { LIMITS } from "src/lib/limits"
 import { quotaResetMessage, utcDateKey } from "src/lib/quotas"
 import { mutation, query } from "./_generated/server"
+import { appError } from "./lib/appError"
 import { requireNotebookOwner } from "./lib/ownership"
 
 function createId() {
@@ -74,11 +75,11 @@ export const prepareGeneration = mutation({
     const prompt = args.prompt.trim()
 
     if (!prompt) {
-      throw new Error("Enter a question for your sources.")
+      throw appError("Enter a question for your sources.")
     }
 
     if (prompt.length > LIMITS.maxPromptCharacters) {
-      throw new Error(
+      throw appError(
         `Prompts can be at most ${LIMITS.maxPromptCharacters.toLocaleString()} characters.`,
       )
     }
@@ -92,7 +93,7 @@ export const prepareGeneration = mutation({
       .unique()
 
     if ((usage?.generations ?? 0) >= LIMITS.generationsPerDay) {
-      throw new Error(quotaResetMessage("generation"))
+      throw appError(quotaResetMessage("generation"))
     }
 
     const entries = await ctx.db
@@ -110,7 +111,7 @@ export const prepareGeneration = mutation({
     )
 
     if (active) {
-      throw new Error("Wait for the current answer to finish.")
+      throw appError("Wait for the current answer to finish.")
     }
 
     const sources = await ctx.db
@@ -128,9 +129,7 @@ export const prepareGeneration = mutation({
     )
 
     if (!selectedReady.length) {
-      throw new Error(
-        "Select at least one source that has finished processing.",
-      )
+      throw appError("Select at least one source that has finished processing.")
     }
 
     const now = Date.now()
@@ -141,7 +140,7 @@ export const prepareGeneration = mutation({
 
     if (args.retryAssistantId) {
       if (!canRetryLatestAssistant(entries)) {
-        throw new Error(
+        throw appError(
           "You can only retry the latest failed or stopped answer.",
         )
       }
@@ -153,7 +152,7 @@ export const prepareGeneration = mutation({
         assistant.notebookId !== notebook._id ||
         assistant.role !== "assistant"
       ) {
-        throw new Error("That answer can't be retried anymore.")
+        throw appError("That answer can't be retried anymore.")
       }
 
       exchangeId = assistant.exchangeId ?? exchangeId
@@ -165,7 +164,7 @@ export const prepareGeneration = mutation({
       )
 
       if (!user) {
-        throw new Error("That answer can't be retried anymore.")
+        throw appError("That answer can't be retried anymore.")
       }
 
       userMessageId = user._id

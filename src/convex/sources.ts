@@ -12,6 +12,7 @@ import {
 import { validatePublicHttpUrl } from "src/lib/urlSafety"
 import { internal } from "./_generated/api"
 import { mutation, query } from "./_generated/server"
+import { appError } from "./lib/appError"
 import {
   requireNotebookOwner,
   requireSourceOwner,
@@ -61,7 +62,7 @@ async function assertIngestionQuota(ctx: { db: any }, userId: string) {
     .unique()
 
   if ((existing?.ingestions ?? 0) >= LIMITS.ingestionsPerDay) {
-    throw new Error(quotaResetMessage("ingestion"))
+    throw appError(quotaResetMessage("ingestion"))
   }
 }
 
@@ -202,11 +203,11 @@ export const addText = mutation({
     const text = args.text.trim()
 
     if (!text) {
-      throw new Error("Paste some text before adding a source.")
+      throw appError("Paste some text before adding a source.")
     }
 
     if (text.length > LIMITS.maxPastedCharacters) {
-      throw new Error(
+      throw appError(
         `Pasted text can be at most ${LIMITS.maxPastedCharacters.toLocaleString()} characters.`,
       )
     }
@@ -216,7 +217,7 @@ export const addText = mutation({
     const visible = await countVisibleSources(ctx, notebook._id)
 
     if (visible >= LIMITS.sourcesPerNotebook) {
-      throw new Error(
+      throw appError(
         `Each notebook can hold up to ${LIMITS.sourcesPerNotebook} sources.`,
       )
     }
@@ -257,13 +258,13 @@ export const addUrl = mutation({
     const url = args.url.trim()
 
     if (!url) {
-      throw new Error("Enter a URL to add as a source.")
+      throw appError("Enter a URL to add as a source.")
     }
 
     const validated = validatePublicHttpUrl(url)
 
     if (!validated.ok) {
-      throw new Error(validated.error)
+      throw appError(validated.error)
     }
 
     await assertIngestionQuota(ctx, user._id)
@@ -271,7 +272,7 @@ export const addUrl = mutation({
     const visible = await countVisibleSources(ctx, notebook._id)
 
     if (visible >= LIMITS.sourcesPerNotebook) {
-      throw new Error(
+      throw appError(
         `Each notebook can hold up to ${LIMITS.sourcesPerNotebook} sources.`,
       )
     }
@@ -315,21 +316,21 @@ export const addFile = mutation({
     const filename = args.filename.trim()
 
     if (!filename) {
-      throw new Error("Choose a file before adding a source.")
+      throw appError("Choose a file before adding a source.")
     }
 
     if (!isAcceptedUpload(filename, args.mimeType)) {
-      throw new Error(describeRejectedFile(filename))
+      throw appError(describeRejectedFile(filename))
     }
 
     const metadata = await ctx.db.system.get("_storage", args.storageId)
 
     if (!metadata) {
-      throw new Error("The uploaded file is missing. Try uploading again.")
+      throw appError("The uploaded file is missing. Try uploading again.")
     }
 
     if (metadata.size > LIMITS.maxUploadBytes) {
-      throw new Error(
+      throw appError(
         `Files can be at most ${Math.round(LIMITS.maxUploadBytes / (1024 * 1024))} MB.`,
       )
     }
@@ -339,7 +340,7 @@ export const addFile = mutation({
       metadata.contentType !== "application/octet-stream" &&
       !isAcceptedUpload(filename, metadata.contentType)
     ) {
-      throw new Error(describeRejectedFile(filename))
+      throw appError(describeRejectedFile(filename))
     }
 
     await assertIngestionQuota(ctx, user._id)
@@ -347,7 +348,7 @@ export const addFile = mutation({
     const visible = await countVisibleSources(ctx, notebook._id)
 
     if (visible >= LIMITS.sourcesPerNotebook) {
-      throw new Error(
+      throw appError(
         `Each notebook can hold up to ${LIMITS.sourcesPerNotebook} sources.`,
       )
     }
@@ -410,7 +411,7 @@ export const setSelected = mutation({
     const { source, notebook } = await requireSourceOwner(ctx, args.sourceId)
 
     if (source.processingState === "failed") {
-      throw new Error("Failed sources can't be used in chat. Retry them first.")
+      throw appError("Failed sources can't be used in chat. Retry them first.")
     }
 
     const previousIds = await getReadySelectedIds(ctx, notebook._id)
@@ -579,7 +580,7 @@ export const retry = mutation({
     const { user, source } = await requireSourceOwner(ctx, args.sourceId)
 
     if (source.processingState !== "failed") {
-      throw new Error("Only failed sources can be retried.")
+      throw appError("Only failed sources can be retried.")
     }
 
     await assertIngestionQuota(ctx, user._id)

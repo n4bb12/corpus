@@ -15,6 +15,7 @@ import type * as emails_send from "../emails/send.js";
 import type * as http from "../http.js";
 import type * as ingestion from "../ingestion.js";
 import type * as ingestionHelpers from "../ingestionHelpers.js";
+import type * as lib_appError from "../lib/appError.js";
 import type * as lib_ownership from "../lib/ownership.js";
 import type * as lib_sourceBoundaries from "../lib/sourceBoundaries.js";
 import type * as notebooks from "../notebooks.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   ingestion: typeof ingestion;
   ingestionHelpers: typeof ingestionHelpers;
+  "lib/appError": typeof lib_appError;
   "lib/ownership": typeof lib_ownership;
   "lib/sourceBoundaries": typeof lib_sourceBoundaries;
   notebooks: typeof notebooks;
