@@ -18,7 +18,7 @@ function RedirectToSignIn() {
   const router = useRouter()
 
   useLayoutEffect(() => {
-    router.replace("/")
+    router.replace("/sign-in")
   }, [router])
 
   return <SignInPage />

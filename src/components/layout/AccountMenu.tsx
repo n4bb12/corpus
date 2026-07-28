@@ -36,7 +36,7 @@ export function AccountMenu({ email, name }: AccountMenuProps) {
     // then navigate before token clear. ClientAuthBoundary paints SignInPage on
     // signed-in routes only as a fallback if this navigate is slow.
     beginSignOut()
-    router.replace("/")
+    router.replace("/sign-in")
     await settleSignOutQueries()
 
     await authClient.signOut({

@@ -10860,3 +10860,26 @@ Split into 6 commits; working tree is clean:
 
 `main` is 6 commits ahead of `origin/main`.
 
+# Redirect page design
+_Exported on 7/29/2026 at 00:28:29 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Make / a redirect-only page with the same background as the dashboard. Move the sign-in page back to /sign-in.
+
+---
+
+**Cursor**
+
+I'll look at the current routing and how the dashboard background is set up so `/` can redirect and sign-in can live at `/sign-in` again.
+
+I'll restore sign-in at `/sign-in`, make `/` an atmosphere redirect hub, and update auth navigation to match.
+
+Done. Routing is now:
+
+- **`/`** — atmosphere shell only; sends signed-in users to `/library`, everyone else to `/sign-in`
+- **`/sign-in`** — sign-in page again
+- Sign-out and auth-boundary redirects go to `/sign-in`
+
