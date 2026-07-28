@@ -8923,3 +8923,61 @@ Fixed. Shimmer was only shown when `titleGenerationState === "pending"` **and** 
 
 It now follows `pending` alone, so when a source becomes ready and Convex marks the title pending, the sparkles + “Generating title…” feedback shows until the new title lands.
 
+# Overlapping title generation
+_Exported on 7/28/2026 at 02:25:28 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Do we already have a way to avoid overlapping title generations when mutiple sources become ready in short succession?
+
+---
+
+**Cursor**
+
+I'll check the title-generation path for any coalescing or lock when multiple sources become ready close together.
+
+Yes. There’s a **debounce + generation** “latest-wins” path for this.
+
+1. Each schedule bumps `titleRefreshGeneration` (`scheduleNotebookTitleRefresh` in `src/convex/titles.ts`).
+2. The orchestrator waits `TITLE_REFRESH_DEBOUNCE_MS` (800ms), then bails if its generation is no longer current (`isStaleTitleRefresh` in `refreshNotebookTitle`).
+
+So if several sources become ready within ~800ms, older kicks drop after the sleep and only the newest generation should run the LLM.
+
+What it does **not** do: cancel or gate an LLM call that’s already past the stale check. `applyGeneratedTitle` also doesn’t re-check generation, so a superseded run that already started can still write.
+
+---
+
+**User**
+
+But does this only work within a single API call? As in dragging 3 files at once? What if 3 files are added one after each other, each in a separate API call?
+
+---
+
+**Cursor**
+
+It works across separate API calls because `titleRefreshGeneration` is persisted on the notebook in Convex, not held in request memory.
+
+For three readiness events within 800ms:
+
+- Call 1 schedules generation 1.
+- Call 2 schedules generation 2.
+- Call 3 schedules generation 3.
+- After each debounce, generations 1 and 2 see the persisted generation is now 3 and exit.
+- Only generation 3 calls the model.
+
+The limitation is timing: if calls are more than ~800ms apart—or generation 1 passes its stale check before generation 2 is scheduled—multiple model calls can overlap. There is no durable in-flight lock, and generation is not checked when applying the generated title. So this is cross-request debouncing, but not complete overlap prevention.
+
+---
+
+**User**
+
+Bump it to 1 second just to not have a weird number.
+
+---
+
+**Cursor**
+
+Updated the title refresh debounce from 800ms to 1 second.
+

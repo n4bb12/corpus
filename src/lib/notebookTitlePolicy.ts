@@ -7,7 +7,7 @@ export type NotebookTitleGenerationState =
   | "failed"
 
 /** Coalesce burst ready/delete/clear events into one title refresh. */
-export const TITLE_REFRESH_DEBOUNCE_MS = 800
+export const TITLE_REFRESH_DEBOUNCE_MS = 1_000
 
 /** Manual titles never refresh from digests. */
 export function shouldSkipTitleRefresh(titleOrigin: NotebookTitleOrigin) {
