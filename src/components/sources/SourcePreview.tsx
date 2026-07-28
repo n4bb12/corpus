@@ -1,14 +1,13 @@
 import { ArrowLeft } from "lucide-react"
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { SourcePreviewArticle } from "src/components/sources/SourcePreviewArticle"
 import { Button } from "src/components/ui/shadcn/button"
 import { ScrollArea } from "src/components/ui/shadcn/scroll-area"
 import {
   type CitationOffsetRange,
   resolveCitationOffsets,
 } from "src/lib/citationHighlight"
-import { renderMarkdownHtml } from "src/lib/renderMarkdown"
 import { formatTitle } from "src/lib/sourceTitle"
-import { cn } from "src/lib/utils"
 
 export type SourcePreviewHighlight = {
   start?: number
@@ -31,40 +30,6 @@ const PREVIEW_PLACEHOLDER_BLOCKS = [
   "Another paragraph approximates typical source density without inventing a separate skeleton layout.",
 ] as const
 
-function blocksWithOffsets(content: string) {
-  const blocks: Array<{ text: string; start: number }> = []
-  let offset = 0
-  let blockStart = 0
-  let blockLines: string[] = []
-
-  for (const line of content.split("\n")) {
-    if (line.trim()) {
-      if (!blockLines.length) {
-        blockStart = offset
-      }
-
-      blockLines.push(line)
-    } else if (blockLines.length) {
-      blocks.push({
-        text: blockLines.join("\n"),
-        start: blockStart,
-      })
-      blockLines = []
-    }
-
-    offset += line.length + 1
-  }
-
-  if (blockLines.length) {
-    blocks.push({
-      text: blockLines.join("\n"),
-      start: blockStart,
-    })
-  }
-
-  return blocks
-}
-
 function locatorFromHighlight(
   highlight?: SourcePreviewHighlight | null,
 ): CitationOffsetRange | null {
@@ -79,29 +44,6 @@ function locatorFromHighlight(
   return { start: highlight.start, end: highlight.end }
 }
 
-function scrollTargetStart(
-  paragraphs: Array<{ text: string; start: number }>,
-  offsets: CitationOffsetRange,
-) {
-  const containing = paragraphs.find(({ text, start }) => {
-    const end = start + text.length
-
-    return start <= offsets.start && end > offsets.start
-  })
-
-  if (containing) {
-    return containing.start
-  }
-
-  const overlapping = paragraphs.find(({ text, start }) => {
-    const end = start + text.length
-
-    return start < offsets.end && end > offsets.start
-  })
-
-  return overlapping?.start
-}
-
 export function SourcePreview({
   title,
   markdown,
@@ -109,11 +51,9 @@ export function SourcePreview({
   onBack,
   onHighlightUnresolved,
 }: SourcePreviewProps) {
-  const blocks = useMemo(
-    () => (markdown ? blocksWithOffsets(markdown) : []),
-    [markdown],
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null,
   )
-  const highlightRef = useRef<HTMLDivElement | null>(null)
   const unresolvedKey = useRef<string | null>(null)
   const resolvedOffsets = useMemo(() => {
     if (!markdown || !highlight) {
@@ -126,10 +66,6 @@ export function SourcePreview({
       highlight.excerpt,
     )
   }, [highlight, markdown])
-  const targetStart =
-    resolvedOffsets && blocks.length
-      ? scrollTargetStart(blocks, resolvedOffsets)
-      : undefined
 
   useEffect(() => {
     if (!markdown || !highlight) {
@@ -138,14 +74,7 @@ export function SourcePreview({
 
     if (resolvedOffsets) {
       unresolvedKey.current = null
-      const frame = window.requestAnimationFrame(() => {
-        highlightRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        })
-      })
-
-      return () => window.cancelAnimationFrame(frame)
+      return
     }
 
     const key = `${highlight.excerpt}:${markdown.length}`
@@ -174,31 +103,17 @@ export function SourcePreview({
           {formatTitle(title)}
         </div>
       </div>
-      <ScrollArea className="min-h-0 flex-1 overflow-hidden">
+      <ScrollArea
+        className="min-h-0 flex-1 overflow-hidden"
+        viewportRef={setScrollElement}
+      >
         <div className="p-4 sm:p-6">
           {markdown ? (
-            <article className="prose prose-sm dark:prose-invert max-w-none space-y-4">
-              {blocks.map(({ text, start }) => {
-                const end = start + text.length
-                const highlighted =
-                  !!resolvedOffsets &&
-                  start < resolvedOffsets.end &&
-                  end > resolvedOffsets.start
-                const html = renderMarkdownHtml(text)
-
-                return (
-                  <div
-                    key={start}
-                    ref={start === targetStart ? highlightRef : undefined}
-                    className={cn(
-                      "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-                      highlighted && "citation-highlight",
-                    )}
-                    dangerouslySetInnerHTML={{ __html: html }}
-                  />
-                )
-              })}
-            </article>
+            <SourcePreviewArticle
+              markdown={markdown}
+              resolvedOffsets={resolvedOffsets}
+              scrollElement={scrollElement}
+            />
           ) : (
             <>
               <span className="sr-only" role="status">

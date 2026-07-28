@@ -9910,3 +9910,40 @@ JWT default is 15 minutes and there's no refresh rotation — dropping the snaps
 
 Updated `AUTH_USER_SNAPSHOT_TTL_MS` to **4 hours**. That matches short-lived Convex JWTs (~15 min default) without refresh rotation; the Better Auth session can still last 30 days — after the snapshot expires we just wait on a live session again instead of pretending we’re signed in.
 
+# Large document rendering performance
+_Exported on 7/28/2026 at 22:04:32 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+We should make rendering large source documents more performant. They can really burden the UI.
+
+---
+
+**Cursor**
+
+I'll look at how source documents are rendered today and where large docs hurt the UI, then we can target the right performance fix.
+
+This has multiple valid approaches (virtualization, lazy markdown, chunked paint). Switching to Plan so we can pick the right one before coding.
+
+Plan mode was declined, so I’ll dig into the markdown render path and existing patterns, then implement a focused fix.
+
+`SourcePreview` parses and mounts every markdown block at once (up to 500k chars). I'll virtualize the list so only visible blocks are parsed and painted, and keep citation scroll working.
+
+Fixing the test and types, then wiring `SourcePreview` to the virtualized article.
+
+Making the virtualizer pick up the ScrollArea viewport reliably once it mounts:
+
+Biome stripped the cache-reset effect deps; I'll reset the HTML cache when blocks change instead.
+
+Source preview now **virtualizes** markdown blocks instead of parsing and mounting the whole document.
+
+**What changed**
+- `SourcePreviewArticle` renders only visible blocks (+ overscan) via `@tanstack/react-virtual`
+- Markdown → HTML runs on demand and is cached per block
+- Citation jumps use `scrollToIndex` so highlights still center correctly
+- Block splitting lives in `sourcePreviewBlocks` with unit tests
+
+Large sources should stay smooth to open and scroll; only the viewport pays the markdown/DOM cost.
+
