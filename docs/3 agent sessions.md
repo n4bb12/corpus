@@ -10371,3 +10371,42 @@ Done.
 
 **Early titles** — `setDigestDraft` now kicks `refreshNotebookTitle` immediately, so the notebook can rename from pending digest text while embedding finishes. `markReady` / `markFailed` still kick as before (latest-wins).
 
+# Smooth scrolling for PDFs
+_Exported on 7/28/2026 at 22:58:32 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+When scrolling to cited source sections, can we skip large distances and smoothly scroll the last bit? Scrolling the full virtualized sections on a large PDF is choppy and takes a while.
+
+---
+
+**Cursor**
+
+I'll look at how cited-source scrolling works today and where we can jump the long distance, then ease in for the last stretch.
+
+TanStack Virtual already has some long-distance smooth-scroll handling — I'll inspect that next so we can build on it.
+
+Implementing a hybrid scroll: jump when the target is more than a viewport away, then smooth-scroll the last stretch.
+
+Citation jumps now use a hybrid scroll: if the target is more than one viewport away, it **jumps** to just outside that range, then **smooth-scrolls** the last viewport.
+
+Nearby citations still smooth-scroll the whole way. Logic lives in `scrollToIndexHybrid` and is wired through `SourcePreviewArticle`.
+
+---
+
+**User**
+
+We always center align. Don't add unused abstraction.
+
+---
+
+**Cursor**
+
+I'll strip the unused `align` option and simplify the hybrid scroll helper around center-only.
+
+Hardcoding center alignment and dropping the unused `align` option and type surface.
+
+Done. Center is hardcoded; the `align` option is gone.
+

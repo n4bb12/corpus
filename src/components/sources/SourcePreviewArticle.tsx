@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from "react"
 import type { CitationOffsetRange } from "src/lib/citationHighlight"
 import { renderMarkdownHtml } from "src/lib/renderMarkdown"
 import { scheduleScrollOnce } from "src/lib/scheduleScrollOnce"
+import { scrollToIndexHybrid } from "src/lib/scrollToIndexHybrid"
 import {
   scrollTargetBlockStart,
   sourcePreviewBlocks,
@@ -55,18 +56,25 @@ export function SourcePreviewArticle({
     }
 
     const key = `${resolvedOffsets.start}:${resolvedOffsets.end}:${blocks.length}`
+    let cancelHybrid = () => {}
 
-    return scheduleScrollOnce({
+    const cancelSchedule = scheduleScrollOnce({
       key,
       scrolledKey,
       isReady: () => scrollElement.clientHeight > 0,
       scroll: () => {
-        virtualizer.scrollToIndex(targetIndex, {
-          align: "center",
-          behavior: "smooth",
+        cancelHybrid = scrollToIndexHybrid({
+          virtualizer,
+          index: targetIndex,
+          scrollElement,
         })
       },
     })
+
+    return () => {
+      cancelSchedule()
+      cancelHybrid()
+    }
   }, [blocks.length, resolvedOffsets, scrollElement, targetIndex, virtualizer])
 
   const virtualItems = virtualizer.getVirtualItems()
