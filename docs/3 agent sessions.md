@@ -9125,3 +9125,249 @@ The overlay button always calls `onPreview`; I'll disable it for failed sources.
 
 Failed sources no longer open reading mode. The full-row preview button in `SourceListItem` is only rendered when the source isn’t failed; rename/retry/delete via the menu still work.
 
+# Codebase architecture improvement
+_Exported on 7/28/2026 at 03:16:10 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+/improve-codebase-architecture 
+
+---
+
+**Cursor**
+
+Architecture review opened:
+
+`/tmp/architecture-review-20260728-023217.html`
+
+Which of these would you like to explore?
+
+---
+
+**User**
+
+All four.
+
+---
+
+**Cursor**
+
+I'll grill all four candidates in turn. Reading the grilling skill first, then walking each decision tree.
+
+We'll walk all four. Starting with the top recommendation: **Unify the Source digest lifecycle**.
+
+**Q1.** Evidence pack currently generates digests mid-Chat when a corpus-summary prompt hits Sources that aren't ready yet. After deepening, should Evidence pack still be allowed to *trigger* digest creation, or should it only *consume* digests that already exist (and soft-fail / fall back to coverage when they're missing)?
+
+**Recommendation:** Keep the trigger. Chat-time ensure is load-bearing when a user summarizes before ingestion finishes — but it should call the shared lifecycle module, not reimplement it. Soft-fail-only would shrink the seam further, but it changes product behavior.
+
+---
+
+**User**
+
+If you ask me, we should not be taking sources into account that weren't ready when the question was submitted. But that may make it even more complicated.
+
+---
+
+**Cursor**
+
+That actually *simplifies* candidate 1 — if Chat never ensures digests, the lifecycle module only has one real caller (Source ingestion), and the deletion test for backfill becomes “delete it.”
+
+**Q2.** When you say “weren’t ready,” do you mean Sources still processing (no chunks yet), or also Sources that are chat-ready but whose Source digest isn’t ready yet?
+
+**Recommendation:** Both. Evidence pack should only use digests that already exist at submit time; missing digests fall through to coverage/chunks for those Sources — no chat-time generation. The lifecycle module then lives under Source ingestion only, which is the deeper and smaller seam.
+
+---
+
+**User**
+
+<timestamp>Tuesday, Jul 28, 2026, 2:46 AM (UTC+2)</timestamp>
+<system_notification>
+The following task has finished. If you were already aware, ignore this notification and do not restate prior responses.
+
+<task>
+kind: shell
+status: error
+task_id: 570343
+title: Open architecture review in browser
+tool_call_id: call_tWpwazwrDVLaRShsfXeW8t3Z
+fc_0b0ed09d40633962016a67f8e7a7f0819fb29bb8726f215763
+detail: exit_code=4
+output_path: /home/n4bb12/.cursor/projects/home-n4bb12-git-work-interviews-corpus/terminals/570343.txt
+</task>
+</system_notification>
+<user_query>Briefly inform the user about the task result and perform any follow-up actions (if needed). If there's no follow-ups needed, don't explicitly say that.</user_query>
+
+---
+
+**Cursor**
+
+Opening the architecture review in the browser failed (Chrome sandbox/permission error). The report is still at `/tmp/architecture-review-20260728-023217.html` — open it manually if you want the visuals.
+
+Still on **Q2**: “weren’t ready” = still-processing Sources only, or also Sources whose digests aren’t ready yet?
+
+---
+
+**User**
+
+Both. Essentially, it was already the case until we introduced digests which made it a bit more complicated.
+
+---
+
+**Cursor**
+
+Got it — digests should not reopen a Source that wasn’t already digest-ready at submit time. That points to **deleting chat-time backfill**, not sharing it.
+
+**Q3.** With Evidence pack only *consuming* digests, is candidate 1 still a deepen — extract a Source digest lifecycle module from Source ingestion — or is the move just **delete `backfillSourceDigest`** and leave `summarizeSource` / `generateSourceDigest` as they are?
+
+**Recommendation:** Delete the backfill. Don’t invent a second lifecycle module for one caller; `generateSourceDigest` already sits at the right seam. Record the product rule (Evidence pack never ensures digests) so a future review doesn’t reintroduce chat-time generation.
+
+---
+
+**User**
+
+Delete the backfill.
+
+---
+
+**Cursor**
+
+Locked: delete `backfillSourceDigest`; Evidence pack only consumes digests.
+
+Want that recorded as an ADR so a future architecture review doesn’t re-suggest chat-time ensure? (Hard to reverse product-wise, and surprising without context.)
+
+Moving to **candidate 2: Title refresh**.
+
+**Q4.** For Title refresh, should the deepened module own *corpus assembly + model call + propose*, with the outer orchestrator only doing debounce / generation checks / Convex writes — or should the model call stay in the orchestrator and only corpus assembly move behind the seam?
+
+**Recommendation:** Corpus + model + propose together. That matches how Title refresh is tested in practice (fixtures in, title out) and keeps prompt rules next to the text they operate on.
+
+---
+
+**User**
+
+Corpus + model + propose
+
+---
+
+**Cursor**
+
+**Q5.** Should Title refresh take a **generation port** (like Answer turn) so tests inject a fake title model, or keep `generateText` / OpenAI inside the module and only unit-test the pure sides (`propose`, quality, corpus shaping)?
+
+**Recommendation:** Generation port. Corpus shaping and propose are already pure; the untested gap is “sources in → title out,” and that only becomes the test surface if the model sits behind a seam with two adapters (prod OpenAI, test fake).
+
+---
+
+**User**
+
+Generation port.
+
+---
+
+**Cursor**
+
+**Q6.** Who loads Source text for Title refresh — the outer orchestrator (fetch digests / markdown, then hand snapshots into the deep module), or the deep module itself via a load adapter?
+
+**Recommendation:** Orchestrator loads; deep module receives snapshots (`label`, `digest or markdown excerpt`, caps already applied or not). That keeps Convex/`fetch` out of the test surface and mirrors Answer turn (Evidence pack hands in the pack; generation is the only injected port).
+
+---
+
+**User**
+
+Orchestrator loads
+
+---
+
+**Cursor**
+
+Title refresh shape is clear. Moving to **candidate 3: Evidence pack**.
+
+**Q7.** After deleting digest backfill, should we still deepen Evidence pack by extracting a pure strategy core (classify → choose digest/coverage/inline/RAG → format), or leave `prepareEvidence` as the I/O script and only delete the backfill?
+
+**Recommendation:** Still extract the strategy core. Backfill removal shrinks the file but leaves the untested branch graph (inline vs corpus vs coverage vs factual) as the real friction — and that’s what callers and tests should hit through one interface.
+
+---
+
+**User**
+
+Still extract the strategy core.
+
+---
+
+**Cursor**
+
+With backfill gone, `isCorpusSummaryPrompt` only gated that path — it can die with it. One corpus-intent path left: the LLM classifier.
+
+**Q8.** Should classify sit behind a **port** on the Evidence pack strategy core (so tests inject `factual` / `corpus`), or should the outer `prepareEvidence` classify first and pass `mode` into a pure packer that never talks to a model?
+
+**Recommendation:** Outer classifies, pure packer takes `mode`. Classification is I/O; packing decisions are local. Fewer ports than “classify + retrieve + embed + rerank,” and strategy tests become table-driven on mode + source shapes without mocking an LLM.
+
+---
+
+**User**
+
+Outer classifies, pure packer takes mode.
+
+---
+
+**Cursor**
+
+Evidence pack shape is clear. Last candidate: **narrow the Answer turn seam**.
+
+**Q9.** Should Answer turn keep receiving prompt-ready strings (`evidenceBlock`, `systemAddendum`, `useDigestEvidence`) from Evidence pack, or only grounding data (`evidence`, `mode`, optional digest sections) and rebuild prompts itself?
+
+**Recommendation:** Keep prompt-ready strings from Evidence pack. Answer turn is already deep on generation/Citation catalog; pulling prompt wording back in re-widens its interface and undoes the Evidence pack ownership we just chose. Fix the duplicated `DigestSection` type only — that’s Speculative-level, not a full seam flip.
+
+---
+
+**User**
+
+Keep prompt-ready strings from Evidence pack.
+
+---
+
+**Cursor**
+
+Shared understanding across all four:
+
+1. **Source digest** — Delete chat-time `backfillSourceDigest`. Evidence pack only consumes digests already ready at submit time; missing digests fall through. Drop `isCorpusSummaryPrompt` with the backfill. No new lifecycle module for one caller.
+
+2. **Title refresh** — Deep module = corpus assembly + model + propose, behind a generation port. Orchestrator loads Source snapshots, then does debounce / generation checks / Convex writes.
+
+3. **Evidence pack** — Extract a pure strategy core that takes `mode` (outer classifies). Still owns prompt-ready formatting. No chat-time digest ensure.
+
+4. **Answer turn** — Keep receiving prompt-ready strings from Evidence pack. Only tidy the duplicated `DigestSection` onto the canonical `sourceDigest` model.
+
+Still open: ADR for “Evidence pack never ensures Source digests”?
+
+**Q10.** Does this match what you want, and should I implement in that order (delete backfill → Title refresh deepen → Evidence pack strategy core → DigestSection unify)?
+
+**Recommendation:** Yes — that order; write the ADR when we delete the backfill.
+
+---
+
+**User**
+
+Yes, go.
+
+---
+
+**Cursor**
+
+Implementing in the agreed order. Starting with backfill deletion, ADR, and CONTEXT updates.
+
+Next: Title refresh deepen and DigestSection unify.
+
+Extracting the Evidence pack strategy core and unifying `DigestSection`.
+
+Done. All four landed; `bun types`, `bun fix`, and `bun run test` pass (104).
+
+1. **Source digests** — Removed chat-time backfill and `isCorpusSummaryPrompt`. ADR: `docs/adr/0001-no-chat-time-digest-ensure.md`. CONTEXT updated.
+
+2. **Title refresh** — Deep module `titleFromSourceSnapshots` + generation port; orchestrator loads snapshots; OpenAI adapter in `openaiTitleGenerator.ts`.
+
+3. **Evidence pack** — Pure strategy in `src/lib/evidencePack.ts` (`buildDigestEvidencePack`, `packEvidence`, `makePromptReady`); `prepareEvidence` classifies/loads then packs.
+
+4. **Answer turn** — `DigestSection` / `EvidenceItem` come from `sourceDigest` / `evidencePack`; `EvidencePack` is `PromptReadyEvidence`.
+
