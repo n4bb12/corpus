@@ -10628,3 +10628,33 @@ File uploads could briefly show both the local “Uploading” placeholder and t
 
 **Fix:** Match placeholders to live sources by `createdAt` + `title` (file ingest already sends the placeholder’s `addedAt`), hide the placeholder as soon as that match appears, and keep the upload `localId` as the React key so the row doesn’t remount.
 
+# Atomic commits discussion
+_Exported on 7/29/2026 at 00:05:48 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll inspect the working tree and recent commit style, then split the changes into atomic commits.
+
+Next I'll read the remaining diffs to group commits by intent.
+
+I've mapped three concerns: ConvexError/user-facing errors, the upload-placeholder race, and incidental chore/docs. Committing them in that order.
+
+All uncommitted work is in 6 commits:
+
+1. `b9af946` — chore(layout): sort ConvexProvider import with other components
+2. `ad2bc7f` — chore(next): point next-env routes types at .next/dev
+3. `49e22be` — fix(convex): throw ConvexError for user-facing app errors
+4. `22be813` — fix(errors): show clean user messages instead of Convex wrappers
+5. `f31dc3d` — fix(sources): hide upload placeholders when Convex publishes early
+6. `d6a0f20` — docs: record pretty-errors and duplicate-source agent sessions
+
+Working tree is clean.
+
