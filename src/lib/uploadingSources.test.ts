@@ -3,6 +3,7 @@ import {
   addedAtForBatch,
   markUploadingSourceCreated,
   mergeSourcesListEntries,
+  pendingSourceStatus,
   removeUploadingSource,
   rowKeysForUploadingSources,
   visibleUploadingSources,
@@ -182,6 +183,86 @@ describe("uploading sources", () => {
 			[
 			  {
 			    "key": "local-b",
+			    "type": "source",
+			  },
+			]
+		`)
+  })
+
+  test("url/text pending rows stay visible from add through Convex handoff", () => {
+    const pending = {
+      localId: "local-url",
+      filename: "https://example.com/doc",
+      title: "example.com/doc",
+      addedAt: 5001,
+      kind: "url" as const,
+    }
+
+    expect(pendingSourceStatus(pending)).toMatchInlineSnapshot(`"Adding"`)
+
+    // Dialog closed, ingest still in flight — row must already be in the list.
+    expect(
+      mergeSourcesListEntries(visibleUploadingSources([pending], []), []).map(
+        (entry) => ({
+          type: entry.type,
+          key: entry.key,
+          status:
+            entry.type === "uploading"
+              ? pendingSourceStatus(entry.source)
+              : undefined,
+        }),
+      ),
+    ).toMatchInlineSnapshot(`
+			[
+			  {
+			    "key": "local-url",
+			    "status": "Adding",
+			    "type": "uploading",
+			  },
+			]
+		`)
+
+    const stamped = markUploadingSourceCreated(
+      [pending],
+      "local-url",
+      "sources_url" as never,
+    )
+    const stampedEntry = stamped[0]
+
+    expect(
+      stampedEntry && pendingSourceStatus(stampedEntry),
+    ).toMatchInlineSnapshot(`"Starting"`)
+
+    // Ingest returned; Convex subscription may still be catching up.
+    expect(
+      mergeSourcesListEntries(visibleUploadingSources(stamped, []), []).map(
+        (entry) => entry.key,
+      ),
+    ).toMatchInlineSnapshot(`
+			[
+			  "local-url",
+			]
+		`)
+
+    const sources = [
+      {
+        _id: "sources_url" as never,
+        createdAt: 5001,
+        title: "example.com/doc",
+      },
+    ]
+
+    // Live row replaces the placeholder under the same React key.
+    expect(
+      mergeSourcesListEntries(
+        visibleUploadingSources(stamped, sources),
+        sources as never,
+        rowKeysForUploadingSources(stamped, sources),
+      ).map((entry) => ({ type: entry.type, key: entry.key })),
+    ).toMatchInlineSnapshot(`
+			[
+			  {
+			    "key": "local-url",
 			    "type": "source",
 			  },
 			]

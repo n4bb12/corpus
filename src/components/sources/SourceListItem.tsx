@@ -6,7 +6,10 @@ import { Label } from "src/components/ui/shadcn/label"
 import { Spinner } from "src/components/ui/shadcn/spinner"
 import type { Doc, Id } from "src/convex/_generated/dataModel"
 import { formatTitle } from "src/lib/sourceTitle"
-import type { SourcesListEntry } from "src/lib/uploadingSources"
+import {
+  pendingSourceStatus,
+  type SourcesListEntry,
+} from "src/lib/uploadingSources"
 import { cn } from "src/lib/utils"
 
 const STATUS_LABEL: Record<string, string> = {
@@ -38,7 +41,7 @@ export const SourceListItem = memo(function SourceListItem({
 }: SourceListItemProps) {
   const source = entry.type === "source" ? entry.source : null
   const uploading = entry.type === "uploading" ? entry.source : null
-  const kind = source?.kind ?? "file"
+  const kind = source?.kind ?? uploading?.kind ?? "file"
   const Icon = kind === "url" ? LinkIcon : kind === "file" ? FileText : Type
   const failed = source?.processingState === "failed"
   const busy =
@@ -48,7 +51,7 @@ export const SourceListItem = memo(function SourceListItem({
       source.processingState !== "failed")
   const label = formatTitle((source ?? uploading)?.title ?? "")
   const statusText = uploading
-    ? "Uploading"
+    ? pendingSourceStatus(uploading)
     : failed
       ? source?.errorCode || STATUS_LABEL.failed
       : source

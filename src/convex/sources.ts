@@ -102,6 +102,15 @@ async function countVisibleSources(ctx: { db: any }, notebookId: string) {
     .length
 }
 
+/** Prefer the client add timestamp so optimistic placeholders can match by createdAt. */
+function resolveCreatedAt(requested: number | undefined, now: number) {
+  return typeof requested === "number" &&
+    Number.isFinite(requested) &&
+    requested <= now + 60_000
+    ? requested
+    : now
+}
+
 export const listByNotebook = query({
   args: {
     notebookId: v.id("notebooks"),
@@ -197,6 +206,7 @@ export const addText = mutation({
   args: {
     notebookId: v.id("notebooks"),
     text: v.string(),
+    createdAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { user, notebook } = await requireNotebookOwner(ctx, args.notebookId)
@@ -223,6 +233,7 @@ export const addText = mutation({
     }
 
     const now = Date.now()
+    const createdAt = resolveCreatedAt(args.createdAt, now)
     const title = titleFromPastedText(text)
 
     const sourceId = await ctx.db.insert("sources", {
@@ -234,7 +245,7 @@ export const addText = mutation({
       textContent: text,
       selected: true,
       processingState: "pending",
-      createdAt: now,
+      createdAt,
       updatedAt: now,
     })
 
@@ -252,6 +263,7 @@ export const addUrl = mutation({
   args: {
     notebookId: v.id("notebooks"),
     url: v.string(),
+    createdAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { user, notebook } = await requireNotebookOwner(ctx, args.notebookId)
@@ -278,6 +290,7 @@ export const addUrl = mutation({
     }
 
     const now = Date.now()
+    const createdAt = resolveCreatedAt(args.createdAt, now)
     const title = titleFromUrl(url)
 
     const sourceId = await ctx.db.insert("sources", {
@@ -289,7 +302,7 @@ export const addUrl = mutation({
       url: validated.url.toString(),
       selected: true,
       processingState: "pending",
-      createdAt: now,
+      createdAt,
       updatedAt: now,
     })
 
@@ -354,12 +367,7 @@ export const addFile = mutation({
     }
 
     const now = Date.now()
-    const createdAt =
-      typeof args.createdAt === "number" &&
-      Number.isFinite(args.createdAt) &&
-      args.createdAt <= now + 60_000
-        ? args.createdAt
-        : now
+    const createdAt = resolveCreatedAt(args.createdAt, now)
     const title = titleFromFilename(filename)
     const mimeType = args.mimeType || metadata.contentType || undefined
 

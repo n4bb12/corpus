@@ -5,7 +5,17 @@ export type UploadingSource = {
   filename: string
   title: string
   addedAt: number
+  /** Defaults to file when omitted (legacy upload placeholders). */
+  kind?: "file" | "url" | "text"
   sourceId?: Id<"sources">
+}
+
+export function pendingSourceStatus(entry: UploadingSource) {
+  if (entry.sourceId) {
+    return "Starting"
+  }
+
+  return entry.kind === "url" || entry.kind === "text" ? "Adding" : "Uploading"
 }
 
 export type SourcesListEntry =

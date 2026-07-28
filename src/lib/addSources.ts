@@ -4,13 +4,14 @@ import { describeRejectedFile, isAcceptedUpload } from "src/lib/fileTypes"
 import { startSourceIngest } from "src/lib/ingestClient"
 import { LIMITS } from "src/lib/limits"
 import {
-  beginCreatingSource,
-  completeCreatingSource,
-  failCreatingSource,
   rememberSourceRowKey,
   updateUploadingSources,
 } from "src/lib/pendingSources"
-import { titleFromFilename } from "src/lib/sourceTitle"
+import {
+  titleFromFilename,
+  titleFromPastedText,
+  titleFromUrl,
+} from "src/lib/sourceTitle"
 import {
   addedAtForBatch,
   markUploadingSourceCreated,
@@ -28,6 +29,30 @@ export type AddSourcesArgs = {
   generateUploadUrl?: () => Promise<string>
 }
 
+function pushPendingSource(
+  notebookId: Id<"notebooks">,
+  pending: UploadingSource,
+) {
+  updateUploadingSources(notebookId, (current) => [pending, ...current])
+}
+
+function stampPendingSource(
+  notebookId: Id<"notebooks">,
+  localId: string,
+  sourceId: Id<"sources">,
+) {
+  rememberSourceRowKey(notebookId, sourceId, localId)
+  updateUploadingSources(notebookId, (current) =>
+    markUploadingSourceCreated(current, localId, sourceId),
+  )
+}
+
+function dropPendingSource(notebookId: Id<"notebooks">, localId: string) {
+  updateUploadingSources(notebookId, (current) =>
+    removeUploadingSource(current, localId),
+  )
+}
+
 /**
  * Client Add Sources module: pending rows, storage upload, ingest POST, LIMITS.
  */
@@ -35,7 +60,17 @@ export async function addSources(args: AddSourcesArgs) {
   const notices: string[] = []
 
   for (const url of args.urls ?? []) {
-    beginCreatingSource(args.notebookId)
+    const localId = nanoid()
+    const addedAt = Date.now()
+    const pending: UploadingSource = {
+      localId,
+      filename: url,
+      title: titleFromUrl(url),
+      addedAt,
+      kind: "url",
+    }
+
+    pushPendingSource(args.notebookId, pending)
 
     try {
       const sourceId = await startSourceIngest({
@@ -43,16 +78,28 @@ export async function addSources(args: AddSourcesArgs) {
         kind: "url",
         notebookId: args.notebookId,
         url,
+        createdAt: addedAt,
       })
-      completeCreatingSource(args.notebookId, sourceId)
+      stampPendingSource(args.notebookId, localId, sourceId)
     } catch (error) {
-      failCreatingSource(args.notebookId)
+      dropPendingSource(args.notebookId, localId)
       throw error
     }
   }
 
   for (const text of args.texts ?? []) {
-    beginCreatingSource(args.notebookId)
+    const localId = nanoid()
+    const addedAt = Date.now()
+    const title = titleFromPastedText(text)
+    const pending: UploadingSource = {
+      localId,
+      filename: title,
+      title,
+      addedAt,
+      kind: "text",
+    }
+
+    pushPendingSource(args.notebookId, pending)
 
     try {
       const sourceId = await startSourceIngest({
@@ -60,10 +107,11 @@ export async function addSources(args: AddSourcesArgs) {
         kind: "text",
         notebookId: args.notebookId,
         text,
+        createdAt: addedAt,
       })
-      completeCreatingSource(args.notebookId, sourceId)
+      stampPendingSource(args.notebookId, localId, sourceId)
     } catch (error) {
-      failCreatingSource(args.notebookId)
+      dropPendingSource(args.notebookId, localId)
       throw error
     }
   }
@@ -116,6 +164,7 @@ export async function addSources(args: AddSourcesArgs) {
       filename: file.name,
       title: titleFromFilename(file.name),
       addedAt: addedAtForBatch(index, accepted.length, addedAtBase),
+      kind: "file",
     }),
   )
 
@@ -157,19 +206,12 @@ export async function addSources(args: AddSourcesArgs) {
         mimeType: file.type || undefined,
         createdAt: pendingEntry.addedAt,
       })
-      rememberSourceRowKey(args.notebookId, sourceId, pendingEntry.localId)
-      updateUploadingSources(args.notebookId, (current) =>
-        markUploadingSourceCreated(current, pendingEntry.localId, sourceId),
-      )
+      stampPendingSource(args.notebookId, pendingEntry.localId, sourceId)
     } catch (error) {
-      updateUploadingSources(args.notebookId, (current) =>
-        removeUploadingSource(current, pendingEntry.localId),
-      )
+      dropPendingSource(args.notebookId, pendingEntry.localId)
 
       for (const leftover of pending.slice(index + 1)) {
-        updateUploadingSources(args.notebookId, (current) =>
-          removeUploadingSource(current, leftover.localId),
-        )
+        dropPendingSource(args.notebookId, leftover.localId)
       }
 
       throw error

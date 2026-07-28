@@ -13,6 +13,7 @@ const createUrlSchema = z.object({
   kind: z.literal("url"),
   notebookId: z.string(),
   url: z.string(),
+  createdAt: z.number().optional(),
 })
 
 const createTextSchema = z.object({
@@ -20,6 +21,7 @@ const createTextSchema = z.object({
   kind: z.literal("text"),
   notebookId: z.string(),
   text: z.string(),
+  createdAt: z.number().optional(),
 })
 
 const createFileSchema = z.object({
@@ -69,11 +71,13 @@ export async function POST(request: Request) {
       sourceId = (await fetchAuthMutation(api.sources.addUrl, {
         notebookId: body.notebookId as Id<"notebooks">,
         url: body.url,
+        createdAt: body.createdAt,
       })) as Id<"sources">
     } else if (body.kind === "text") {
       sourceId = (await fetchAuthMutation(api.sources.addText, {
         notebookId: body.notebookId as Id<"notebooks">,
         text: body.text,
+        createdAt: body.createdAt,
       })) as Id<"sources">
     } else {
       sourceId = (await fetchAuthMutation(api.sources.addFile, {

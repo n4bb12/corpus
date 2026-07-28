@@ -5,6 +5,8 @@ export type IngestCreateUrlInput = {
   kind: "url"
   notebookId: Id<"notebooks">
   url: string
+  /** Client add time so sidebar order matches the optimistic placeholder. */
+  createdAt?: number
 }
 
 export type IngestCreateTextInput = {
@@ -12,6 +14,8 @@ export type IngestCreateTextInput = {
   kind: "text"
   notebookId: Id<"notebooks">
   text: string
+  /** Client add time so sidebar order matches the optimistic placeholder. */
+  createdAt?: number
 }
 
 export type IngestCreateFileInput = {
