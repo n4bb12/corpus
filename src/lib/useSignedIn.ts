@@ -17,8 +17,7 @@ const signingOutStore = createStore<{ signingOut: boolean }>(() => ({
 }))
 
 export function beginSignOut() {
-  // Skip authenticated queries; ClientAuthBoundary navigates to sign-in and
-  // keeps that page mounted until the session is gone.
+  // Skip authenticated queries; callers navigate to `/` until the session is gone.
   clearAuthUserSnapshot()
   clearCachedConvexAuth()
   signingOutStore.setState({ signingOut: true })

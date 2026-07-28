@@ -33,10 +33,10 @@ export function AccountMenu({ email, name }: AccountMenuProps) {
     setPending(true)
 
     // Flag first so the library boundary won't bounce us back to `/library`,
-    // then navigate before token clear. ClientAuthBoundary paints SignInPage on
-    // signed-in routes only as a fallback if this navigate is slow.
+    // then navigate to `/` before token clear. HomeRedirect sends unsigned
+    // users to `/sign-in` so SignInPage mounts only there.
     beginSignOut()
-    router.replace("/sign-in")
+    router.replace("/")
     await settleSignOutQueries()
 
     await authClient.signOut({

@@ -10883,3 +10883,57 @@ Done. Routing is now:
 - **`/sign-in`** — sign-in page again
 - Sign-out and auth-boundary redirects go to `/sign-in`
 
+# Sign-out page flash issue
+_Exported on 7/29/2026 at 00:32:43 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+On sign-out, there is sometimes a brief flash that feels like the page loads twice. This is since the Next.js change. It feels like it's the background image that animates twice.
+
+---
+
+**Cursor**
+
+I'll dig into the sign-out flow and background animation to find why it flashes twice after the Next.js change.
+
+The sign-out path mounts sign-in in a couple of places — next I'll check AuthShell / decorations and the route tree for a double mount.
+
+The double mount is clear in the sign-out path. Next I'll add a tight remount check for the backdrop fade, then list ranked hypotheses.
+
+Sign-out paints `SignInPage` under `/library`, then remounts it on `/sign-in` — that matches a double backdrop fade. Building a remount reveal test next.
+
+**Loop:** `bun test src/lib/authBackdropReveal.test.ts` — red on remount (starts hidden again after reveal).
+
+**Ranked hypotheses**
+
+1. **Double `SignInPage` mount on sign-out** — `beginSignOut()` makes the library boundary render `<RedirectToSignIn />` → `<SignInPage />`, then `router.replace("/sign-in")` remounts it. `AuthBackdropPhoto` resets `loaded` to `false` → opacity fade runs twice.
+2. **Duplicate `router.replace("/sign-in")`** — AccountMenu and RedirectToSignIn both navigate; less likely to cause a second fade by itself than the remount in #1.
+3. **Motion page-enter replaying** — unlikely: `pageEnterInitial` is already `false`.
+4. **`endSignOut()` remounting the signed-out tree** — unlikely: still returns the same `children` on `/sign-in`.
+
+Proceeding with #1: sticky backdrop reveal across remounts.
+
+Biome rewrote the effect deps; I'll inline the reveal logic so it stays stable.
+
+**Cause:** On sign-out, `ClientAuthBoundary` paints `SignInPage` as a redirect fallback on `/library`, then Next.js remounts it on `/sign-in`. `AuthBackdropPhoto` reset `loaded` to `false` each time, so the 500ms opacity fade ran twice.
+
+**Fix:** Sticky reveal in `src/lib/authBackdropReveal.ts` — once a backdrop has faded in this session, remounts start revealed. Wired into `AuthDecorations`.
+
+First visit still fades once; sign-out remount should not. Worth a quick check in the UI.
+
+---
+
+**User**
+
+We should be able to just redirect to /. Don't render the sign-in page outside of /sign-in.
+
+---
+
+**Cursor**
+
+I'll stop painting sign-in off-route and make sign-out a plain redirect to `/`. Checking the current route layout first.
+
+Sign-out and session loss now go to `/` with the atmosphere shell only. `SignInPage` mounts solely on `/sign-in` via `HomeRedirect`. Dropped the sticky-backdrop workaround.
+
