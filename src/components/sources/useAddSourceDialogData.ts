@@ -2,12 +2,7 @@ import { useQuery } from "convex/react"
 import { useEffect, useRef, useState } from "react"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
-import { startSourceIngest } from "src/lib/ingestClient"
-import {
-  beginCreatingSource,
-  completeCreatingSource,
-  failCreatingSource,
-} from "src/lib/pendingSources"
+import { addSources } from "src/lib/addSources"
 import { quotaResetMessage } from "src/lib/quotas"
 
 export function useAddSourceDialogData({
@@ -71,18 +66,14 @@ export function useAddSourceDialogData({
     const submittedUrl = url
 
     onOpenChange(false)
-    beginCreatingSource(notebookId)
 
     try {
-      const sourceId = await startSourceIngest({
-        action: "create",
-        kind: "url",
+      await addSources({
         notebookId,
-        url: submittedUrl,
+        sourceCount: 0,
+        urls: [submittedUrl],
       })
-      completeCreatingSource(notebookId, sourceId)
     } catch (err) {
-      failCreatingSource(notebookId)
       setUrl(submittedUrl)
       setMode("main")
       setError(err instanceof Error ? err.message : "Couldn't add this URL.")
@@ -103,18 +94,14 @@ export function useAddSourceDialogData({
     const submittedText = text
 
     onOpenChange(false)
-    beginCreatingSource(notebookId)
 
     try {
-      const sourceId = await startSourceIngest({
-        action: "create",
-        kind: "text",
+      await addSources({
         notebookId,
-        text: submittedText,
+        sourceCount: 0,
+        texts: [submittedText],
       })
-      completeCreatingSource(notebookId, sourceId)
     } catch (err) {
-      failCreatingSource(notebookId)
       setText(submittedText)
       setMode("text")
       setError(err instanceof Error ? err.message : "Couldn't add this text.")

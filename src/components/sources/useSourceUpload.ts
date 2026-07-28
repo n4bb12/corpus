@@ -1,16 +1,8 @@
 import { useMutation } from "convex/react"
 import { useState } from "react"
-import { uploadSourceFiles } from "src/components/sources/uploadSourceFiles"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
-import {
-  rememberSourceRowKey,
-  updateUploadingSources,
-} from "src/lib/pendingSources"
-import {
-  markUploadingSourceCreated,
-  removeUploadingSource,
-} from "src/lib/uploadingSources"
+import { addSources } from "src/lib/addSources"
 
 export function useSourceUpload({
   notebookId,
@@ -27,28 +19,11 @@ export function useSourceUpload({
 
   async function uploadFiles(files: File[]) {
     try {
-      const notice = await uploadSourceFiles({
-        files,
+      const notice = await addSources({
         notebookId,
         sourceCount: sourceCount + uploadingCount,
+        files,
         generateUploadUrl: async () => generateUploadUrl({}),
-        onPending: (pending) => {
-          updateUploadingSources(notebookId, (current) => [
-            ...pending,
-            ...current,
-          ])
-        },
-        onCreated: (localId, sourceId) => {
-          rememberSourceRowKey(notebookId, sourceId, localId)
-          updateUploadingSources(notebookId, (current) =>
-            markUploadingSourceCreated(current, localId, sourceId),
-          )
-        },
-        onFailed: (localId) => {
-          updateUploadingSources(notebookId, (current) =>
-            removeUploadingSource(current, localId),
-          )
-        },
       })
       setUploadNotice(notice)
     } catch (error) {
