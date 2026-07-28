@@ -10546,3 +10546,24 @@ Creating the new file and updating imports.
 
 Done. `AppConvexProvider` is now `ConvexProvider` at `src/components/context/ConvexProvider.tsx`, with imports updated in `layout.tsx`, `useSignedIn.ts`, and `useSyncAuthUserSnapshot.ts`. The empty `src/integrations` tree was removed.
 
+# Library grain alignment
+_Exported on 7/29/2026 at 00:02:06 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+The library grain is too much. Align with the notebook page.
+
+---
+
+**Cursor**
+
+I'll compare the library and notebook page grain treatments and align them.
+
+Notebook uses plain `atmosphere` without noise — removing the library grain to match.
+
+Removed `atmosphere-noise` from the library shell so it matches the notebook page: pine wash only, no grain overlay.
+
+PRODUCT.md is behind the current product-record schema — say if you want an `init` pass to fill the gaps.
+

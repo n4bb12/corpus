@@ -16,7 +16,7 @@ export function LibraryPage() {
 
   return (
     <div
-      className="atmosphere atmosphere-noise relative flex h-dvh flex-col overflow-hidden"
+      className="atmosphere flex h-dvh flex-col overflow-hidden"
       aria-busy={library.isLoading || undefined}
     >
       {library.isLoading ? (
