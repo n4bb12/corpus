@@ -3,10 +3,12 @@ import { createStore } from "zustand/vanilla"
 
 /**
  * Sliding client optimism window for “still signed in” before Convex / Better Auth
- * settle. Refreshed whenever a live session is confirmed. Matches Better Auth
- * `session.expiresIn` (30 days).
+ * settle. Refreshed whenever a live session is confirmed.
+ *
+ * Kept to a few hours: Convex JWTs default to ~15 minutes and we are not using
+ * refresh-token rotation, so a multi-day snapshot would outlive usable auth.
  */
-export const AUTH_USER_SNAPSHOT_TTL_MS = 60 * 60 * 24 * 30 * 1000
+export const AUTH_USER_SNAPSHOT_TTL_MS = 60 * 60 * 4 * 1000
 
 export const AUTH_USER_SNAPSHOT_STORAGE_KEY = "corpus-auth-user"
 

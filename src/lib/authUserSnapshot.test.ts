@@ -21,7 +21,7 @@ describe("auth user snapshot", () => {
     expect(isAuthUserSnapshotValid(null, 0)).toMatchInlineSnapshot(`false`)
   })
 
-  test("ttl matches thirty days", () => {
-    expect(AUTH_USER_SNAPSHOT_TTL_MS).toMatchInlineSnapshot(`2592000000`)
+  test("ttl is four hours", () => {
+    expect(AUTH_USER_SNAPSHOT_TTL_MS).toMatchInlineSnapshot(`14400000`)
   })
 })

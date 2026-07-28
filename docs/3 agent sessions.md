@@ -9792,7 +9792,7 @@ The culprit was AuthShell’s `BrandLockup` → `<Link to="/">` with `"render"`:
 You’ll still see `schemas` on `/sign-in` — it’s a static dep of the main bundle via the route tree’s Zod `validateSearch` on `/`, not preload.
 
 # Local user snapshot caching
-_Exported on 7/28/2026 at 14:30:06 GMT+2 from Cursor (3.13.21)_
+_Exported on 7/28/2026 at 14:33:08 GMT+2 from Cursor (3.13.21)_
 
 ---
 
@@ -9893,4 +9893,20 @@ Yes — for three jobs nothing else covers:
 JWT caching in that hook is partly redundant with `bootConvexAuthFromCache` (which already persists tokens on fetch). You could drop that `authClient.convex.token()` call and keep the hook for snapshot write/clear + expiry only.
 
 So: keep the hook (or fold those three into `ClientAuthBoundary`); don’t delete it outright.
+
+---
+
+**User**
+
+Regarding the TTL. It feels more like a few hours and I believe we don't use refresh tokens / rotation yet.
+
+---
+
+**Cursor**
+
+Checking session/JWT lifetimes so we can set a TTL that matches reality without refresh rotation.
+
+JWT default is 15 minutes and there's no refresh rotation — dropping the snapshot TTL from 30 days to 4 hours so client optimism matches that.
+
+Updated `AUTH_USER_SNAPSHOT_TTL_MS` to **4 hours**. That matches short-lived Convex JWTs (~15 min default) without refresh rotation; the Better Auth session can still last 30 days — after the snapshot expires we just wait on a live session again instead of pretending we’re signed in.
 
