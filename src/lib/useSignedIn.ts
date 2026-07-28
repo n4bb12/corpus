@@ -1,6 +1,14 @@
 import { useConvexAuth } from "convex/react"
-import { clearConvexQueryCache } from "src/integrations/convex/provider"
+import {
+  clearCachedConvexAuth,
+  clearConvexQueryCache,
+} from "src/integrations/convex/provider"
 import { authClient } from "src/lib/authClient"
+import {
+  clearAuthUserSnapshot,
+  isAuthUserSnapshotValid,
+  useAuthUserSnapshot,
+} from "src/lib/authUserSnapshot"
 import { useStore } from "zustand"
 import { createStore } from "zustand/vanilla"
 
@@ -11,6 +19,8 @@ const signingOutStore = createStore<{ signingOut: boolean }>(() => ({
 export function beginSignOut() {
   // Skip authenticated queries; ClientAuthBoundary navigates to sign-in and
   // keeps that page mounted until the session is gone.
+  clearAuthUserSnapshot()
+  clearCachedConvexAuth()
   signingOutStore.setState({ signingOut: true })
 }
 
@@ -39,17 +49,26 @@ export function useIsSigningOut() {
 }
 
 /**
- * True only after Convex auth and the Better Auth session are both ready.
- * `useConvexAuth` can report authenticated from a cached JWT while the session
- * is still pending — queries in that window can resolve empty and then redo.
+ * True when Convex auth + Better Auth session are ready, or when a still-valid
+ * localStorage user snapshot says we were signed in (so queries can subscribe
+ * immediately). Pair with a cached Convex JWT (`bootConvexAuthFromCache` /
+ * `initialToken`) so `expectAuth` can resume before get-session finishes.
  */
 export function useIsSignedIn() {
   const { isAuthenticated, isLoading } = useConvexAuth()
   const signingOut = useIsSigningOut()
   const session = authClient.useSession()
+  const snapshot = useAuthUserSnapshot()
+
+  if (signingOut) {
+    return false
+  }
+
+  if (isAuthUserSnapshotValid(snapshot)) {
+    return true
+  }
 
   return (
-    !signingOut &&
     !isLoading &&
     !session.isPending &&
     isAuthenticated &&
@@ -57,7 +76,7 @@ export function useIsSignedIn() {
   )
 }
 
-/** Pass query args only when Convex auth is ready; otherwise skip. */
+/** Pass query args only when signed in (live or snapshot); otherwise skip. */
 export function useSignedInQueryArgs<T extends Record<string, unknown>>(
   args: T | "skip",
 ) {
@@ -68,4 +87,29 @@ export function useSignedInQueryArgs<T extends Record<string, unknown>>(
   }
 
   return args
+}
+
+/** Live session user, falling back to the localStorage snapshot. */
+export function useAuthUser() {
+  const session = authClient.useSession()
+  const snapshot = useAuthUserSnapshot()
+  const user = session.data?.user
+
+  if (user) {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    }
+  }
+
+  if (snapshot) {
+    return {
+      id: snapshot.id,
+      name: snapshot.name,
+      email: snapshot.email,
+    }
+  }
+
+  return null
 }

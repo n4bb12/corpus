@@ -3,10 +3,9 @@ import { useMutation } from "convex/react"
 import { useQuery } from "convex-helpers/react/cache"
 import { startTransition, useEffect, useRef, useState } from "react"
 import { api } from "src/convex/_generated/api"
-import { authClient } from "src/lib/authClient"
 import { normalizeTitle } from "src/lib/sourceTitle"
 import { useDebouncedValue } from "src/lib/useDebouncedValue"
-import { useSignedInQueryArgs } from "src/lib/useSignedIn"
+import { useAuthUser, useSignedInQueryArgs } from "src/lib/useSignedIn"
 
 const routeApi = getRouteApi("/")
 const SEARCH_DEBOUNCE_MS = 100
@@ -65,7 +64,7 @@ export function useLibraryPageData() {
       }
     },
   )
-  const session = authClient.useSession()
+  const user = useAuthUser()
   const [creating, setCreating] = useState(false)
   const [creatingNotebookId, setCreatingNotebookId] = useState<string>()
   const pageIndex =
@@ -180,7 +179,7 @@ export function useLibraryPageData() {
   }
 
   return {
-    session,
+    user,
     draft,
     setDraft,
     creating,

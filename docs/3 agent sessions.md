@@ -9791,3 +9791,106 @@ The culprit was AuthShell’s `BrandLockup` → `<Link to="/">` with `"render"`:
 
 You’ll still see `schemas` on `/sign-in` — it’s a static dep of the main bundle via the route tree’s Zod `validateSearch` on `/`, not preload.
 
+# Local user snapshot caching
+_Exported on 7/28/2026 at 14:30:06 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+I’d like to reduce our dependency on the authentication flow and speed things up.
+
+When a page reloads, could we store a local snapshot of the user in `localStorage` and let it expire after a defined period using a timestamp? That would allow us to determine locally whether the user should still be considered authenticated and automatically log them out once the snapshot expires.
+
+This would make us less dependent on Convex authentication during initialization. Of course, if the user is no longer authenticated with Convex, the request should still fail, and we could automatically log them out in that case as well.
+
+The main goal is to avoid the current waterfall: first waiting for the authentication state, then enabling the queries. With a cached user snapshot in `localStorage`, we could enable queries immediately and remove that delay.
+
+---
+
+**Cursor**
+
+I'll explore how auth and query enabling work today so we can design a localStorage user snapshot that skips the auth waterfall.
+
+This touches auth caching, query enablement, and logout behavior — switching to Plan so we can nail the design before coding.
+
+Plan mode was declined — continuing in agent mode. Digging into the auth client and how queries wait on signed-in state.
+
+`expectAuth: true` already queues Convex work until a token exists — the skip in `useSignedIn` is the extra wait. Checking session shape and sign-in paths so we can wire a snapshot cleanly.
+
+Implementing a sync localStorage snapshot (sliding 30-day TTL to match the Better Auth session) and wiring it so queries can start without waiting on the auth waterfall.
+
+Moving snapshot sync into a single boundary-mounted effect so we don't run it from every `useIsSignedIn` caller.
+
+Fixing the expiry timer: `setTimeout` can't reliably wait 30 days, so I'll wake periodically and re-check.
+
+Reverting the half-baked optimization — sliding TTL needs a real store update so the expiry timer resets.
+
+Queries no longer wait on the full Convex + Better Auth handshake when a recent session exists.
+
+**What changed**
+
+1. **`localStorage` snapshot** (`corpus-auth-user`) — stores `id`, `name`, `email`, and `expiresAt`. Sliding TTL is **30 days** (same as Better Auth `session.expiresIn`), refreshed whenever a live session is confirmed.
+
+2. **`useIsSignedIn`** — returns true from a still-valid snapshot so `useSignedInQueryArgs` enables subscriptions immediately. Convex `expectAuth: true` still holds the socket until a real token arrives.
+
+3. **Sync + logout** (`useSyncAuthUserSnapshot` in `ClientAuthBoundary`):
+   - Writes/refreshes the snapshot when the session is ready
+   - Clears it when auth settles with no session (forces query skip + redirect)
+   - Clears it on explicit sign-out
+   - Auto sign-out when the TTL elapses while the app is open
+
+4. **`useAuthUser`** — Account menu name/email come from the live session, with the snapshot as a fallback so the header isn’t blank during settle.
+
+If you want a shorter optimism window than 30 days, change `AUTH_USER_SNAPSHOT_TTL_MS` in `src/lib/authUserSnapshot.ts`.
+
+---
+
+**User**
+
+We added the local snapshot but queries are still waiting.
+
+---
+
+**Cursor**
+
+Investigating why queries still wait — tracing the signed-in gate and what still blocks subscriptions after the snapshot.
+
+The React skip gate isn’t the bottleneck — `expectAuth` still waits for a Convex JWT. Checking how we can cache that token (e.g. `initialToken`) so the socket can resume immediately.
+
+Root cause: the user snapshot only skips the React `"skip"` gate — `expectAuth` still blocks the socket until a Convex JWT exists. Caching that JWT and booting auth from it unblocks queries immediately.
+
+Force-refresh after the first authenticate was clearing the boot token. Updating the boot fetcher to refresh via the cookie-backed token endpoint instead.
+
+Also booting auth when only the user snapshot exists (no cached JWT yet), so we hit the token endpoint immediately instead of waiting on `useSession`.
+
+The user snapshot only removed the React `"skip"` gate. With `expectAuth: true`, the Convex socket stayed paused until a JWT existed — so queries still waited on get-session + token.
+
+**What we added**
+1. Cache the Convex JWT in `localStorage` (`corpus-convex-token`)
+2. Boot `setAuth` from that cache (or from a user snapshot) at module load, so the socket can resume before React auth settles
+3. Pass `initialToken` into `ConvexBetterAuthProvider`
+4. Persist/clear the JWT with the session sync and on sign-out
+
+After one signed-in load (to populate the JWT cache), reloads should subscribe and fetch without waiting on the auth waterfall. If `corpus-convex-token` is missing, do a normal load once, then reload to verify.
+
+---
+
+**User**
+
+Do we still need useSyncAuthUserSnapshot
+
+---
+
+**Cursor**
+
+Yes — for three jobs nothing else covers:
+
+1. **Write the user snapshot** after a live session confirms (otherwise the next reload has no optimism; JWT boot alone doesn’t create `corpus-auth-user`)
+2. **Clear snapshot + JWT** when auth settles with no session (otherwise a stale snapshot keeps `useIsSignedIn` true and boot auth can linger)
+3. **TTL sign-out** while the tab stays open
+
+JWT caching in that hook is partly redundant with `bootConvexAuthFromCache` (which already persists tokens on fetch). You could drop that `authClient.convex.token()` call and keep the hook for snapshot write/clear + expiry only.
+
+So: keep the hook (or fold those three into `ClientAuthBoundary`); don’t delete it outright.
+

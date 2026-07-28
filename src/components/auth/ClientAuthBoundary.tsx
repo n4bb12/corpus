@@ -3,6 +3,7 @@ import { useConvexAuth } from "convex/react"
 import { type ReactNode, useEffect, useLayoutEffect } from "react"
 import { authClient } from "src/lib/authClient"
 import { endSignOut, useIsSigningOut } from "src/lib/useSignedIn"
+import { useSyncAuthUserSnapshot } from "src/lib/useSyncAuthUserSnapshot"
 import { SignInPage } from "src/pages/SignInPage"
 
 export type ClientAuthBoundaryProps = {
@@ -29,6 +30,8 @@ export function ClientAuthBoundary({
   const session = authClient.useSession()
   const signingOut = useIsSigningOut()
   const hasSession = !!session.data?.session
+
+  useSyncAuthUserSnapshot()
 
   // Drop the flag only after the session is actually gone so we never remount
   // signed-in pages between the sign-out click and a settled sign-in route.
@@ -60,8 +63,8 @@ export function ClientAuthBoundary({
     return <RedirectToSignIn />
   }
 
-  // Never block first paint on auth. Pages render immediately; queries already
-  // skip via useSignedInQueryArgs until the session is ready.
+  // Never block first paint on auth. Pages render immediately; queries enable
+  // from a valid localStorage user snapshot (or once the live session is ready).
   if (!authReady) {
     return children
   }

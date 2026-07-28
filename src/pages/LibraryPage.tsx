@@ -25,10 +25,7 @@ export function LibraryPage() {
 
       <ScrollArea className="min-h-0 flex-1">
         <div className="relative z-10">
-          <AppHeader
-            email={library.session.data?.user.email}
-            name={library.session.data?.user.name}
-          />
+          <AppHeader email={library.user?.email} name={library.user?.name} />
           <main className="mx-auto w-full max-w-336 px-4 py-16 md:px-6">
             <div className="mb-10 flex flex-col gap-6 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
               <div className="space-y-3">

@@ -19,8 +19,8 @@ export function NotebookPage() {
   return (
     <div className="atmosphere flex h-dvh flex-col overflow-hidden">
       <AppHeader
-        email={page.session.data?.user.email}
-        name={page.session.data?.user.name}
+        email={page.user?.email}
+        name={page.user?.name}
         notebookTitle={
           <motion.div
             initial={pageEnterInitial}
