@@ -9726,3 +9726,68 @@ Added a root `preconnect` to the Convex cloud origin in `__root.tsx`. Auth stays
 
 Expect a small cold-connect win, not a fix for the full auth→list wait.
 
+# Login page JS
+_Exported on 7/28/2026 at 04:47:23 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+Quite a bit of JS for a login page.
+
+---
+
+**Cursor**
+
+Agreed — the sign-in chunk is tiny; the weight is shared bundles. I'll trace what's pulling those in.
+
+The sign-in route itself is 0.3 kB — weight is shared chunks and likely preload. Checking what those chunks contain.
+
+Yes — and most of it isn’t the login UI.
+
+`sign-in-*.js` is **0.3 kB**. The rest is shared runtime:
+
+| Chunk | ~transfer | What’s in it |
+|---|---|---|
+| `index` | 91 kB | app shell / router |
+| `preload-helper` | 72 kB | **better-auth + Convex** (root `AppConvexProvider`) |
+| `ClientAuthBoundary` | 71 kB | auth gate + **`SignInPage` + Motion** |
+| `schemas` | 18 kB | **Zod** |
+| `routes` / `sourceTitle` | ~15 kB | library/notebook helpers |
+
+Roughly **~270 kB** of app JS transferred. Ignore the extension noise (`injected.js` ~424 kB, `js.js` / `dom.js`) — those aren’t yours.
+
+Why it looks fat for a form:
+
+1. **Auth stack is global** — root always mounts Convex + Better Auth, so sign-in pays for that even before the form runs.
+2. **`ClientAuthBoundary` statically imports `SignInPage`**, so Motion lands in that 71 kB chunk on every auth-gated route.
+3. **`defaultPreload: "render"`** in `router.tsx` plus the `/` route’s Zod `validateSearch` likely pulls **`schemas` / `routes` / `sourceTitle`** even when you’re only on `/sign-in`.
+
+Necessary for “email / Google → session”: Convex + Better Auth. Not necessary for first paint of a login card: Motion in the auth boundary chunk, and Zod/library chunks via preload.
+
+Biggest levers if you want to trim: lazy `SignInPage` (or drop Motion on auth), and stop preloading `/` from signed-out (`defaultPreload: "intent"` / `"viewport"`, or no preload on `/sign-in`).
+
+---
+
+**User**
+
+It's kinda pointless to preload anything besides the sign-in page because we'll redirect through google or click the email link. We're not client-side-navigating to the authenticated area.
+
+---
+
+**Cursor**
+
+You're right — auth exits via full navigation, so preloading the app from `/sign-in` is wasted. Checking what's actually triggering those loads before changing it.
+
+Prerender already modulepreloads `schemas`; Brand lockup likely triggers `/` preload. Checking that path.
+
+BrandLockup’s `<Link to="/">` with `defaultPreload: "render"` preloads the library as soon as the auth shell mounts. Turning that off.
+
+Comments are a bit long for this repo — tightening them.
+
+Set `defaultPreload: false`.
+
+The culprit was AuthShell’s `BrandLockup` → `<Link to="/">` with `"render"`: that mounted link immediately prefetched the library route (`routes` + `sourceTitle`).
+
+You’ll still see `schemas` on `/sign-in` — it’s a static dep of the main bundle via the route tree’s Zod `validateSearch` on `/`, not preload.
+

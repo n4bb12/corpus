@@ -6,7 +6,9 @@ export function getRouter() {
   const router = createTanStackRouter({
     routeTree,
     scrollRestoration: true,
-    defaultPreload: "render",
+    // Auth leaves via full navigations (OAuth / magic link), not client routing
+    // into the app — don't preload `/` from BrandLockup on /sign-in.
+    defaultPreload: false,
     // Only used for client-only routes (notebooks) and the SPA shell mask.
     // `/` and `/sign-in` SSR real page HTML during prerender.
     defaultPendingComponent: AppPending,
