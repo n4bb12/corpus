@@ -9460,3 +9460,27 @@ Updating the error message to plain-language wording about pages that only load 
 Updated the message to:
 
 > Couldn't find readable text in this source. Pages that only show their content after loading in a browser aren't supported.
+
+# CitationPills height discrepancy
+_Exported on 7/28/2026 at 03:41:56 GMT+2 from Cursor (3.13.21)_
+
+---
+
+**User**
+
+CitationPillsPending seem to have a slightly different height.
+
+---
+
+**Cursor**
+
+I'll compare `CitationPillsPending` with the regular citation pills to find the height mismatch.
+
+Checking shimmer styles and how the pills sit in the message layout.
+
+Checking theme text sizing — real pills use `text-xs`, which may push them above `size-6`.
+
+Real pills use `min-h-6` + `text-xs` + `px-2`; pending uses fixed `size-6`, so the text line box can leave them short. Matching the real pill box model.
+
+The pending pills used fixed `size-6`, while real ones size from `min-h-6` + `text-xs` + `px-2`. They now share that same box model, with a transparent `0` so the text line box matches.
+

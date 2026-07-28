@@ -6,13 +6,17 @@ export function CitationPillsPending() {
         Linking sources…
       </span>
       <span
-        className="inline-flex size-6 shrink-0 rounded-full placeholder-shimmer"
+        className="inline-flex min-h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-2 text-xs font-medium placeholder-shimmer"
         aria-hidden
-      />
+      >
+        0
+      </span>
       <span
-        className="inline-flex size-6 shrink-0 rounded-full placeholder-shimmer"
+        className="inline-flex min-h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-2 text-xs font-medium placeholder-shimmer"
         aria-hidden
-      />
+      >
+        0
+      </span>
     </div>
   )
 }
