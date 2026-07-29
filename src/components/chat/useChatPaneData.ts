@@ -45,9 +45,9 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   const [clearOpen, setClearOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [streamedContent, setStreamedContent] = useState<string | null>(null)
-  const [streamedCitations, setStreamedCitations] = useState<StreamCitation[]>(
-    [],
-  )
+  const [streamedCitations, setStreamedCitations] = useState<
+    StreamCitation[]
+  >([])
   const [streamedInsufficient, setStreamedInsufficient] = useState<
     boolean | null
   >(null)
@@ -187,6 +187,9 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     setStreamedInsufficient(null)
     setProgressLabel(CHAT_PROGRESS.looking)
     setRetryAssistantId(retryAssistantId ?? null)
+    // Clear with the optimistic row so the thread never shows the same text
+    // still sitting in the composer.
+    setPrompt("")
 
     if (!retryAssistantId) {
       setOptimisticSubmission({
@@ -199,6 +202,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     const controller = new AbortController()
     abortRef.current = controller
     acceptingStreamRef.current = true
+    let accepted = false
 
     try {
       const response = await fetch("/api/chat", {
@@ -228,7 +232,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
         throw new Error(message)
       }
 
-      setPrompt("")
+      accepted = true
       const result = await consumeChatSse(response, {
         signal: controller.signal,
         shouldAccept: () => acceptingStreamRef.current,
@@ -282,6 +286,10 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
     } catch (err) {
       if ((err as Error).name === "AbortError" || controller.signal.aborted) {
         return
+      }
+
+      if (!accepted) {
+        setPrompt(nextPrompt)
       }
 
       await markFailed(formatChatError(err))
