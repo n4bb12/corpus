@@ -11365,3 +11365,36 @@ Locking in Quint and removing the experiment switcher.
 
 Locked to **easeOutQuint** and removed the switcher.
 
+# Atomic commits discussion
+_Exported on 7/29/2026 at 23:10:43 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+/atomic-commits 
+
+---
+
+**Cursor**
+
+I'll inspect the working tree and recent commit style, then split the changes into atomic commits.
+
+Next I'll read the full diffs to group changes by intent.
+
+I've mapped seven semantic groups. Checking a couple of call-site details, then staging and committing each group.
+
+Committing in seven groups, staging hunks carefully where files mix concerns.
+
+Next: AnswerCitationSlot rename, then the empty-prompt animation group.
+
+Split into 7 commits on `main` (working tree clean):
+
+1. `8a2142c` — fix(chat): use destructive variant for stop button  
+2. `f602fd9` — fix(chat): clear composer when the optimistic message appears  
+3. `14acd62` — refactor(chat): prefer AnswerCitationSlot over deprecated StreamCitation  
+4. `30602af` — feat(chat): animate empty prompt enter and drop mobile chat-tab motion  
+5. `1e647a9` — fix(scroll): ease-out hybrid jump after the target offset settles  
+6. `6632120` — fix(sources): keep preview scroll thumb aligned after virtualizer churn  
+7. `898a642` — docs: record stop button, composer clear, empty prompt, and scroll sessions
+
