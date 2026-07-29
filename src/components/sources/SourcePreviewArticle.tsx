@@ -17,7 +17,7 @@ export type SourcePreviewArticleProps = {
 }
 
 const ESTIMATED_BLOCK_SIZE = 96
-const OVERSCAN = 8
+const OVERSCAN = 16
 
 export function SourcePreviewArticle({
   markdown,
@@ -78,6 +78,7 @@ export function SourcePreviewArticle({
   }, [blocks.length, resolvedOffsets, scrollElement, targetIndex, virtualizer])
 
   const virtualItems = virtualizer.getVirtualItems()
+
 
   return (
     <article
