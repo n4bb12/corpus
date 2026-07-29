@@ -1,6 +1,9 @@
+import { motion, useReducedMotion } from "motion/react"
+import type { ReactNode } from "react"
 import { Eyebrow } from "src/components/ui/Eyebrow"
 import { IslandCta } from "src/components/ui/IslandCta"
 import { PendingLabel } from "src/components/ui/PendingLabel"
+import { respectReducedMotion, revealTransition } from "src/lib/motion"
 
 const SUGGESTIONS = [
   "Give me a concise brief of the sources.",
@@ -19,14 +22,21 @@ export type ChatEmptyPromptProps = {
   onSendSuggestion: (suggestion: string) => void
 }
 
+const emptyPromptHidden = { opacity: 0, y: 8 } as const
+const emptyPromptVisible = { opacity: 1, y: 0 } as const
+
 export function ChatEmptyPrompt({
   state,
   onAddSource,
   onOpenSources,
   onSendSuggestion,
 }: ChatEmptyPromptProps) {
+  const reduceMotion = useReducedMotion()
+
+  let body: ReactNode
+
   if (state === "ready") {
-    return (
+    body = (
       <div className="space-y-6 pt-10">
         <div className="space-y-3">
           <Eyebrow>Grounded answers</Eyebrow>
@@ -52,10 +62,8 @@ export function ChatEmptyPrompt({
         </div>
       </div>
     )
-  }
-
-  if (state === "processing") {
-    return (
+  } else if (state === "processing") {
+    body = (
       <div className="space-y-5 pt-10">
         <Eyebrow>Getting ready</Eyebrow>
         <h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
@@ -74,10 +82,8 @@ export function ChatEmptyPrompt({
         </PendingLabel>
       </div>
     )
-  }
-
-  if (state === "select") {
-    return (
+  } else if (state === "select") {
+    body = (
       <div className="space-y-5 pt-10">
         <Eyebrow>Sources first</Eyebrow>
         <h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
@@ -89,18 +95,28 @@ export function ChatEmptyPrompt({
         <IslandCta onClick={onOpenSources}>Select sources</IslandCta>
       </div>
     )
+  } else {
+    body = (
+      <div className="space-y-5 pt-10">
+        <Eyebrow>Sources first</Eyebrow>
+        <h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
+          Add and select sources
+        </h2>
+        <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+          Chat needs at least one selected source that has finished processing.
+        </p>
+        <IslandCta onClick={onAddSource}>Add first source</IslandCta>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-5 pt-10">
-      <Eyebrow>Sources first</Eyebrow>
-      <h2 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
-        Add and select sources
-      </h2>
-      <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-        Chat needs at least one selected source that has finished processing.
-      </p>
-      <IslandCta onClick={onAddSource}>Add first source</IslandCta>
-    </div>
+    <motion.div
+      initial={emptyPromptHidden}
+      animate={emptyPromptVisible}
+      transition={respectReducedMotion(reduceMotion, revealTransition)}
+    >
+      {body}
+    </motion.div>
   )
 }

@@ -27,6 +27,8 @@ export type ChatMessageListProps = {
   retryAssistantId: string | null
   optimisticUserPrompt: string | null
   emptyPromptState: ChatEmptyPromptState
+  /** False while the chat pane is off-screen (mobile sources tab). */
+  emptyPromptMounted?: boolean
   canRetry: boolean
   onAddSource: () => void
   onOpenSources: () => void
@@ -44,6 +46,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   retryAssistantId,
   optimisticUserPrompt,
   emptyPromptState,
+  emptyPromptMounted = true,
   canRetry,
   onAddSource,
   onOpenSources,
@@ -60,11 +63,13 @@ export const ChatMessageList = memo(function ChatMessageList({
     progressLabel,
     retryAssistantId,
   )
+  const showEmptyPrompt = empty && emptyPromptMounted
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-200 flex-col gap-6 pt-4 pb-48 md:pb-72">
-      {empty ? (
+      {showEmptyPrompt ? (
         <ChatEmptyPrompt
+          key={emptyPromptState}
           state={emptyPromptState}
           onAddSource={onAddSource}
           onOpenSources={onOpenSources}

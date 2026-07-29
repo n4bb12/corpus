@@ -12,6 +12,7 @@ import type { Id } from "src/convex/_generated/dataModel"
 
 export type ChatPaneProps = {
   notebookId: Id<"notebooks">
+  emptyPromptMounted?: boolean
   onOpenSources: () => void
   onAddSource: () => void
   onCite: (args: ChatCiteArgs) => void
@@ -19,6 +20,7 @@ export type ChatPaneProps = {
 
 export function ChatPane({
   notebookId,
+  emptyPromptMounted,
   onOpenSources,
   onAddSource,
   onCite,
@@ -60,6 +62,7 @@ export function ChatPane({
           retryAssistantId={chat.retryAssistantId}
           optimisticUserPrompt={chat.optimisticUserPrompt}
           emptyPromptState={chat.emptyPromptState}
+          emptyPromptMounted={emptyPromptMounted}
           canRetry={chat.canRetry}
           onAddSource={onAddSource}
           onOpenSources={onOpenSources}
