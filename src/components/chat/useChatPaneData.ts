@@ -3,6 +3,7 @@ import { useQuery } from "convex-helpers/react/cache"
 import { useEffect, useRef, useState } from "react"
 import { api } from "src/convex/_generated/api"
 import type { Id } from "src/convex/_generated/dataModel"
+import type { AnswerCitationSlot } from "src/lib/answerCitation"
 import { formatChatError } from "src/lib/chatErrors"
 import {
   canRetryLatestAssistant,
@@ -11,7 +12,7 @@ import {
   patchChatEntriesForCancel,
 } from "src/lib/chatHistory"
 import { CHAT_PROGRESS } from "src/lib/chatProgress"
-import { consumeChatSse, type StreamCitation } from "src/lib/chatSse"
+import { consumeChatSse } from "src/lib/chatSse"
 import { useHasPendingSources } from "src/lib/pendingSources"
 import { useSignedInQueryArgs } from "src/lib/useSignedIn"
 
@@ -46,7 +47,7 @@ export function useChatPaneData(notebookId: Id<"notebooks">) {
   const [error, setError] = useState<string | null>(null)
   const [streamedContent, setStreamedContent] = useState<string | null>(null)
   const [streamedCitations, setStreamedCitations] = useState<
-    StreamCitation[]
+    AnswerCitationSlot[]
   >([])
   const [streamedInsufficient, setStreamedInsufficient] = useState<
     boolean | null

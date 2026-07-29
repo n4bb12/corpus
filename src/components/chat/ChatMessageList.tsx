@@ -10,8 +10,8 @@ import { ChatProgressLabel } from "src/components/chat/ChatProgressLabel"
 import { ChatSourceBoundary } from "src/components/chat/ChatSourceBoundary"
 import type { ChatCiteArgs } from "src/components/chat/CitationPills"
 import type { api } from "src/convex/_generated/api"
+import type { AnswerCitationSlot } from "src/lib/answerCitation"
 import { shouldShowOptimisticProgress } from "src/lib/chatHistory"
-import type { StreamCitation } from "src/lib/chatSse"
 import { fadeTransition } from "src/lib/motion"
 
 export type { ChatCiteArgs }
@@ -21,7 +21,7 @@ type ChatListEntry = FunctionReturnType<typeof api.chat.list>[number]
 export type ChatMessageListProps = {
   entries: ChatListEntry[] | undefined
   streamedContent: string | null
-  streamedCitations: StreamCitation[]
+  streamedCitations: AnswerCitationSlot[]
   streamedInsufficient: boolean | null
   progressLabel: string | null
   retryAssistantId: string | null
