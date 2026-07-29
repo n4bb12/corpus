@@ -84,7 +84,12 @@ export function ChatComposer({
               </Button>
 
               {streaming ? (
-                <IslandCta type="button" showArrow={false} onClick={onStop}>
+                <IslandCta
+                  type="button"
+                  variant="destructive"
+                  showArrow={false}
+                  onClick={onStop}
+                >
                   <span className="inline-flex items-center gap-2 leading-none">
                     <Square size={16} className="shrink-0" aria-hidden />
                     Stop
