@@ -10976,3 +10976,48 @@ The plus card now shows the same creating feedback as the header button.
 
 `bun types` and `bun fix` both pass.
 
+# Streaming sources performance
+_Exported on 7/29/2026 at 13:36:42 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Streaming sources is always a bit slow. Sure, we have some work to do but generally it is surprising since the response is based on those selected sources so they kinda should be known already.
+
+---
+
+**Cursor**
+
+I'll dig into how selected sources are resolved versus when they get streamed in the response path.
+
+The progress copy and chat pipeline look like the right place — next I'll trace when sources get attached during a turn.
+
+You’re right that **which sources are in play** is known early — `prepareGeneration` already snapshots the ready-selected set, and after evidence packing we even know which of those made it into the prompt.
+
+What streams late isn’t that set. It’s **per-paragraph citations**: which chunks, with which quotes. Those only exist once the model emits them (`text` → `citations[]`), and we intentionally **hold the trailing paragraph’s pills** until that array settles, so you get shimmer “Linking sources…” instead of half-baked slots.
+
+So the lag isn’t “discovering sources” — it’s waiting on structured citation tokens (especially quotes) that aren’t knowable from selection alone.
+
+Worth speeding up perceived latency by streaming **source titles from the evidence pack** as soon as packing finishes (before answer tokens), and/or emitting **chunkId → source title** pills as soon as IDs land and resolving quotes after?
+
+---
+
+**User**
+
+Let's give it a try. See how it feels.
+
+---
+
+**Cursor**
+
+We'll try making citation pills show up as soon as chunk IDs land (with titles from evidence), and refine quotes afterward — checking the stream schema and client path first.
+
+Turning off trailing-citation holding so pills can appear as soon as chunk IDs land, with titles from the evidence pack.
+
+Try a chat turn and see how the pills feel.
+
+**What changed:** streaming no longer holds the trailing paragraph’s citations. As soon as a `chunkId` lands, the pill shows with the **source title from the evidence pack**; quotes/locators still refine on finalize. Shimmer only covers the short gap between text and the first chunk ID.
+
+If it feels too twitchy as the citation array grows, we can put a light hold back — or go further and drop quotes from the stream schema entirely.
+

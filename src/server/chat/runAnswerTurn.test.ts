@@ -245,4 +245,101 @@ describe("runAnswerTurn", () => {
       }
     `)
   })
+
+  test("streams citation pills once chunkIds land, before quotes finish", async () => {
+    const streamedCitations: Array<
+      Array<{ liveTitle: string; excerpt: string }>
+    > = []
+
+    const turn = await runAnswerTurn({
+      evidencePack,
+      sourcesById: new Map([
+        ["source-1", { title: "Forest notes", deletedAt: null }],
+      ]),
+      history: [],
+      prompt: "What seals wounds?",
+      generateAnswer: {
+        stream() {
+          return {
+            partials: (async function* () {
+              yield {
+                insufficient: false,
+                paragraphs: [
+                  {
+                    text: "Resin seals wounds.",
+                    citations: [{ chunkId: "chunk-1", quote: "" }],
+                  },
+                ],
+              }
+              yield {
+                insufficient: false,
+                paragraphs: [
+                  {
+                    text: "Resin seals wounds.",
+                    citations: [
+                      {
+                        chunkId: "chunk-1",
+                        quote: "Pine resin seals wounds on the trunk.",
+                      },
+                    ],
+                  },
+                ],
+              }
+            })(),
+            output: Promise.resolve({
+              insufficient: false,
+              paragraphs: [
+                {
+                  text: "Resin seals wounds.",
+                  citations: [
+                    {
+                      chunkId: "chunk-1",
+                      quote: "Pine resin seals wounds on the trunk.",
+                    },
+                  ],
+                },
+              ],
+            }),
+          }
+        },
+        generateOnce() {
+          return Promise.resolve(null)
+        },
+      },
+      onPartial: {
+        citations: (citations) => {
+          streamedCitations.push(
+            citations.map((citation) => ({
+              liveTitle: citation.liveTitle,
+              excerpt: citation.excerpt,
+            })),
+          )
+        },
+      },
+    })
+
+    expect(turn.status).toBe("complete")
+    expect(streamedCitations).toMatchInlineSnapshot(`
+      [
+        [
+          {
+            "excerpt": "Pine resin seals wounds on the trunk.",
+            "liveTitle": "Forest notes",
+          },
+        ],
+        [
+          {
+            "excerpt": "Pine resin seals wounds on the trunk.",
+            "liveTitle": "Forest notes",
+          },
+        ],
+        [
+          {
+            "excerpt": "Pine resin seals wounds on the trunk.",
+            "liveTitle": "Forest notes",
+          },
+        ],
+      ]
+    `)
+  })
 })

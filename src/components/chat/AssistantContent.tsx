@@ -9,7 +9,7 @@ export type AssistantContentProps = {
   content: string
   citations: AnswerCitationSlot[]
   insufficient?: boolean
-  /** Trailing paragraph cites are held until they finish; show placeholders meanwhile. */
+  /** Show placeholders after text until the first citation chunkIds stream in. */
   citationsPending?: boolean
   onCite: (args: ChatCiteArgs) => void
 }

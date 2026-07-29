@@ -264,10 +264,6 @@ export async function runAnswerTurn(args: {
     markerStyle: "numbered" as const,
     chunkTextById,
   }
-  const streamingCiteOptions = {
-    ...citeOptions,
-    holdTrailingParagraphCitations: true,
-  }
 
   let lastStreamedCitationSignature = ""
 
@@ -289,11 +285,9 @@ export async function runAnswerTurn(args: {
     if (typeof partial.insufficient === "boolean" && partial.insufficient) {
       onPartial.text?.(joinParagraphText(paragraphs))
     } else {
-      const built = buildCitedMarkdown(
-        paragraphs,
-        allowed,
-        streamingCiteOptions,
-      )
+      // Emit pills as soon as chunkIds land (titles come from the evidence
+      // pack). Quotes may still be streaming; finalize resolves locators.
+      const built = buildCitedMarkdown(paragraphs, allowed, citeOptions)
 
       onPartial.text?.(normalizeNumberedCitedMarkdown(built.content))
 
