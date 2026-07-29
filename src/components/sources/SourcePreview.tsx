@@ -107,7 +107,7 @@ export function SourcePreview({
         className="min-h-0 flex-1 overflow-hidden"
         viewportRef={setScrollElement}
       >
-        <div className="p-4 sm:p-6">
+        <div className="p-4 py-6">
           {markdown ? (
             <SourcePreviewArticle
               markdown={markdown}

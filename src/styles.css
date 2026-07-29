@@ -211,6 +211,9 @@ textarea:-webkit-autofill:active {
 [data-slot="scroll-area-viewport"] {
 	overflow-x: hidden !important;
 	overflow-y: auto !important;
+	/* Virtualized lists remount/remeasure above the fold; anchoring fights the
+	   virtualizer and can leave scrollTop stranded above 0. */
+	overflow-anchor: none;
 }
 
 .atmosphere {

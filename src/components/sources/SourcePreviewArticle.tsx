@@ -77,13 +77,31 @@ export function SourcePreviewArticle({
     }
   }, [blocks.length, resolvedOffsets, scrollElement, targetIndex, virtualizer])
 
+  const totalSize = virtualizer.getTotalSize()
   const virtualItems = virtualizer.getVirtualItems()
 
+  // Estimate→measure can shrink scrollHeight and clamp scrollTop without a
+  // scroll event. Radix only repositions its thumb on scroll (or size state
+  // updates); a synthetic scroll keeps the thumb aligned after virtualizer
+  // layout churn. Defer off the effect so TanStack's scroll→flushSync does
+  // not run inside React's lifecycle.
+  useEffect(() => {
+    if (!scrollElement) {
+      return
+    }
+
+    void totalSize
+    const frameId = requestAnimationFrame(() => {
+      scrollElement.dispatchEvent(new Event("scroll"))
+    })
+
+    return () => cancelAnimationFrame(frameId)
+  }, [scrollElement, totalSize])
 
   return (
     <article
       className="prose prose-sm dark:prose-invert relative max-w-none"
-      style={{ height: virtualizer.getTotalSize() }}
+      style={{ height: totalSize }}
     >
       {virtualItems.map((item) => {
         const block = blocks[item.index]
