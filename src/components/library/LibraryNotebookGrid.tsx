@@ -104,7 +104,12 @@ export function LibraryNotebookGrid({
         >
           {showHeroLayout ? (
             <div className="col-span-1 sm:col-span-1 lg:col-span-4 lg:row-span-2">
-              <AddNotebookCard disabled={creating} onClick={onCreate} tall />
+              <AddNotebookCard
+                disabled={creating}
+                pending={creating}
+                onClick={onCreate}
+                tall
+              />
             </div>
           ) : null}
           {page.map((notebook, index) => (

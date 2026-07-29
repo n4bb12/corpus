@@ -10937,3 +10937,42 @@ I'll stop painting sign-in off-route and make sign-out a plain redirect to `/`. 
 
 Sign-out and session loss now go to `/` with the atmosphere shell only. `SignInPage` mounts solely on `/sign-in` via `HomeRedirect`. Dropped the sticky-backdrop workaround.
 
+# Plus card feedback request
+_Exported on 7/29/2026 at 13:33:26 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+The new notebook primary button has a spinner for feedback but the plus card has nothing. I'd like a feedback there, too. Alternatively, time to navigation could be shorter. If it were shorter, we might be fine without.
+
+---
+
+**Cursor**
+
+I'll look at how the new-notebook primary button and plus card handle creation feedback and navigation timing.
+
+Checking how the create path and card interact, and whether navigation can start sooner.
+
+The mutation has to finish before we have a notebook id to navigate to, so speeding up navigation alone won’t cover that wait — card feedback is the better fix. I’ll plan that.
+
+---
+
+**User**
+
+Implement the plan as specified, it is attached for your reference. Do NOT edit the plan file itself.
+
+To-do's from the plan have already been created. Do not create them again. Mark them as in_progress as you work, starting with the first one. Don't stop until you have completed all the to-dos.
+
+---
+
+**Cursor**
+
+The plus card now shows the same creating feedback as the header button.
+
+**[`AddNotebookCard.tsx`](src/components/library/AddNotebookCard.tsx)** — Added a `pending` prop. While creating, the Plus icon becomes a `Spinner` in the same `size-12` container (no layout shift), hover scale is off, and the button gets `aria-busy` plus `aria-label="Creating notebook"` on the spinner.
+
+**[`LibraryNotebookGrid.tsx`](src/components/library/LibraryNotebookGrid.tsx)** — Passes `pending={creating}` alongside the existing `disabled={creating}`.
+
+`bun types` and `bun fix` both pass.
+
