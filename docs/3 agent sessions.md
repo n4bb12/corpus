@@ -11021,3 +11021,347 @@ Try a chat turn and see how the pills feel.
 
 If it feels too twitchy as the citation array grows, we can put a light hold back — or go further and drop quotes from the stream schema entirely.
 
+# Stop button color change
+_Exported on 7/29/2026 at 22:01:24 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+The stop button should have a different color so it's less easily confused with the send button.
+
+---
+
+**Cursor**
+
+I'll find the send and stop button styles so we can give stop a distinct color.
+
+Stop and Send both use the same primary `IslandCta`. I'll switch Stop to the destructive variant so it reads as cancel/halt.
+
+Stop now uses the destructive button variant (soft red) instead of the same primary pine as Send, so the two are easier to tell apart.
+
+# Message input delay issue
+_Exported on 7/29/2026 at 22:01:51 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+When sending a message manually, the message stays in the input for a split second. It even shows up in the message thread before the composer input is cleared.
+
+---
+
+**Cursor**
+
+I'll look at how manual send clears the composer relative to when the message appears in the thread.
+
+Following the diagnosis skill—I'll inspect the send path and set up a way to catch the clear-vs-thread ordering.
+
+Found it: `setPrompt("")` runs only after `/api/chat` returns OK, while the optimistic message is set immediately. Checking helpers and tests so we can clear on send and restore on failure.
+
+Confirmed: optimistic message is set immediately, but `setPrompt("")` waits until `/api/chat` returns OK. Clearing the prompt in the same turn as the optimistic update.
+
+The composer was clearing **after** `/api/chat` returned OK, while the optimistic user row was painted **immediately** on send — so the same text briefly appeared in both places.
+
+**Fix** in `useChatPaneData`: clear the prompt in the same turn as the optimistic submission. If the request fails before it’s accepted, the prompt is restored so you can retry.
+
+# Chat thread animation request
+_Exported on 7/29/2026 at 22:02:34 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+Whenever drawing the top of the chat thread (suggestion to add sources, suggested messages, etc.), I would like to have it animated. e.g. after clearing, after switching mobile tabs to the chat, after switching between no selected sources and at least one, etc. We can remove the chat animation on mobile that we currently perform to avoid layering two animations.
+
+---
+
+**Cursor**
+
+I'll look at how the chat thread top section and the current mobile chat animation are implemented so we can animate those transitions cleanly.
+
+I'll animate `ChatEmptyPrompt` on state/tab/clear reveals, and remove the mobile chat-pane enter animation so they don't stack.
+
+Fixing the reveal key so mobile SSR/hydration doesn't remount the empty prompt.
+
+Simplifying mobile tab handling: unmount the empty prompt while the chat pane is hidden so it re-enters cleanly without a separate reveal key.
+
+The empty chat top now fades/slides in via `AnimatePresence`, and the old mobile chat-pane enter animation is gone.
+
+**What animates**
+- Clearing the chat (empty prompt mounts)
+- Empty-prompt state changes (`empty` / `select` / `processing` / `ready`)
+- Switching back to chat on mobile (prompt unmounts while sources is active, then re-enters)
+
+**Removed**
+- `chatTabMotion` and the wrapping motion div in `NotebookWorkspace` that animated the whole chat pane on mobile tab switches
+
+---
+
+**User**
+
+The animation behaves weirly when sending a chat message. Only animate its entry.
+
+---
+
+**Cursor**
+
+I'll make the empty prompt animate only on enter and skip the exit when a message is sent.
+
+Empty prompt now only runs its enter animation. Sending a message removes it immediately — no exit fade/slide fighting the new message.
+
+# ChatEmptyPrompt animation speed
+_Exported on 7/29/2026 at 22:58:27 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+The animation on @src/components/chat/ChatEmptyPrompt.tsx needs to be a tad slower.
+
+---
+
+**Cursor**
+
+Switching the empty prompt from the 180ms layout transition to the existing 320ms reveal transition — same fade/slide pattern, just a bit slower.
+
+Switched it from `layoutTransition` (180ms) to `revealTransition` (320ms) — same ease, just a bit more leisurely on the entrance.
+
+# StreamCitation deprecation notice
+_Exported on 7/29/2026 at 22:58:40 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+@deprecated —'StreamCitation' is deprecated.ts(6385) Prefer AnswerCitationSlot — alias kept for call-site clarity in SSE.
+
+
+
+---
+
+**Cursor**
+
+I'll find where `StreamCitation` is used and what `AnswerCitationSlot` expects so we can clear that deprecation.
+
+Updating the deprecated `StreamCitation` imports to `AnswerCitationSlot`.
+
+Import order looks off — I'll put `answerCitation` with the other `src/lib` imports and check lints.
+
+Switched both call sites from the deprecated `StreamCitation` alias to `AnswerCitationSlot`:
+
+- `ChatMessageList.tsx` — prop type
+- `useChatPaneData.ts` — streamed citations state
+
+# Scrolling animation issues
+_Exported on 7/29/2026 at 22:59:14 GMT+2 from Cursor (3.13.25)_
+
+---
+
+**User**
+
+When scrolling large distances in the source text, we first jump near it. This sometimes leads to choppy, sometimes instant jumps to the final location. If there is no other reason, id's suspect we're jumping too far leaving too little room to perform the animation. On the other hand, when scrolling short distances that stay within the virtualized window, animations ARE smooth, so the long distance choppiness might be for another reason.
+
+Another odity is the scroll track position. Initially, the scroll thumb (or bar) is at the top. When scrolling down and back up, the thumb isn't able to reach to very top. We're already at the top content-wise before the thumb reaches the top and then it gets stuck in its almost-top position.
+
+---
+
+**Cursor**
+
+I'll investigate the source-text scrolling and virtualization path—both the long-distance jump behavior and the stuck scroll thumb.
+
+Following the diagnosis skill: I'll build a tight repro loop for both symptoms before hypothesizing fixes.
+
+Plan mode was declined — continuing diagnosis. Building a tight loop around the hybrid jump + virtualizer remount race, and the thumb-at-top mismatch.
+
+Found a strong lead on the choppiness: TanStack Virtual drops smooth scrolling when remaining distance ≤ one viewport — and our jump lands exactly there. Next I’ll lock that in with a failing test, then probe the thumb stuck-near-top issue.
+
+Red loop confirmed: we jump to exactly one viewport out, but TanStack only keeps `behavior: "smooth"` when `distance > viewport`—so the first remount/remeasure snaps. Sharing hypotheses, then fixing that and probing the thumb.
+
+Building a minimal browser repro for the thumb stuck-near-top case.
+
+The thumb symptom matches scrollable top padding: content sits flush while `scrollTop` is still in the padding zone, so the thumb sits slightly down with no visible content change. Verifying and fixing that.
+
+Confirmed: content-height clamp changes `scrollTop` without firing `scroll` events, which can leave Radix’s thumb transform stale. Applying fixes for both issues.
+
+Biome dropped `totalSize` from the effect deps — restoring it so the thumb still re-syncs when layout height changes.
+
+Your instinct on the jump distance was right, and it maps onto a specific TanStack Virtual rule.
+
+### Long-distance choppiness
+Hybrid scroll jumped to **exactly one viewport** from the target, then smooth-scrolled. TanStack’s `reconcileScroll` only keeps `behavior: "smooth"` while `distance > viewport`. After the jump, the first remount/remeasure shifts the target and TanStack flips the rest to `auto` — instant snap. Short in-window scrolls don’t remount enough to shift the target, so they stay smooth.
+
+**Fix:** leave **two viewports** for the smooth leg, and wait **two frames** after the jump so measurement can settle before smooth starts.
+
+### Thumb stuck near the top
+Two contributors:
+
+1. **Top padding** inside the scroll content — text can sit flush with the viewport while `scrollTop` is still in the padding zone, so the thumb sits slightly below the top with no visible content change.
+2. **Estimate→measure shrink** can clamp `scrollTop` **without a `scroll` event**. Radix positions its thumb from scroll events, so the transform can go stale just off the top.
+
+**Fix:** drop top padding in the preview scroller; disable `overflow-anchor` on scroll viewports; dispatch a synthetic `scroll` when virtualizer `totalSize` changes so the thumb re-syncs.
+
+Worth a quick pass on a long source: citation jump should smooth the last stretch, and scrolling down then back up should let the thumb reach the true top.
+
+---
+
+**User**
+
+When scrolling past virtualized boundaries, I also see overlapping content. And it feels like the animation starts twice.
+
+---
+
+**Cursor**
+
+Overlapping content at virtualized boundaries and a double-start animation sound like the jump/remeasure path fighting the smooth leg. I'll trace that next.
+
+Two likely causes: TanStack blocks measuring items we’re scrolling through during `behavior: "smooth"` (overlap at boundaries), and each target remasure restarts native smooth (double animation). Fixing the hybrid path to settle, then use one native `scrollTo`.
+
+Both came from using TanStack’s `scrollToIndex({ behavior: "smooth" })` for the last stretch.
+
+**Overlap:** During that smooth path TanStack sets `scrollState` and **skips measuring** items outside a buffer around the target. Rows you scroll through stay on estimated heights while their real content is taller → stacked/overlapping blocks at virtualized boundaries.
+
+**Double animation:** When those rows finally measure, the target offset moves and TanStack calls `scrollTo(..., smooth)` again, which **cancels and restarts** the browser animation.
+
+**Fix:** After the jump, wait until the target offset is stable, then run **one** native `scrollElement.scrollTo({ behavior: "smooth" })` — no TanStack smooth `scrollState`, so items measure normally and the animation isn’t restarted. Also bumped overscan `8 → 16`.
+
+---
+
+**User**
+
+Jump a bit closer to the target.
+
+---
+
+**Cursor**
+
+Done — the jump now lands one viewport from the target (was two), so the smooth leg is shorter.
+
+---
+
+**User**
+
+Not satisfied. Maybe it's the animation curve. Is there a speedup at the start? That could make it feel off. I believe we need more of an ease-out.
+
+---
+
+**Cursor**
+
+Native `behavior: "smooth"` uses the browser’s ease-in-out, which accelerates at the start. I’ll replace it with a custom ease-out scroll.
+
+Replacing native smooth scroll with a custom ease-out animation — native ease-in-out accelerates after the jump, which feels like a second kick.
+
+Yes — native `behavior: "smooth"` is ease-in-out, so after the jump it accelerates from a standstill (that second kick).
+
+The smooth leg now uses a custom **ease-out cubic** (~420ms): moves most of the distance early, then decelerates into the target.
+
+---
+
+**User**
+
+Yep. Feels better. Jump a bit less close now.
+
+---
+
+**Cursor**
+
+Jump now lands **1.5 viewports** out (was 1), so the ease-out has a bit more room.
+
+---
+
+**User**
+
+And can I get a softer ease at the end?
+
+---
+
+**Cursor**
+
+Switching to a stronger ease-out (quint) so the landing decelerates more gently.
+
+Switched to **ease-out quint** (stronger deceleration into the target) and stretched the duration slightly to **520ms** so that soft landing has more time to read.
+
+---
+
+**User**
+
+This is related to the scroll change:
+
+## Error Type
+Console Error
+
+## Error Message
+flushSync was called from inside a lifecycle method. React cannot flush when React is already rendering. Consider moving this call to a scheduler task or micro task.
+
+
+    at SourcePreviewArticle.useEffect (src/components/sources/SourcePreviewArticle.tsx:93:19)
+    at SourcePreview (src/components/sources/SourcePreview.tsx:112:13)
+    at SourcesPane (src/components/sources/SourcesPane.tsx:67:9)
+    at NotebookWorkspace (src/components/notebook/NotebookWorkspace.tsx:57:9)
+    at NotebookPage (src/components/pages/notebooks/NotebookPage.tsx:79:7)
+    at NotebookRoute (src/app/notebooks/[notebookId]/page.tsx:16:9)
+
+## Code Frame
+  91 |
+  92 |     void totalSize
+> 93 |     scrollElement.dispatchEvent(new Event("scroll"))
+     |                   ^
+  94 |   }, [scrollElement, totalSize])
+  95 |
+  96 |   return (
+
+Next.js version: 16.2.12 (Turbopack)
+
+
+---
+
+**Cursor**
+
+The synthetic scroll is firing during a React effect and Tripping TanStack’s `flushSync`. Deferring it off the lifecycle.
+
+The synthetic scroll was running inside the effect, and TanStack’s handler calls `flushSync` from there. It’s deferred to the next animation frame now so that stays outside React’s lifecycle.
+
+---
+
+**User**
+
+I don't like the feel of the ease yet. Can you give me a easeOutQuart?
+
+---
+
+**Cursor**
+
+Duration is 750ms now — updating the tests to flush past that.
+
+Switched to **easeOutQuart**.
+
+---
+
+**User**
+
+Hmm. Try easeOutExpo. You know what, give me a quick experimentation switcher. I want to feel it live in comparison and decide then. But we're getting closer. I have a feeling it might be Quint or Expo. https://easings.net/ 
+
+---
+
+**Cursor**
+
+I'll add the easings.net curves (including Expo and Quint) and a small live switcher in the source preview so you can A/B them while scrolling.
+
+There’s a small **ease picker** in the source preview header: Cubic / Quart / Quint / Expo ([easings.net](https://easings.net/)).
+
+Default is **Expo**. Changing the dropdown resets to the top and replays the jump + ease so you can compare on the same citation. Tell me which one you lock in and I’ll remove the switcher.
+
+---
+
+**User**
+
+Quint it is.
+
+---
+
+**Cursor**
+
+Locking in Quint and removing the experiment switcher.
+
+Locked to **easeOutQuint** and removed the switcher.
+
